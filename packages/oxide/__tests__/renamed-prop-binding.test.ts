@@ -6,12 +6,17 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP, getStyleRecords } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import {
+  DEFAULT_STYLE_PROP,
+  getStyleRecords,
+  childClasses,
+  loadProject,
+} from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   const STYLES = path.join(DIR, 'styles.ts');
   const RENAMED_APPLY = path.join(DIR, 'RenamedApply.tsx');
@@ -35,23 +40,23 @@ describe.each(implementations)('$name', ({ transformSource }) => {
 
   const files: Record<string, string> = {
     [STYLES]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const styles = css.create(${JSON.stringify({ red: RED, blue: BLUE })});
 `,
     [RENAMED_APPLY]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const RenamedApply = ({ styleArray: s }: { styleArray?: css.Style }) => (
-  <div classStyle={s} />
+  <div sx={s} />
 );
 `,
     [DIRECT_APPLY]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const DirectApply = ({ styleArray }: { styleArray?: css.Style }) => (
-  <div classStyle={styleArray} />
+  <div sx={styleArray} />
 );
 `,
     [PARENT]: `
-import '@plumeria/core';
+import '@typedcss/css';
 import { styles } from './styles';
 import { RenamedApply } from './RenamedApply';
 import { DirectApply } from './DirectApply';
@@ -78,9 +83,6 @@ export const Parent = () => (
 
   const norm = (value: string) => value.trim().split(/\s+/).sort().join(' ');
 
-  const classExprOf = (code: string) =>
-    code.match(/className=\{([\s\S]*?)\}(?= \/>)/)![1];
-
   beforeAll(() => {
     for (const [p, src] of Object.entries(files)) fs.writeFileSync(p, src);
   });
@@ -95,20 +97,20 @@ export const Parent = () => (
       await expect(run(RENAMED_APPLY)).resolves.toEqual(expect.any(String));
     });
 
+    // typedcss passes the style itself, so Parent is rendered through both.
+    const rendered = async () => {
+      const codes: Record<string, string> = {};
+      for (const file of Object.keys(files)) codes[file] = await run(file);
+      return childClasses(loadProject(codes)(PARENT).Parent()).map(norm);
+    };
+
     it('resolves to the style the parent passed', async () => {
-      await run(PARENT);
-      const code = await run(RENAMED_APPLY);
-      const table: Record<string, string> = JSON.parse(
-        code.match(/\{("\w+":"[\w ]+",?)+\}/)![0],
-      );
-      expect(Object.values(table).map(norm)).toEqual([classesOf(RED)]);
+      expect((await rendered())[0]).toBe(classesOf(RED));
     });
 
     it('matches the output of the same component without the rename', async () => {
-      await run(PARENT);
-      const renamed = classExprOf(await run(RENAMED_APPLY));
-      const direct = classExprOf(await run(DIRECT_APPLY));
-      expect(renamed.replace(/\bs\b/g, 'styleArray')).toEqual(direct);
+      const [renamed, direct] = await rendered();
+      expect(renamed).toBe(direct);
     });
   });
 });
