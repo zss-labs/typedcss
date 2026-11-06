@@ -1,8 +1,8 @@
 import { createVitePlugin } from 'unplugin';
 import { unpluginFactory, EXTENSION_PATTERN } from './core';
 import type { PluginOptions } from './core';
-import compiler from '@plumeria/compiler';
 import * as path from 'path';
+import * as oxide from '@typedcss/oxide';
 import type {
   ViteDevServer,
   ModuleNode,
@@ -12,8 +12,6 @@ import type {
   UserConfig,
 } from 'vite';
 import { createDiskCssImport } from './disk-css';
-
-const { scanAll, optimizer } = compiler;
 
 function isRscConfig(userConfig: UserConfig): boolean {
   if ((userConfig as any).environments?.rsc) return true;
@@ -35,7 +33,12 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
     setRoot,
     setCssImport,
     setClassProp,
-  } = plugin.__plumeriaInternal;
+    stylesheetFiles,
+    cssFilename: sheetFilename,
+    refresh,
+    resolveSource,
+    inSource,
+  } = plugin.__typedcssInternal;
 
   const useDiskEmit = options?.devEmitToDisk ?? false;
   let isDev = false;
@@ -50,24 +53,6 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
     if (isDev && diskCssImport) return diskCssImport(ctx);
     return `\nimport ${JSON.stringify(ctx.cssId)};`;
   });
-
-  // Snapshot of componentPropsTable used to detect which child components'
-  // prop possibilities changed on an edit (compKey -> propName -> joined keys).
-  let propsTableSnapshot: Record<string, Record<string, string>> = {};
-  const snapshotPropsTable = (): Record<string, Record<string, string>> => {
-    const snap: Record<string, Record<string, string>> = {};
-    const table = scanAll().componentPropsTable || {};
-    for (const compKey of Object.keys(table)) {
-      snap[compKey] = {};
-      for (const propName of Object.keys(table[compKey])) {
-        snap[compKey][propName] = table[compKey][propName]
-          .map((e) => e.key)
-          .sort()
-          .join(',');
-      }
-    }
-    return snap;
-  };
 
   // Last CSS text pushed per virtual CSS module, to skip no-op reloads.
   const lastServedCss = new Map<string, string>();
@@ -131,8 +116,7 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
       ) {
         // Virtual module HMR: signal Vite to reload the CSS module,
         // but only when its content actually changed (avoids repaint flicker).
-        const baseId = id.replace(EXTENSION_PATTERN, '');
-        const cssFilename = `${baseId}.zero.css`;
+        const cssFilename = sheetFilename();
         const cssContent = cssLookup.get(cssFilename) ?? '';
         const envName = (this as any).environment?.name;
         const seenKey = `${envName ?? ''}:${cssFilename}`;
@@ -161,18 +145,25 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
 
   const vitePlugin = {
     ...plugin,
-    name: '@plumeria/unplugin:vite',
+    name: '@typedcss/unplugin:vite',
     vite: undefined,
 
     config(userConfig: UserConfig, { command }: { command: string }) {
       plugin.vite?.config?.(userConfig, { command });
+      // A package that exports typedcss source is transformed by this plugin,
+      // so it stays out of pre-bundling and out of the SSR externals.
+      const sourceNames = oxide
+        .sourcePackages(path.resolve(userConfig.root ?? ''))
+        .map((pkg) => pkg.name);
       const configToReturn: UserConfig = {
         optimizeDeps: {
           exclude: [
             ...(userConfig.optimizeDeps?.exclude ?? []),
-            '@plumeria/core',
+            '@typedcss/css',
+            ...sourceNames,
           ],
         },
+        ...(sourceNames.length > 0 ? { ssr: { noExternal: sourceNames } } : {}),
       };
 
       isBuild = command === 'build';
@@ -202,17 +193,12 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
       if (!isRsc || !isBuild) return;
       if (this.environment?.name !== 'rsc') return;
 
-      const source = optimizer(
-        [...cssLookup.keys()]
-          .sort()
-          .map((key) => cssLookup.get(key))
-          .join(''),
-      );
+      const source = cssLookup.get(sheetFilename()) ?? refresh();
       if (!source.trim()) return;
 
       sheetRef = this.emitFile({
         type: 'asset',
-        name: 'plumeria.css',
+        name: 'typedcss.css',
         source,
       });
     },
@@ -244,7 +230,8 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
       if (!devServer) return;
 
       const modules = [...ctx.modules];
-      if (ctx.file.includes('node_modules')) return modules;
+      if (ctx.file.includes('node_modules') && !inSource(ctx.file))
+        return modules;
 
       const addModule = (m: ModuleNode | undefined | null) => {
         if (m && !modules.includes(m)) {
@@ -252,42 +239,11 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
         }
       };
 
-      // Re-scan up front so every transform in this batch reads a consistent,
-      // already-updated table (scanAll is mtime-incremental, so subsequent
-      // calls inside transforms hit the cache).
-      const snapshot = snapshotPropsTable();
-      const prevSnapshot = propsTableSnapshot;
-      propsTableSnapshot = snapshot;
+      if (!EXTENSION_PATTERN.test(ctx.file)) return modules;
+      if (!stylesheetFiles.has(ctx.file)) return modules;
 
-      // Child components whose prop possibilities changed must re-transform
-      // so their inlined lookup maps are rebuilt.
-      const compKeys = new Set([
-        ...Object.keys(prevSnapshot),
-        ...Object.keys(snapshot),
-      ]);
-      for (const compKey of compKeys) {
-        const prevProps = prevSnapshot[compKey] || {};
-        const nextProps = snapshot[compKey] || {};
-        const propNames = new Set([
-          ...Object.keys(prevProps),
-          ...Object.keys(nextProps),
-        ]);
-        const changed = [...propNames].some(
-          (p) => prevProps[p] !== nextProps[p],
-        );
-        if (changed) {
-          const defFile = compKey.slice(0, compKey.lastIndexOf('-'));
-          devServer.moduleGraph.getModulesByFile(defFile)?.forEach(addModule);
-        }
-      }
-
-      // Only re-queue targets that actually depend on the changed file,
-      // instead of every Plumeria module (a blanket re-queue can walk
-      // importer chains without an HMR boundary and force a full reload).
       targets
-        .filter(
-          (t: any) => t.id !== ctx.file && t.dependencies.includes(ctx.file),
-        )
+        .filter((t: any) => t.id !== ctx.file)
         .map((t: any) => devServer!.moduleGraph.getModuleById(t.id))
         .forEach((m: any) => addModule(m as ModuleNode | null));
 
@@ -310,7 +266,7 @@ function attachViteHooks(plugin: any, options?: VitePluginOptions) {
       if (resolved) {
         return resolved + query;
       }
-      return null;
+      return resolveSource(importeeUrl);
     };
 
     vitePlugin.load = function (url: string) {
