@@ -12,7 +12,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
   valid: [
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         const dynamic = 'paddingLeft';
         css.unknown({ main: { paddingLeft: 1 } });
         css['create']({ main: { paddingLeft: 1 } });
@@ -27,7 +27,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingBlockStart: 4,
@@ -47,7 +47,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
        * what a direction reverses.
        */
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             width: 320,
@@ -67,7 +67,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const key = 'paddingLeft';
         css.create({
           main: {
@@ -82,7 +82,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
   invalid: [
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         css.viewTransitionClass({ old: { ['right']: 0 } });
         css.keyframes({ from: { bottom: 0 } });
       `,
@@ -93,21 +93,21 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
     },
     {
       code: `
-        import { 'viewTransitionClass' as transition } from '@plumeria/core';
+        import { 'viewTransitionClass' as transition } from '@typedcss/css';
         transition({ old: { borderLeftColor: 'red' } });
       `,
       errors: [{ messageId: 'rejected', suggestions: 1 }],
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.positionTry({ marginTop: 8 });
       `,
       errors: [{ messageId: 'rejected', suggestions: 1 }],
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingLeft: 16
@@ -123,7 +123,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
               messageId: 'rename',
               data: { counterpart: 'paddingInlineStart' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingInlineStart: 16
@@ -137,7 +137,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
     },
     {
       code: `
-        import { create, keyframes } from '@plumeria/core';
+        import { create, keyframes } from '@typedcss/css';
         create({ main: { ':hover': { top: 0 } } });
         keyframes({ from: { 'border-top-color': 'red' } });
       `,
@@ -159,7 +159,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({ main: { width: 320 } });
       `,
       options: [{ sizes: true }],
@@ -172,7 +172,7 @@ ruleTester.run('no-physical-properties', noPhysicalProperties, {
               messageId: 'rename',
               data: { counterpart: 'inlineSize' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({ main: { inlineSize: 320 } });
       `,
             },
