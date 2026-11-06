@@ -9,7 +9,7 @@ import type { CssImportContext } from './core';
  * Writes CSS to a real file on disk using marker-based blocks per source file.
  * The bundler's file watcher detects changes and triggers HMR automatically.
  *
- * This is the same approach used by @plumeria/turbopack-loader.
+ * This is the same approach used by @typedcss/next-plugin.
  */
 
 const VIRTUAL_CSS_FILENAME = 'zero-virtual.css';
@@ -18,7 +18,7 @@ let _cachedVirtualCssPath: string | null = null;
 
 /**
  * Resolve the path to the shared virtual CSS file.
- * Located at the root of the @plumeria/unplugin package.
+ * Located at the root of the @typedcss/unplugin package.
  */
 export function resolveVirtualCssPath(): string {
   if (_cachedVirtualCssPath) return _cachedVirtualCssPath;
@@ -35,7 +35,7 @@ export function resolveVirtualCssPath(): string {
     // ESM: resolve via the package's own entry point
     try {
       const req = createRequire(process.cwd() + '/');
-      const entryPath = req.resolve('@plumeria/unplugin');
+      const entryPath = req.resolve('@typedcss/unplugin');
       // entryPath = .../packages/unplugin/dist/index.js
       packageRoot = path.resolve(path.dirname(entryPath), '..');
     } catch {
