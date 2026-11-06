@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   button: {
@@ -15,7 +15,7 @@ export function ClientCounter() {
 
   return (
     <button
-      classStyle={styles.button}
+      sx={styles.button}
       onClick={() => setCount((count) => count + 1)}
     >
       Client Counter: {count}
