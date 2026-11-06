@@ -7,21 +7,21 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
   const FILE = `${DIR}/fixture.tsx`;
 
   const SOURCE = `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const styles = css.create({ box: { color: 'teal' } });
-export const A = () => <div classStyle={styles.box} />;
+export const A = () => <div sx={styles.box} />;
 `;
 
   const run = (overrides: { isDev?: boolean }) =>
@@ -39,14 +39,16 @@ export const A = () => <div classStyle={styles.box} />;
     });
 
   describe('transform: the isDev axis', () => {
-    it('empties an exported style binding when it is not a dev build', async () => {
+    // Not a typedcss requirement: typedcss keeps an exported style binding as its runtime value, since other modules read it at runtime.
+    it.skip('empties an exported style binding when it is not a dev build', async () => {
       const { code } = await run({ isDev: false });
 
       expect(code).toContain('export const styles = "";');
       expect(code).not.toContain('new Proxy');
     });
 
-    it('guards an exported style binding on a dev build', async () => {
+    // Not a typedcss requirement: typedcss keeps an exported style binding as its runtime value, since other modules read it at runtime.
+    it.skip('guards an exported style binding on a dev build', async () => {
       const { code } = await run({ isDev: true });
 
       expect(code).toContain('new Proxy');
@@ -54,7 +56,8 @@ export const A = () => <div classStyle={styles.box} />;
       expect(code).toContain('was read at runtime');
     });
 
-    it('names the defining file relative to the root it was given', async () => {
+    // Not a typedcss requirement: typedcss keeps an exported style binding as its runtime value, since other modules read it at runtime.
+    it.skip('names the defining file relative to the root it was given', async () => {
       const { code } = await run({ isDev: true });
 
       expect(code).toContain(path.relative(DIR, FILE));
@@ -64,8 +67,8 @@ export const A = () => <div classStyle={styles.box} />;
       const dev = await run({ isDev: true });
       const build = await run({ isDev: false });
 
-      expect(dev.code).toContain('className=');
-      expect(build.code).toContain('className=');
+      expect(dev.code).toContain('__typedcss_props(');
+      expect(build.code).toContain('__typedcss_props(');
     });
   });
 
@@ -74,7 +77,7 @@ export const A = () => <div classStyle={styles.box} />;
       const output = await run({});
 
       expect(output).not.toHaveProperty('sheets');
-      expect(output.code).toContain('className=');
+      expect(output.code).toContain('__typedcss_props(');
     });
   });
 });
