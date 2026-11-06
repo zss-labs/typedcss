@@ -16,7 +16,7 @@ const STYLE_FILE = path.join(
   '../nextjs/component/hmr-target.styles.ts',
 );
 
-const WITH_BASE_RULE = `import * as css from '@plumeria/core';
+const WITH_BASE_RULE = `import * as css from '@typedcss/css';
 
 export const hmrTarget = css.create({
   box: {
