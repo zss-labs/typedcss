@@ -109,10 +109,10 @@ const ESLINT_NAMES = [
 ];
 
 const DECLARATION_NAMES = [
-  'plumeria.d.ts',
-  'src/plumeria.d.ts',
-  'app/plumeria.d.ts',
-  'types/plumeria.d.ts',
+  'typedcss.d.ts',
+  'src/typedcss.d.ts',
+  'app/typedcss.d.ts',
+  'types/typedcss.d.ts',
 ];
 
 export const readManifest = (root: string): Manifest => {
