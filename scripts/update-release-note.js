@@ -5,14 +5,7 @@ const { normalizeReleaseNote } = require('./release-note-markdown');
 
 const changesetDir = path.join(__dirname, '../.changeset');
 const releaseNotePath = path.join(__dirname, '../RELEASENOTE.md');
-const corePackageJsonPath = path.join(
-  __dirname,
-  '../packages/core/package.json',
-);
-const pluginJsonPath = path.join(
-  __dirname,
-  '../plugins/plumeria/.claude-plugin/plugin.json',
-);
+const cssPackageJsonPath = path.join(__dirname, '../packages/css/package.json');
 
 function main() {
   const changes = [];
@@ -42,14 +35,10 @@ function main() {
   console.log('Updating lockfile...');
   execSync('pnpm install --lockfile-only', { stdio: 'inherit' });
 
-  const corePackageJson = JSON.parse(
-    fs.readFileSync(corePackageJsonPath, 'utf-8'),
+  const cssPackageJson = JSON.parse(
+    fs.readFileSync(cssPackageJsonPath, 'utf-8'),
   );
-  const newVersion = corePackageJson.version;
-
-  const pluginJson = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8'));
-  pluginJson.version = newVersion;
-  fs.writeFileSync(pluginJsonPath, JSON.stringify(pluginJson, null, 2) + '\n');
+  const newVersion = cssPackageJson.version;
 
   const months = [
     'Jan',
