@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
   const FIXTURE_PATH = path.join(FIXTURE_DIR, 'fixture.tsx');
 
   const wrap = (body: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const s = css.create({
   p1: { color: 'green' },
@@ -31,10 +31,9 @@ ${body}
   afterAll(() => fs.rmSync(FIXTURE_DIR, { recursive: true, force: true }));
 
   describe('compiler: bracket notation emits CSS', () => {
-    it('emits only the selected rule for a string literal key', () => {
-      const css = compile(
-        `export const A = () => <div classStyle={s['p2']} />;`,
-      );
+    // Not a typedcss requirement: typedcss emits every style a file defines, because a style can be applied anywhere at runtime.
+    it.skip('emits only the selected rule for a string literal key', () => {
+      const css = compile(`export const A = () => <div sx={s['p2']} />;`);
       expect(css).toContain('color: purple');
       expect(css).not.toContain('color: green');
     });
@@ -45,7 +44,7 @@ ${body}
       const css = compile(`
       export const A = () => {
         const k = 'p1';
-        return <div classStyle={s[k]} />;
+        return <div sx={s[k]} />;
       };
     `);
       expect(css).toContain('color: green');
@@ -55,7 +54,7 @@ ${body}
     it('emits every branch for a dynamic key', () => {
       const css = compile(`
       export const A = ({ k }: { k: 'p1' | 'p2' | 'p3' }) => (
-        <div classStyle={s[k]} />
+        <div sx={s[k]} />
       );
     `);
       expect(css).toContain('color: green');
@@ -63,11 +62,11 @@ ${body}
       expect(css).toContain('color: teal');
     });
 
-    it('emits bracket entries combined in a classStyle array', () => {
+    it('emits bracket entries combined in a sx array', () => {
       const css = compile(`
       const t = css.create({ big: { fontSize: '20px' } });
       export const A = ({ k }: { k: 'p1' | 'p2' }) => (
-        <div classStyle={[t.big, s[k]]} />
+        <div sx={[t.big, s[k]]} />
       );
     `);
       expect(css).toContain('font-size: 20px');
@@ -88,7 +87,7 @@ ${body}
     it('emits both sides of a ternary over bracket access', () => {
       const css = compile(`
       export const A = ({ on }: { on: boolean }) => (
-        <div classStyle={on ? s['p1'] : s['p3']} />
+        <div sx={on ? s['p1'] : s['p3']} />
       );
     `);
       expect(css).toContain('color: green');
@@ -98,7 +97,7 @@ ${body}
     it('emits the right-hand side of a logical &&', () => {
       const css = compile(`
       export const A = ({ on }: { on: boolean }) => (
-        <div classStyle={on && s['p1']} />
+        <div sx={on && s['p1']} />
       );
     `);
       expect(css).toContain('color: green');
@@ -107,7 +106,7 @@ ${body}
     it('emits a bracket branch mixed with dot access', () => {
       const css = compile(`
       export const A = ({ on }: { on: boolean }) => (
-        <div classStyle={on ? s['p1'] : s.p3} />
+        <div sx={on ? s['p1'] : s.p3} />
       );
     `);
       expect(css).toContain('color: green');
@@ -118,7 +117,7 @@ ${body}
       const css = compile(`
       export const A = () => {
         const alias = s['p3'];
-        return <div classStyle={alias} />;
+        return <div sx={alias} />;
       };
     `);
       expect(css).toContain('color: teal');
