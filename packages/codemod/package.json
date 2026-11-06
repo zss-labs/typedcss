@@ -1,23 +1,22 @@
 {
-  "name": "@plumeria/codemod",
+  "name": "@typedcss/codemod",
   "version": "21.1.2",
-  "description": "Codemods for Plumeria: migrate a CSS Modules codebase in, export it back out, and rename the styling prop or an API",
+  "description": "Codemods for typedcss: rename the styling prop or an API",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://plumeria.dev",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zss-in-js/plumeria.git",
+    "url": "git+https://github.com/zss-labs/typedcss.git",
     "directory": "packages/codemod"
   },
   "bugs": {
-    "url": "https://github.com/zss-in-js/plumeria/issues"
+    "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "keywords": [
     "plumeria",
     "codemod",
     "migration",
-    "css-modules",
     "eslint",
     "css-in-js"
   ],
@@ -25,7 +24,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "plumeria-codemod": "bin/codemod.js"
+    "typedcss-codemod": "bin/codemod.js"
   },
   "files": [
     "dist/",
@@ -37,11 +36,7 @@
   },
   "dependencies": {
     "@typescript-eslint/parser": "^8.60.0",
-    "eslint": "^10.4.1",
-    "get-tsconfig": "^4.14.2",
-    "postcss": "catalog:",
-    "postcss-selector-parser": "^7.1.1",
-    "zss-engine": "catalog:"
+    "eslint": "^10.4.1"
   },
   "publishConfig": {
     "access": "public",
