@@ -5,14 +5,14 @@ const { execFileSync } = require('child_process');
 
 // A package that exports a created style carries the style's type into its
 // declaration file, and TypeScript has to have a name it can write there.
-// Resolving `@plumeria/core` through node_modules is what makes the emit match
+// Resolving `@typedcss/css` through node_modules is what makes the emit match
 // a consumer's: reached by a path inside the repository, TypeScript writes a
 // relative import that a consumer could never resolve, and the check passes
 // while the published types do not.
 const root = path.join(__dirname, '..');
 const installed = path.join(root, 'test-e2e/nextjs/node_modules');
 
-const SOURCE = `import * as css from '@plumeria/core';
+const SOURCE = `import * as css from '@typedcss/css';
 
 export const styles = css.create({
   base: {
@@ -54,7 +54,7 @@ if (!fs.existsSync(installed)) {
   process.exit(1);
 }
 
-const work = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-declaration-'));
+const work = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-declaration-'));
 try {
   fs.symlinkSync(installed, path.join(work, 'node_modules'), 'dir');
   fs.writeFileSync(path.join(work, 'style-exports.ts'), SOURCE);
