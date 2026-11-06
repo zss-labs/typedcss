@@ -1,16 +1,16 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
-const moduleUsing = (color: string) => `import * as css from '@plumeria/core';
+const moduleUsing = (color: string) => `import * as css from '@typedcss/css';
 const styles = css.create({ box: { color: '${color}' } });
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `;
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-sources-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-sources-')),
   );
   const FILE = path.join(DIR, 'box.tsx');
   const OTHER = path.join(DIR, 'other.tsx');
@@ -78,11 +78,11 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
 
   it('keeps the themes a given source writes out of the next compile', () => {
     const themed = (fg: string, opacity: string) =>
-      `import * as css from '@plumeria/core';
+      `import * as css from '@typedcss/css';
 const theme = css.createTheme('.dark', { fg: { default: '${fg}', theme: '#fafafa' } });
 const fade = css.keyframes({ from: { opacity: 0 }, to: { opacity: ${opacity} } });
 const styles = css.create({ box: { color: theme.fg, animationName: fade } });
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `;
     const themedDir = path.join(DIR, 'themed');
     const themedFile = path.join(themedDir, 'box.tsx');
