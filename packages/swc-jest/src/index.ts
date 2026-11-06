@@ -1,93 +1,57 @@
+import * as crypto from 'crypto';
 import swcJest from '@swc/jest';
-import {
-  transformSource,
-  resolvePropertyPolicy,
-  DEFAULT_STYLE_PROP,
-  needsCompile,
-} from '@plumeria/compiler';
-import type { PropertyPolicyOptions } from '@plumeria/compiler';
+import * as oxide from '@typedcss/oxide';
+import type { PropertyPolicyOptions } from '@typedcss/oxide';
+import type { SyncTransformer, TransformOptions } from '@jest/transform';
 
 type SwcOptions = NonNullable<Parameters<typeof swcJest.createTransformer>[0]>;
-type SwcTransformer = ReturnType<typeof swcJest.createTransformer>;
 
-export interface TransformerOptions extends SwcOptions, PropertyPolicyOptions {
+export interface TypedCSSJestOptions extends PropertyPolicyOptions {
+  root?: string;
   styleProp?: string;
+  swc?: SwcOptions;
 }
 
-interface JestOptions {
-  config: { rootDir: string };
-}
+const VERSION: string = require('../package.json').version;
 
 export function createTransformer(
-  options: TransformerOptions = {},
-): SwcTransformer {
-  const {
-    styleProp = DEFAULT_STYLE_PROP,
-    withoutLogicalProperties,
-    withoutPhysicalProperties,
-    ...swcOptions
-  } = options;
-  const propertyPolicy = resolvePropertyPolicy({
-    withoutLogicalProperties,
-    withoutPhysicalProperties,
-  });
-  const swc = swcJest.createTransformer(swcOptions) as Required<
-    Pick<SwcTransformer, 'process' | 'processAsync' | 'getCacheKey'>
-  > &
-    SwcTransformer;
-  const compiled = new Map<string, { src: string; code: string }>();
-
-  const compile = (src: string, filename: string, jestOptions: JestOptions) => {
-    if (
-      filename.includes('node_modules') ||
-      !needsCompile(src, styleProp, filename)
-    ) {
-      return src;
-    }
-    return transformSource({
-      source: src,
-      moduleId: filename,
-      filePath: filename,
-      root: jestOptions.config.rootDir,
-      cwd: jestOptions.config.rootDir,
-      styleProp,
-      propertyPolicy,
-      isDev: process.env.NODE_ENV !== 'production',
-    }).code;
-  };
-
-  const take = (src: string, filename: string, jestOptions: JestOptions) => {
-    const cached = compiled.get(filename);
-    compiled.delete(filename);
-    return cached && cached.src === src
-      ? cached.code
-      : compile(src, filename, jestOptions);
-  };
-
+  options: TypedCSSJestOptions = {},
+): SyncTransformer<TypedCSSJestOptions> {
+  const { swc, ...rest } = options;
+  const typedcss = { ...rest, root: rest.root ?? process.cwd() };
+  const inner = swcJest.createTransformer(swc) as SyncTransformer;
+  const prepare = (source: string, filename: string) =>
+    filename.includes('node_modules')
+      ? source
+      : (oxide.transform(source, filename, typedcss) ?? source);
   return {
-    canInstrument: swc.canInstrument,
-    process(...[src, filename, jestOptions]: Parameters<typeof swc.process>) {
-      return swc.process(
-        take(src, filename, jestOptions),
-        filename,
-        jestOptions,
-      );
-    },
-    processAsync(
-      ...[src, filename, jestOptions]: Parameters<typeof swc.processAsync>
+    canInstrument: inner.canInstrument,
+    process(
+      source: string,
+      filename: string,
+      transformOptions: TransformOptions,
     ) {
-      return swc.processAsync(
-        take(src, filename, jestOptions),
+      return inner.process(
+        prepare(source, filename),
         filename,
-        jestOptions,
+        transformOptions,
       );
     },
     getCacheKey(
-      ...[src, filename, jestOptions]: Parameters<typeof swc.getCacheKey>
+      source: string,
+      filename: string,
+      transformOptions: TransformOptions,
     ) {
-      const code = compile(src, filename, jestOptions);
-      compiled.set(filename, { src, code });
-      return swc.getCacheKey(code, filename, jestOptions);
+      const base =
+        inner.getCacheKey?.(source, filename, transformOptions) ?? '';
+      return crypto
+        .createHash('sha1')
+        .update(base)
+        .update('\0')
+        .update(VERSION)
+        .update('\0')
+        .update(JSON.stringify(typedcss))
+        .digest('hex');
     },
   };
 }
