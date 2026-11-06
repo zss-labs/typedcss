@@ -1,5 +1,5 @@
 import { Link } from 'waku';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { Counter } from '../components/counter';
 
 const styles = css.create({
@@ -21,10 +21,10 @@ export default async function HomePage() {
   return (
     <div>
       <title>{data.title}</title>
-      <h1 classStyle={styles.headline}>{data.headline}</h1>
+      <h1 sx={styles.headline}>{data.headline}</h1>
       <p>{data.body}</p>
       <Counter />
-      <Link to="/about" classStyle={styles.link}>
+      <Link to="/about" {...css.props(styles.link)}>
         About page
       </Link>
     </div>
