@@ -16,7 +16,7 @@ const tester = new RuleTester({
   languageOptions: { ecmaVersion: 'latest', sourceType: 'module' },
 });
 const wrap = (body: string) =>
-  `import * as css from '@plumeria/core'; css.create({ dynamic: value => (${body}) });`;
+  `import * as css from '@typedcss/css'; css.create({ dynamic: value => (${body}) });`;
 const rejects = (
   name: string,
   rule: Parameters<typeof tester.run>[1],
@@ -26,7 +26,7 @@ const rejects = (
   tester.run(`function keys: ${name}`, rule, {
     valid: [
       wrap('null'),
-      `import * as css from '@plumeria/core'; css.create({ ...styles });`,
+      `import * as css from '@typedcss/css'; css.create({ ...styles });`,
     ],
     invalid: [
       {
@@ -78,21 +78,21 @@ rejects(
   'expand-border-shorthands',
   expandBorderShorthands,
   `{ border: '1px solid red' }`,
-  `import * as css from '@plumeria/core'; css.create({ dynamic: value => ({ borderWidth: '1px',
-                                                                         borderStyle: 'solid',
-                                                                         borderColor: 'red' }) });`,
+  `import * as css from '@typedcss/css'; css.create({ dynamic: value => ({ borderColor: 'red',
+                                                                        borderStyle: 'solid',
+                                                                        borderWidth: '1px' }) });`,
 );
 rejects(
   'sort-properties',
   sortProperties,
   `{ display: 'block', position: 'absolute' }`,
-  `import * as css from '@plumeria/core'; css.create({ dynamic: value => ({ position: 'absolute', display: 'block' }) });`,
+  `import * as css from '@typedcss/css'; css.create({ dynamic: value => ({ position: 'absolute', display: 'block' }) });`,
 );
 rejects(
   'format-properties',
   formatProperties,
   `{ color: value, display: 'block' }`,
-  `import * as css from '@plumeria/core'; css.create({ dynamic: value => ({
+  `import * as css from '@typedcss/css'; css.create({ dynamic: value => ({
   color: value,
   display: 'block'
 }) });`,
