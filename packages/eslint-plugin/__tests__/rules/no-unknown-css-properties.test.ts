@@ -11,8 +11,11 @@ const ruleTester = new RuleTester({
 ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
   valid: [
     {
+      code: `import * as css from '@typedcss/css'; css.positionTry({ [getKey()]: 'top', ...other });`,
+    },
+    {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             backgroundColor: 'red',
@@ -33,7 +36,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         const styles = css.create({
           main: {
             display: 'flex'
@@ -43,7 +46,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         const styles = create({
           main: {
             color: 'red'
@@ -53,7 +56,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { create as c } from '@plumeria/core';
+        import { create as c } from '@typedcss/css';
         const styles = c({
           main: {
             color: 'red'
@@ -63,7 +66,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         const styles = css['create']({
           main: {
             color: 'red'
@@ -73,7 +76,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const animation = css.keyframes({
           from: { opacity: 0 },
           to: { opacity: 1 }
@@ -82,7 +85,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const transition = css.viewTransitionClass({
           group: { opacity: 0 },
           new: { opacity: 1 }
@@ -91,7 +94,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { keyframes } from '@plumeria/core';
+        import { keyframes } from '@typedcss/css';
         const animation = keyframes({
           from: { opacity: 0 }
         });
@@ -99,13 +102,13 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const above = css.positionTry({ positionArea: 'top', marginBottom: 8 });
       `,
     },
     {
       code: `
-        import { positionTry } from '@plumeria/core';
+        import { positionTry } from '@typedcss/css';
         const fallback = positionTry({
           inset: 0,
           insetBlockStart: 0,
@@ -120,7 +123,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { viewTransitionClass as vt } from '@plumeria/core';
+        import { viewTransitionClass as vt } from '@typedcss/css';
         const transition = vt({
           new: { opacity: 1 }
         });
@@ -128,7 +131,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         const styles = create({
           main: {
             ...{},
@@ -138,36 +141,36 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
       `,
     },
     {
-      // Non-Plumeria import
+      // Non-typedcss import
       code: `import * as other from 'other'; other.create({ main: { color: 'red' } });`,
     },
     {
       // String literal import name
-      code: `import { "create" as c } from '@plumeria/core'; c({ main: { color: 'red' } });`,
+      code: `import { "create" as c } from '@typedcss/css'; c({ main: { color: 'red' } });`,
     },
     {
       // Non-Identifier object in MemberExpression
-      code: `import * as css from '@plumeria/core'; (function(){ return css; })().create({ main: { color: 'red' } });`,
+      code: `import * as css from '@typedcss/css'; (function(){ return css; })().create({ main: { color: 'red' } });`,
     },
     {
       // Non-Identifier callee
-      code: `import * as css from '@plumeria/core'; (function(){})()`,
+      code: `import * as css from '@typedcss/css'; (function(){})()`,
     },
     {
       // Non-ObjectExpression argument and Spread element
-      code: `import { create } from '@plumeria/core'; create(arg, { ...props, main: { color: 'red' } });`,
+      code: `import { create } from '@typedcss/css'; create(arg, { ...props, main: { color: 'red' } });`,
     },
     {
       // Literal key and non-property element in checkStyleObject
-      code: `import { create } from '@plumeria/core'; create({ main: { 'background-color': 'red', [key]: 'blue', ['a' + 'b']: 'green' } });`,
+      code: `import { create } from '@typedcss/css'; create({ main: { 'background-color': 'red', [key]: 'blue', ['a' + 'b']: 'green' } });`,
     },
     {
-      // Other import from @plumeria/core to cover alias lookup failure
-      code: `import { use } from '@plumeria/core'; use({ s: { color: 'red' } });`,
+      // Other import from @typedcss/css to cover alias lookup failure
+      code: `import { use } from '@typedcss/css'; use({ s: { color: 'red' } });`,
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             ['color']: 'red',
@@ -178,7 +181,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             cornerShape: 'squircle',
@@ -195,7 +198,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             msOverflowStyle: 'none',
@@ -213,7 +216,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             voiceFamily: 'male',
@@ -228,7 +231,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             backgoundColor: 'red'
@@ -246,7 +249,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             unknownProp: 'value'
@@ -264,7 +267,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             ':hover': {
@@ -284,7 +287,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             '[disabled]': {
@@ -304,7 +307,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         const styles = create({
           main: {
             '& .child': {
@@ -324,7 +327,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         const styles = create({
           main: {
             '&:hover': 'red'
@@ -342,7 +345,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const animation = css.keyframes({
           from: { '&:hover': { color: 'red' } }
         });
@@ -358,7 +361,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const animation = css.keyframes({
           from: { unkownProp: '0' }
         });
@@ -374,7 +377,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const transition = css.viewTransitionClass({
           new: { unkownProp: '0' }
         });
@@ -390,7 +393,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const above = css.positionTry({
           color: 'red',
           padding: 4,
@@ -412,7 +415,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const above = css.positionTry({ positionAre: 'top' });
       `,
       errors: [
@@ -426,7 +429,7 @@ ruleTester.run('no-unknown-css-properties', noUnknownCssProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             ['unknownProp']: 'value'
