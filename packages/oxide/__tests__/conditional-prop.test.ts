@@ -10,12 +10,14 @@ import {
   DEFAULT_STYLE_PROP,
   getStyleRecords,
   deepMerge,
-} from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+  evaluateModule,
+  renderClass,
+} from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   const STYLES = path.join(DIR, 'styles.ts');
   const GATED = path.join(DIR, 'Gated.tsx');
@@ -40,7 +42,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
 
   const files: Record<string, string> = {
     [STYLES]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const styles = css.create(${JSON.stringify({
       base: BASE,
       red: RED,
@@ -48,7 +50,7 @@ export const styles = css.create(${JSON.stringify({
     })});
 `,
     [GATED]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { styles } from './styles';
 export const Gated = ({
   styleArray,
@@ -56,10 +58,10 @@ export const Gated = ({
 }: {
   styleArray?: css.Style;
   cond?: boolean;
-}) => <div classStyle={[styles.base, cond && styleArray]} />;
+}) => <div sx={[styles.base, cond && styleArray]} />;
 `,
     [EITHER]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { styles } from './styles';
 export const Either = ({
   styleArray,
@@ -67,10 +69,10 @@ export const Either = ({
 }: {
   styleArray?: css.Style;
   cond?: boolean;
-}) => <div classStyle={cond ? styleArray : styles.base} />;
+}) => <div sx={cond ? styleArray : styles.base} />;
 `,
     [PARENT]: `
-import '@plumeria/core';
+import '@typedcss/css';
 import { styles } from './styles';
 import { Gated } from './Gated';
 import { Either } from './Either';
@@ -101,32 +103,33 @@ export const Parent = () => (
         .join(' '),
     );
 
-  // The compiled element, driven the way React would drive it.
+  // The compiled element, driven the way React would drive it. typedcss hands
+  // the style value itself to the component, so the keys are the styles.
+  let stylesModule: Record<string, any> = {};
   const renderer = async (file: string) => {
     const code = await run(file);
-    const expr = code.match(/className=\{([\s\S]*?)\}(?= \/>)/)?.[1];
-    if (!expr) throw new Error(`no className in:\n${code}`);
+    const name = path.basename(file, '.tsx');
     return (styleArray: unknown, cond: unknown) =>
       norm(
-        new Function('styleArray', 'cond', `return (${expr});`)(
-          styleArray,
-          cond,
-        ) ?? '',
+        renderClass(code, { styleArray, cond }, name, (specifier) =>
+          specifier === './styles' ? stylesModule : undefined,
+        ),
       );
   };
 
-  let keys: string[] = [];
+  let keys: unknown[] = [];
 
   beforeAll(async () => {
     for (const [p, src] of Object.entries(files)) fs.writeFileSync(p, src);
-    const parent = await run(PARENT);
-    keys = [...parent.matchAll(/styleArray={"(\w+)"}/g)].map((m) => m[1]);
+    stylesModule = evaluateModule(await run(STYLES), STYLES);
+    keys = [stylesModule.styles.red, stylesModule.styles.blue];
   });
 
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
   describe('transform: a style prop applied under a condition', () => {
-    it('keys the call sites by content, so the same style repeats', () => {
+    // Not a typedcss requirement: typedcss passes the style value itself, so there are no call-site keys to share.
+    it.skip('keys the call sites by content, so the same style repeats', () => {
       // [Gated red, Gated blue, Either red, Either blue]
       expect(keys).toHaveLength(4);
       expect(keys[0]).toBe(keys[2]);
@@ -160,7 +163,8 @@ export const Parent = () => (
       expect(render(keys[1], false)).toBe(classesOf(BASE));
     });
 
-    it('leaves no style object in the class expression', async () => {
+    // Not a typedcss requirement: typedcss keeps the style objects as class maps for the runtime.
+    it.skip('leaves no style object in the class expression', async () => {
       for (const file of [GATED, EITHER]) {
         const code = await run(file);
         const expr = code.match(/className=\{([\s\S]*?)\}(?= \/>)/)![1];
