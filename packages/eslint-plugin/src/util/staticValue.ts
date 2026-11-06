@@ -1,7 +1,7 @@
 import type { Rule, Scope } from 'eslint';
-import { resolveExportValue, resolveImportPath } from '@plumeria/compiler';
+import { resolveExportValue, resolveImportPath } from '@typedcss/oxide';
 
-const CORE = '@plumeria/core';
+const CORE = '@typedcss/css';
 
 type Binding =
   | { kind: 'value'; node: any }
@@ -98,7 +98,9 @@ export function staticValueResolver(context: Rule.RuleContext) {
       return node.property.name;
     }
     const key = resolve(node.property);
-    return typeof key === 'string' ? key : undefined;
+    return typeof key === 'string' || typeof key === 'number'
+      ? String(key)
+      : undefined;
   };
 
   const resolve = (node: any): unknown => {
