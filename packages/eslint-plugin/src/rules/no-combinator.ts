@@ -21,7 +21,7 @@ export const noCombinator: Rule.RuleModule = {
   },
 
   create(context) {
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
 
     function isCombinatorAllowed(selector: string): boolean {
       const s = selector.trim();
@@ -140,20 +140,20 @@ export const noCombinator: Rule.RuleModule = {
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (
               specifier.type === 'ImportNamespaceSpecifier' ||
               specifier.type === 'ImportDefaultSpecifier'
             ) {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const spec = specifier as ImportSpecifier;
               const importedName =
                 spec.imported.type === 'Identifier'
                   ? spec.imported.name
                   : String(spec.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -162,7 +162,7 @@ export const noCombinator: Rule.RuleModule = {
         if (node.callee.type === 'MemberExpression') {
           if (
             node.callee.object.type === 'Identifier' &&
-            plumeriaAliases[node.callee.object.name] === 'NAMESPACE'
+            coreAliases[node.callee.object.name] === 'NAMESPACE'
           ) {
             const propertyName =
               node.callee.property.type === 'Identifier'
@@ -183,7 +183,7 @@ export const noCombinator: Rule.RuleModule = {
             }
           }
         } else if (node.callee.type === 'Identifier') {
-          const alias = plumeriaAliases[node.callee.name];
+          const alias = coreAliases[node.callee.name];
           if (alias === 'create') {
             node.arguments.forEach((arg) => {
               if (arg.type === 'ObjectExpression') {
@@ -226,7 +226,9 @@ export const noCombinator: Rule.RuleModule = {
         if (prop.type === 'Property') {
           if (prop.value.type === 'Literal') {
             const value = String(prop.value.value);
-            checkAndReport(value, prop.value);
+            // Only a value starting with ':' or '[' becomes a selector as a key.
+            const head = value.trimStart()[0];
+            if (head === ':' || head === '[') checkAndReport(value, prop.value);
           }
         }
       }
