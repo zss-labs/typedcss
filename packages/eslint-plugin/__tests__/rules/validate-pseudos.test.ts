@@ -41,7 +41,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     // Test branch: callee is neither identifier nor member expression
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         (function() { return css.create; })()({
           s: { ':hovver': {} }
         });
@@ -49,7 +49,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           button: {
             color: 'red',
@@ -75,7 +75,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         create({
           button: {
             // Nested checks
@@ -90,7 +90,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const hv = ':hover' as const;
         css.create({
           button: {
@@ -101,7 +101,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         // Non-string-literal dynamic computed keys are skipped/ignored by this rule
         const dynamic = (':hover' + '') as string;
         css.create({
@@ -114,7 +114,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     // Test branch: non-Identifier namespace object (ParenthesizedExpression)
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         (css).create({
           button: {
             ':hover': { color: 'blue' }
@@ -125,7 +125,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     // Test branch: member expression property is not an Identifier (css['create'])
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css['create']({
           button: {
             ':hover': { color: 'blue' }
@@ -136,7 +136,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     // Test branch: Import specifier with string literal name
     {
       code: `
-        import { "create" as c2 } from '@plumeria/core';
+        import { "create" as c2 } from '@typedcss/css';
         c2({
           button: {
             ':hover': { color: 'blue' }
@@ -147,7 +147,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     // Test branch: spread elements and non-object expressions at top-level and nested level
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         create({
           ...topSpread,
           button: {
@@ -162,7 +162,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           button: {
             ':hovver': { color: 'red' }
@@ -177,7 +177,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           button: {
             ':hover::befor': { color: 'red' }
@@ -192,7 +192,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           button: {
             ':nth-child()': { color: 'red' }
@@ -207,7 +207,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           button: {
             ':nth-child(2n': { color: 'red' }
@@ -222,7 +222,7 @@ ruleTester.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const invalidHv = ':hovver' as const;
         css.create({
           button: {
@@ -243,7 +243,7 @@ ruleTesterNoType.run('validate-pseudos', validatePseudos, {
   valid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         let invalidHv = ':hovver';
         css.create({
           button: {
@@ -256,7 +256,7 @@ ruleTesterNoType.run('validate-pseudos', validatePseudos, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const invalidHv = ':hovver' as const;
         css.create({
           button: {
@@ -268,7 +268,7 @@ ruleTesterNoType.run('validate-pseudos', validatePseudos, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           button: {
             ':hovver': { color: 'red' }
