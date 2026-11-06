@@ -17,6 +17,9 @@ pub fn var_type_hash(name: &str, rule: &Object) -> String {
 
 pub fn checked_var_type_hash(name: &str, rule: &Object) -> Result<String, String> {
     let hash = var_type_hash(name, rule);
+    if cfg!(feature = "swc-plugin") {
+        return Ok(hash);
+    }
     let css = transpile_global(&create_var_type(rule, &hash));
     if crate::optimize::optimize(&css, false).is_ok() {
         return Ok(hash);
@@ -31,7 +34,7 @@ pub fn checked_var_type_hash(name: &str, rule: &Object) -> Result<String, String
         _ => "no initialValue".to_string(),
     };
     Err(format!(
-        "[plumeria] css.varType \"{name}\" is not a valid @property: {syntax} with {initial}. The syntax has to be a valid @property syntax, and the initial value has to match it."
+        "[typedcss] css.varType \"{name}\" is not a valid @property: {syntax} with {initial}. The syntax has to be a valid @property syntax, and the initial value has to match it."
     ))
 }
 
