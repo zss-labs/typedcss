@@ -1,11 +1,11 @@
 import { defineConfig } from '@farmfe/core';
 import farmPluginReact from '@farmfe/plugin-react';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 export default defineConfig({
   plugins: [
     farmPluginReact(),
-    plumeria.farm({
+    typedcss.farm({
       devEmitToDisk: true,
     }),
   ],
