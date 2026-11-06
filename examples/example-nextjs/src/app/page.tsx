@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import stylesModule from './page.module.css';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   color: {
@@ -22,7 +22,7 @@ export default function Home() {
           height={38}
           priority
         />
-        <div classStyle={styles.color}>Next.js + Plumeria</div>
+        <div sx={styles.color}>Next.js + typedcss</div>
         <ol>
           <li>
             Get started by editing <code>src/app/page.tsx</code>.
