@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { HmrClientBox } from 'component/hmr-client-chromium';
 
 const page = css.create({
@@ -12,7 +12,7 @@ export default function HmrClientPage() {
     <main>
       <h1>HMR client edit</h1>
       <HmrClientBox>
-        <p data-testid="hmr-client-server-child" classStyle={page.note}>
+        <p data-testid="hmr-client-server-child" sx={page.note}>
           a server child inside the client component
         </p>
       </HmrClientBox>
