@@ -47,24 +47,24 @@ export const createSpellingRule = (
 
   create(context) {
     const includeAxes: boolean = context.options[0]?.sizes ?? false;
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (
               specifier.type === 'ImportNamespaceSpecifier' ||
               specifier.type === 'ImportDefaultSpecifier'
             ) {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const spec = specifier as ImportSpecifier;
               const importedName =
                 spec.imported.type === 'Identifier'
                   ? spec.imported.name
                   : String(spec.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -75,7 +75,7 @@ export const createSpellingRule = (
         if (node.callee.type === 'MemberExpression') {
           if (
             node.callee.object.type === 'Identifier' &&
-            plumeriaAliases[node.callee.object.name] === 'NAMESPACE'
+            coreAliases[node.callee.object.name] === 'NAMESPACE'
           ) {
             const propertyName =
               node.callee.property.type === 'Identifier'
@@ -92,7 +92,7 @@ export const createSpellingRule = (
             }
           }
         } else if (node.callee.type === 'Identifier') {
-          const aliasName = plumeriaAliases[node.callee.name];
+          const aliasName = coreAliases[node.callee.name];
           if (
             aliasName === 'create' ||
             aliasName === 'keyframes' ||
