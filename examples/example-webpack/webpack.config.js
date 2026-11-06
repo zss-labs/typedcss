@@ -1,6 +1,6 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 export default {
   stats: 'minimal',
@@ -41,7 +41,7 @@ export default {
     new HtmlWebpackPlugin({
       template: './src/index.html',
     }),
-    plumeria.webpack(),
+    typedcss.webpack(),
     new ReactRefreshWebpackPlugin(),
   ],
   devServer: {
