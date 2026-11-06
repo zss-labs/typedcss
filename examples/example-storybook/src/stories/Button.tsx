@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { useState, type ReactNode, type MouseEvent } from 'react';
 import {
   rippleEffect,
@@ -268,7 +268,7 @@ export const Button = ({
 
   return (
     <button
-      classStyle={[styles.button, variantStyles[variant], sizeStyles[size]]}
+      sx={[styles.button, variantStyles[variant], sizeStyles[size]]}
       name={name}
       onClick={handleClick}
       disabled={isDisabled}
@@ -276,15 +276,15 @@ export const Button = ({
       aria-busy={loading}
     >
       {loading ? (
-        <div classStyle={styles.spinner} />
+        <div sx={styles.spinner} />
       ) : (
-        <span classStyle={styles.content}>{children}</span>
+        <span sx={styles.content}>{children}</span>
       )}
       {!loading &&
         ripples.map((ripple) => (
           <span
             key={ripple.id}
-            classStyle={styles.ripple(ripple.top, ripple.left, ripple.size)}
+            sx={styles.ripple(ripple.top, ripple.left, ripple.size)}
           />
         ))}
     </button>
