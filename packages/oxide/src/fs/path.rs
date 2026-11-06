@@ -67,28 +67,6 @@ pub fn extname(path: &str) -> String {
     }
 }
 
-pub fn relative(from: &str, to: &str) -> String {
-    let from = normalize(Path::new(from));
-    let to = normalize(Path::new(to));
-    let from_parts: Vec<Component> = from.components().collect();
-    let to_parts: Vec<Component> = to.components().collect();
-    let mut common = 0;
-    while common < from_parts.len()
-        && common < to_parts.len()
-        && from_parts[common] == to_parts[common]
-    {
-        common += 1;
-    }
-    let mut out = PathBuf::new();
-    for _ in common..from_parts.len() {
-        out.push("..");
-    }
-    for part in &to_parts[common..] {
-        out.push(part.as_os_str());
-    }
-    out.to_string_lossy().into_owned()
-}
-
 pub fn is_file(path: &Path) -> bool {
     std::fs::metadata(path)
         .map(|meta| meta.is_file())
