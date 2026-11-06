@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
 
   let n = 0;
   const compile = (
@@ -24,9 +24,9 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
   afterAll(() => fs.rmSync(FIXTURE_DIR, { recursive: true, force: true }));
 
   const style = (declaration: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const s = css.create({ a: { ${declaration} } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `;
 
   describe('compiler: withoutLogicalProperties', () => {
@@ -128,10 +128,10 @@ export const A = () => <div classStyle={s.a} />;
       expect(() =>
         compile(
           `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const k = css.keyframes({ from: { marginBlockStart: 0 } });
 export const s = css.create({ a: { animationName: k } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `,
           { withoutLogicalProperties: true },
         ),
@@ -142,9 +142,9 @@ export const A = () => <div classStyle={s.a} />;
       expect(() =>
         compile(
           `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const s = css.create({ a: (v: number) => ({ marginBlockStart: v }) });
-export const A = () => <div classStyle={s.a(0)} />;
+export const A = () => <div sx={s.a(0)} />;
 `,
           { withoutLogicalProperties: true },
         ),
