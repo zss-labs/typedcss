@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   title: {
@@ -23,8 +23,8 @@ function App() {
 
   return (
     <div style={{ textAlign: 'center', padding: '2em' }}>
-      <h1 classStyle={styles.title}>Plumeria + Rspack</h1>
-      <div classStyle={styles.card}>
+      <h1 sx={styles.title}>typedcss + Rspack</h1>
+      <div sx={styles.card}>
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
