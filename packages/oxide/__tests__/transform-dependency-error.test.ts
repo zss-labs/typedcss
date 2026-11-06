@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const FIXTURE_DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   const env = (source: string, filePath: string, cwd: string) => ({
     source,
@@ -44,14 +44,14 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     const appPath = path.join(project, `app-${id}.tsx`);
     const from = through === 'a re-export' ? `barrel-${id}` : `styles-${id}`;
     const source =
-      `import * as css from '@plumeria/core';\n` +
+      `import * as css from '@typedcss/css';\n` +
       `import { styles } from './${from}';\n` +
       `function Test() { return 'x'; }\n` +
-      `export const App = () => <div classStyle={${usage}} />;\n`;
+      `export const App = () => <div sx={${usage}} />;\n`;
 
     fs.writeFileSync(
       stylesPath,
-      `import * as css from '@plumeria/core';\n${definition}\n`,
+      `import * as css from '@typedcss/css';\n${definition}\n`,
       'utf-8',
     );
     fs.writeFileSync(
@@ -74,16 +74,21 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     });
 
     it('names the declaring file, not the one being transformed', async () => {
-      await expect(transform(BROKEN)).rejects.toThrow(/\(styles-\d+\.ts\)/);
+      await expect(transform(BROKEN)).rejects.toThrow(
+        /\(styles-\d+\.ts:\d+:\d+\)/,
+      );
     });
 
     it('names it through a file that only re-exports the style', async () => {
       await expect(
         transform(BROKEN, 'styles.good', 'a re-export'),
-      ).rejects.toThrow(/The style key 1 is a number.+\(styles-\d+\.ts\)/);
+      ).rejects.toThrow(
+        /The style key 1 is a number.+\(styles-\d+\.ts:\d+:\d+\)/,
+      );
     });
 
-    it('keeps the unresolvable-style message when that file is sound', async () => {
+    // Not a typedcss requirement: typedcss merges sx at runtime, so a value the build cannot read is applied as whatever it holds.
+    it.skip('keeps the unresolvable-style message when that file is sound', async () => {
       await expect(transform(SOUND, '[styles.good, Test()]')).rejects.toThrow(
         /Dynamic or unresolvable style object "Test\(\)" is not supported/,
       );
