@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   section: {
@@ -42,12 +42,12 @@ export const Counter = () => {
   const handleIncrement = () => setCount((c) => c + 1);
 
   return (
-    <section classStyle={styles.section}>
+    <section sx={styles.section}>
       <div>
-        <span classStyle={styles.label}>Count</span>
-        <strong classStyle={styles.value}>{count}</strong>
+        <span sx={styles.label}>Count</span>
+        <strong sx={styles.value}>{count}</strong>
       </div>
-      <button onClick={handleIncrement} classStyle={styles.button}>
+      <button onClick={handleIncrement} sx={styles.button}>
         Increment
       </button>
     </section>
