@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const GUARD_ENV = 'PLUMERIA_LINT_GUARD';
+const GUARD_ENV = 'TYPEDCSS_LINT_GUARD';
 
 const BASE_CONFIG = path.join(__dirname, '..', 'oxlint.json');
 
@@ -17,7 +17,7 @@ interface LintOptions {
 
 export interface LintOverrides {
   rules?: Record<string, unknown>;
-  settings?: { plumeria: { styleProp: string } };
+  settings?: { typedcss: { styleProp: string } };
 }
 
 function spellingRule(spelling: Spelling): unknown {
@@ -32,18 +32,18 @@ export function lintOverrides(options: LintOptions): LintOverrides {
   const rules: Record<string, unknown> = {};
   const logical = spellingRule(options.withoutLogicalProperties);
   const physical = spellingRule(options.withoutPhysicalProperties);
-  if (logical) rules['@plumeria/no-logical-properties'] = logical;
-  if (physical) rules['@plumeria/no-physical-properties'] = physical;
+  if (logical) rules['@typedcss/no-logical-properties'] = logical;
+  if (physical) rules['@typedcss/no-physical-properties'] = physical;
   if (logical || physical) overrides.rules = rules;
   if (options.styleProp) {
-    overrides.settings = { plumeria: { styleProp: options.styleProp } };
+    overrides.settings = { typedcss: { styleProp: options.styleProp } };
   }
   return overrides;
 }
 
 export function lintConfig(overrides: LintOverrides): string {
   if (!overrides.rules && !overrides.settings) return BASE_CONFIG;
-  const file = path.join(os.tmpdir(), `plumeria-oxlint-${process.pid}.json`);
+  const file = path.join(os.tmpdir(), `typedcss-oxlint-${process.pid}.json`);
   fs.writeFileSync(
     file,
     JSON.stringify({ extends: [BASE_CONFIG], ...overrides }),
@@ -67,7 +67,7 @@ export function lintEnv(): NodeJS.ProcessEnv {
       process.cwd(),
       'node_modules',
       '.cache',
-      'plumeria-lint',
+      'typedcss-lint',
     ),
     ...process.env,
   };
@@ -89,9 +89,10 @@ export function startLintGuard(overrides: LintOverrides = {}): boolean {
       ),
       '-c',
       config,
+      '--ignore-pattern=**/node_modules/**',
       '--deny-warnings',
       '--no-error-on-unmatched-pattern',
-      '--threads=2',
+      '--threads=1',
     ],
     { stdio: 'inherit', env: lintEnv() },
   );
@@ -102,7 +103,7 @@ export function startLintGuard(overrides: LintOverrides = {}): boolean {
   let pendingCode: number | undefined | null = null;
 
   child.on('error', (error) => {
-    console.error(`\n✖ [plumeria] Could not run oxlint: ${error.message}`);
+    console.error(`\n✖ [typedcss] Could not run oxlint: ${error.message}`);
     exit(1);
   });
 
@@ -110,7 +111,7 @@ export function startLintGuard(overrides: LintOverrides = {}): boolean {
     if (config !== BASE_CONFIG) fs.rmSync(config, { force: true });
     lintCode = code ?? 1;
     if (lintCode !== 0) {
-      console.error('\n✖ [plumeria] Linting failed. Aborting build...');
+      console.error('\n✖ [typedcss] Linting failed. Aborting build...');
       return exit(lintCode);
     }
     if (pendingCode !== null) exit(pendingCode);
