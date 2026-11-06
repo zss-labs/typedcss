@@ -1,269 +1,208 @@
-jest.mock('@plumeria/eslint-plugin/guard', () => ({
-  lintOverrides: jest.requireActual('@plumeria/eslint-plugin/guard')
+jest.mock('@typedcss/eslint-plugin/guard', () => ({
+  lintOverrides: jest.requireActual('@typedcss/eslint-plugin/guard')
     .lintOverrides,
   startLintGuard: jest.fn(),
 }));
-let mockCompiledSource = '';
-jest.mock('@plumeria/compiler', () => ({
-  DEFAULT_STYLE_PROP: 'classStyle',
-  needsCompile: jest.requireActual('@plumeria/compiler').needsCompile,
-  optimizer: jest.fn((css: string) => css),
-  resolvePropertyPolicy: jest.fn(() => ({ policy: true })),
-  transformSource: jest.fn(
-    ({
-      source,
-      addDependency,
-    }: {
-      source: string;
-      addDependency: (path: string) => void;
-    }) => {
-      mockCompiledSource = source;
-      addDependency('/dependency.ts');
-      return { code: 'transformed' };
-    },
-  ),
-  compileCSS: jest.fn(() =>
-    mockCompiledSource.includes('EMPTY')
-      ? ''
-      : mockCompiledSource.includes('SECOND')
-        ? '.second {}'
-        : '.generated {}',
-  ),
-}));
 
-import { unpluginFactory } from '../src/core';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { CSS_FILENAME, unpluginFactory } from '../src/core';
 
-const { transformSource: mockTransformSource } = jest.requireMock<{
-  transformSource: jest.Mock;
-}>('@plumeria/compiler');
-const { optimizer: mockOptimizer, resolvePropertyPolicy: mockPolicy } =
-  jest.requireMock<{
-    optimizer: jest.Mock;
-    resolvePropertyPolicy: jest.Mock;
-  }>('@plumeria/compiler');
+const ROOT = fs.realpathSync(
+  fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-unplugin-core-')),
+);
+const CARD = path.join(ROOT, 'Card.tsx');
+const TOKENS = path.join(ROOT, 'tokens.ts');
+const CSS_FILE = path.join(ROOT, CSS_FILENAME);
+const CSS_ID = `/${CSS_FILENAME}`;
 
-const SOURCE = `import '@plumeria/core';`;
-const createPlugin = (options?: Parameters<typeof unpluginFactory>[0]) =>
-  unpluginFactory(options, { framework: 'rollup' } as never) as any;
+const card = (
+  color: string,
+  prop = 'sx',
+) => `import * as css from '@typedcss/css';
+import { space } from './tokens';
+const styles = css.create({ box: { color: '${color}', padding: space.md } });
+export const Card = () => <div ${prop}={styles.box} />;
+`;
+const TOKENS_SOURCE = `import * as css from '@typedcss/css';
+export const space = css.createStatic({ md: 12 });
+`;
 
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  fs.writeFileSync(CARD, card('teal'));
+  fs.writeFileSync(TOKENS, TOKENS_SOURCE);
+});
 
-it('exposes metadata and applies plugin options', () => {
-  const plugin = createPlugin({
-    include: '**/*.tsx',
-    styleProp: 'css',
-    withoutPhysicalProperties: true,
-  });
+afterAll(() => fs.rmSync(ROOT, { recursive: true, force: true }));
 
-  expect(plugin).toMatchObject({ name: '@plumeria/unplugin', enforce: 'pre' });
-  expect(plugin.__plumeriaInternal.unpluginMeta).toEqual({
+const createPlugin = (options: Parameters<typeof unpluginFactory>[0] = {}) => {
+  const plugin = unpluginFactory({ lint: false, ...options }, {
+    framework: 'rollup',
+  } as never) as any;
+  plugin.__typedcssInternal.setRoot(ROOT);
+  return plugin;
+};
+
+it('exposes metadata and applies the include filter', () => {
+  const plugin = createPlugin({ include: '**/*.tsx' });
+
+  expect(plugin).toMatchObject({ name: '@typedcss/unplugin', enforce: 'pre' });
+  expect(plugin.__typedcssInternal.unpluginMeta).toEqual({
     framework: 'rollup',
   });
   expect(plugin.transformInclude('/project/Card.tsx')).toBe(true);
   expect(plugin.transformInclude('/project/Card.ts')).toBe(false);
-  expect(mockPolicy).toHaveBeenCalledWith(
-    expect.objectContaining({ withoutPhysicalProperties: true }),
-  );
 });
 
 it('resolves and identifies virtual CSS ids', () => {
   const plugin = createPlugin();
 
-  expect(plugin.resolveId('/project/Card.zero.css?direct')).toBe(
-    '/project/Card.zero.css?direct',
+  expect(plugin.resolveId(`${CSS_ID}?direct`)).toBe(`${CSS_ID}?direct`);
+  expect(plugin.resolveId(`./${CSS_FILENAME}?direct`, CARD)).toBe(
+    `${CSS_FILE}?direct`,
   );
-  expect(plugin.resolveId('./Card.zero.css?direct', '/project/source.ts')).toBe(
-    '/project/Card.zero.css?direct',
+  expect(plugin.resolveId(`./${CSS_FILENAME}`, CARD)).toBe(CSS_FILE);
+  expect(plugin.resolveId(CSS_FILENAME)).toBe(CSS_FILENAME);
+  expect(plugin.resolveId(`${CSS_FILENAME}?inline`)).toBe(
+    `${CSS_FILENAME}?inline`,
   );
-  expect(plugin.resolveId('./Card.zero.css', '/project/source.ts')).toBe(
-    '/project/Card.zero.css',
-  );
-  expect(plugin.resolveId('/project/source.ts')).toBeNull();
-  expect(plugin.loadInclude('/project/Card.zero.css?direct')).toBe(true);
-  expect(plugin.loadInclude('/project/Card.tsx')).toBe(false);
+  expect(plugin.resolveId(CARD, CARD)).toBeNull();
+  expect(plugin.loadInclude(`${CSS_FILE}?t=1`)).toBe(true);
+  expect(plugin.loadInclude(CARD)).toBe(false);
 });
 
-it('keeps unresolved relative virtual CSS ids intact', () => {
+it('uses the configured class prop', async () => {
   const plugin = createPlugin();
+  plugin.__typedcssInternal.setClassProp('class');
+  const transformed = await plugin.transform.handler(card('teal'), CARD);
+  expect(transformed.code).toContain('classProps as __typedcss_props');
+});
 
-  expect(plugin.resolveId('Card.zero.css')).toBe('Card.zero.css');
-  expect(plugin.resolveId('Card.zero.css?direct')).toBe('Card.zero.css?direct');
+it('permits a compiler no-op', async () => {
+  jest.resetModules();
+  jest.doMock('@typedcss/oxide', () => ({
+    ...jest.requireActual('@typedcss/oxide'),
+    sourcePackages: () => [],
+    resolveSourcePackage: () => null,
+    needsCompile: () => true,
+    transform: () => null,
+  }));
+  let factory: typeof unpluginFactory;
+  jest.isolateModules(() => {
+    factory = require('../src/core').unpluginFactory;
+  });
+  const plugin = factory!({ lint: false }, {} as never) as any;
+  await expect(
+    plugin.transform.handler('source', '/tmp/file.ts'),
+  ).resolves.toBeNull();
+  jest.dontMock('@typedcss/oxide');
 });
 
 it('skips dependencies, unrelated sources, and excluded files', async () => {
-  const plugin = createPlugin({ exclude: '**/excluded.ts' });
+  const plugin = createPlugin({ exclude: '**/excluded.tsx' });
 
   await expect(
-    plugin.transform.handler(SOURCE, '/project/node_modules/pkg/index.ts'),
+    plugin.transform.handler(
+      card('teal'),
+      path.join(ROOT, 'node_modules/pkg/index.tsx'),
+    ),
   ).resolves.toBeNull();
   await expect(
-    plugin.transform.handler('export {};', '/project/source.ts'),
+    plugin.transform.handler('export {};', path.join(ROOT, 'plain.ts')),
   ).resolves.toBeNull();
   await expect(
-    plugin.transform.handler(SOURCE, '/project/excluded.ts?raw'),
+    plugin.transform.handler(card('teal'), path.join(ROOT, 'excluded.tsx?raw')),
   ).resolves.toBeNull();
-
-  expect(mockTransformSource).not.toHaveBeenCalled();
+  await expect(
+    plugin.transform.handler(card('teal'), path.join(ROOT, 'index.html')),
+  ).resolves.toBeNull();
 });
 
-it('updates and removes an existing target without a watch callback', async () => {
+it('rewrites sx into a merge call and imports the one stylesheet', async () => {
   const plugin = createPlugin();
-  const id = '/project/source.ts';
 
-  await plugin.transform.handler.call({}, SOURCE, id);
-  await plugin.transform.handler.call({}, SOURCE, id);
-  expect(plugin.__plumeriaInternal.targets).toEqual([
-    { id, dependencies: ['/dependency.ts'] },
-  ]);
+  const result = await plugin.transform.handler(card('teal'), `${CARD}?raw`);
 
-  await plugin.transform.handler.call({}, `${SOURCE} EMPTY`, id);
-  expect(plugin.__plumeriaInternal.targets).toEqual([]);
+  expect(result.map).toBeNull();
+  expect(result.code).toContain('__typedcss_props(styles.box)');
+  expect(result.code).not.toContain('sx=');
+  expect(result.code.endsWith(`\nimport "${CSS_ID}";`)).toBe(true);
+  expect(plugin.load(`${CSS_ID}?direct`)).toContain('color: teal');
+  expect(plugin.load(CSS_FILE)).toContain('padding: 12px');
 });
 
-it('stores and loads generated CSS through virtual and filesystem ids', async () => {
+it('reads the styling prop the options name', async () => {
   const plugin = createPlugin({ styleProp: 'css' });
-  const addWatchFile = jest.fn();
-  const id = '/project/source.tsx?raw';
 
-  plugin.__plumeriaInternal.setRoot('/project');
-  const result = await plugin.transform.handler.call(
-    { addWatchFile },
-    SOURCE,
-    id,
-  );
+  const result = await plugin.transform.handler(card('teal', 'css'), CARD);
 
-  expect(result).toEqual({
-    code: 'transformed\nimport "/source.zero.css";',
-    map: null,
-  });
-  expect(addWatchFile).toHaveBeenCalledWith('/dependency.ts');
-  expect(mockTransformSource).toHaveBeenCalledWith(
-    expect.objectContaining({
-      moduleId: id,
-      filePath: '/project/source.tsx',
-      root: '/project',
-      styleProp: 'css',
-      propertyPolicy: { policy: true },
-      isDev: false,
-    }),
-  );
-  expect(plugin.load('/source.zero.css?direct')).toBe('.generated {}');
-  expect(plugin.load('/project/source.zero.css')).toBe('.generated {}');
-  expect(plugin.load('/missing.zero.css')).toBe('');
+  expect(result.code).toContain('__typedcss_props(styles.box)');
 });
 
-it('compiles the stylesheet of the transformed file alone', async () => {
-  const { compileCSS: mockCompileCSS } = jest.requireMock<{
-    compileCSS: jest.Mock;
-  }>('@plumeria/compiler');
-  const plugin = createPlugin({
-    styleProp: 'css',
-    withoutLogicalProperties: true,
-  });
-  plugin.__plumeriaInternal.setRoot('/project');
-
-  await plugin.transform.handler(SOURCE, '/project/app/[slug]/page.tsx');
-  await plugin.transform.handler(SOURCE, '/outside/Card.tsx');
-
-  expect(mockCompileCSS).toHaveBeenNthCalledWith(1, {
-    include: [],
-    exclude: [],
-    files: ['/project/app/[slug]/page.tsx'],
-    cwd: '/project',
-    styleProp: 'css',
-    withoutLogicalProperties: true,
-    withoutPhysicalProperties: undefined,
-    sources: { '/project/app/[slug]/page.tsx': SOURCE },
-  });
-  expect(mockCompileCSS).toHaveBeenNthCalledWith(
-    2,
-    expect.objectContaining({
-      files: ['/outside/Card.tsx'],
-      cwd: '/outside',
-    }),
-  );
-});
-
-it('scopes the transform scan to the root rather than the process cwd', async () => {
+it('compiles the stylesheet from the source it was handed, not the disk', async () => {
   const plugin = createPlugin();
-  plugin.__plumeriaInternal.setRoot('/project');
 
-  await plugin.transform.handler(SOURCE, '/project/Card.tsx');
-  await plugin.transform.handler(SOURCE, '/outside/Card.tsx');
+  await plugin.transform.handler(card('tomato'), CARD);
 
-  expect(mockTransformSource).toHaveBeenNthCalledWith(
-    1,
-    expect.objectContaining({ root: '/project', cwd: '/project' }),
-  );
-  expect(mockTransformSource).toHaveBeenNthCalledWith(
-    2,
-    expect.objectContaining({ root: '/project', cwd: '/outside' }),
+  expect(plugin.load(CSS_FILE)).toContain('tomato');
+  expect(plugin.load(CSS_FILE)).not.toContain('teal');
+});
+
+it('records every file with styles as a dependency of the target', async () => {
+  const plugin = createPlugin();
+
+  await plugin.transform.handler(card('teal'), CARD);
+  await plugin.transform.handler(card('teal'), CARD);
+
+  expect(plugin.__typedcssInternal.targets).toEqual([
+    { id: CARD, dependencies: expect.arrayContaining([CARD, TOKENS]) },
+  ]);
+  expect([...plugin.__typedcssInternal.stylesheetFiles].sort()).toEqual(
+    [CARD, TOKENS].sort(),
   );
 });
 
 it('uses a custom CSS import formatter and permits omitting the import', async () => {
   const plugin = createPlugin();
   const formatter = jest.fn(() => null);
-  plugin.__plumeriaInternal.setRoot('/project');
-  plugin.__plumeriaInternal.setCssImport(formatter);
+  plugin.__typedcssInternal.setCssImport(formatter);
 
-  await expect(
-    plugin.transform.handler(SOURCE, '/project/Card.ts'),
-  ).resolves.toEqual({
-    code: 'transformed',
-    map: null,
-  });
+  const omitted = await plugin.transform.handler(card('teal'), CARD);
+  expect(omitted.code).not.toContain(CSS_ID);
   expect(formatter).toHaveBeenCalledWith({
-    id: '/project/Card.ts',
-    cssId: '/Card.zero.css',
-    cssFilename: '/project/Card.zero.css',
-    css: '.generated {}',
+    id: CARD,
+    cssId: CSS_ID,
+    cssFilename: CSS_FILE,
+    css: expect.stringContaining('teal'),
   });
 
-  plugin.__plumeriaInternal.setCssImport(null);
-  await expect(
-    plugin.transform.handler(SOURCE, '/project/Card.ts'),
-  ).resolves.toEqual(
-    expect.objectContaining({ code: 'transformed\nimport "/Card.zero.css";' }),
-  );
+  plugin.__typedcssInternal.setCssImport(null);
+  const restored = await plugin.transform.handler(card('teal'), CARD);
+  expect(restored.code).toContain(`import "${CSS_ID}";`);
 });
 
-it('falls back to empty CSS for a formatter and handles an empty first pass', async () => {
+it('compiles the stylesheet on demand when it is loaded first', () => {
   const plugin = createPlugin();
-  const formatter = jest.fn(() => '');
-  plugin.__plumeriaInternal.setCssImport(formatter);
-  mockOptimizer.mockReturnValueOnce(undefined);
 
-  await plugin.transform.handler(SOURCE, '/project/Card.ts');
-  expect(formatter).toHaveBeenCalledWith(expect.objectContaining({ css: '' }));
-
-  const emptyPlugin = createPlugin();
-  await expect(
-    emptyPlugin.transform.handler(`${SOURCE} EMPTY`, '/project/Empty.ts'),
-  ).resolves.toEqual({ code: 'transformed', map: null });
-  expect(emptyPlugin.__plumeriaInternal.targets).toEqual([]);
+  expect(plugin.load(CSS_ID)).toContain('teal');
 });
 
-it('accumulates development CSS and keeps re-added sheets latest', async () => {
-  const plugin = createPlugin();
-  plugin.__plumeriaInternal.setRoot('/project');
-  plugin.__plumeriaInternal.setDev(true);
+it('stops on a property the policy rejects', async () => {
+  const plugin = createPlugin({ withoutPhysicalProperties: true });
+  const source = `import * as css from '@typedcss/css';
+const styles = css.create({ box: { marginLeft: 4 } });
+export const Box = () => <div sx={styles.box} />;
+`;
 
-  await plugin.transform.handler(SOURCE, '/project/Card.ts');
-  await plugin.transform.handler(`${SOURCE} SECOND`, '/project/Card.ts');
-  await plugin.transform.handler(SOURCE, '/project/Card.ts');
-
-  expect(plugin.load('/Card.zero.css')).toBe('.second {}.generated {}');
-  expect(
-    plugin.__plumeriaInternal.devCssSheets.get('/project/Card.zero.css'),
-  ).toEqual(new Set(['.second {}', '.generated {}']));
-  expect(mockOptimizer).toHaveBeenLastCalledWith('.second {}.generated {}');
-  expect(mockOptimizer).toHaveBeenCalledTimes(3);
+  await expect(
+    plugin.transform.handler(source, path.join(ROOT, 'Box.tsx')),
+  ).rejects.toThrow("'marginLeft' is the physical name of this property");
 });
 
 describe('the lint guard', () => {
   const { startLintGuard } = jest.requireMock<{ startLintGuard: jest.Mock }>(
-    '@plumeria/eslint-plugin/guard',
+    '@typedcss/eslint-plugin/guard',
   );
   const create = (lint?: boolean) =>
     unpluginFactory(lint === undefined ? {} : { lint }, {} as never) as any;
@@ -306,15 +245,15 @@ describe('the lint guard', () => {
     ) as any;
     plugin.vite.config({}, { command: 'build' });
     expect(startLintGuard).toHaveBeenCalledWith({
-      rules: { '@plumeria/no-logical-properties': 'error' },
+      rules: { '@typedcss/no-logical-properties': 'error' },
     });
   });
 
   it('lints with the styling prop the options name', () => {
-    const plugin = unpluginFactory({ styleProp: 'sx' }, {} as never) as any;
+    const plugin = unpluginFactory({ styleProp: 'css' }, {} as never) as any;
     plugin.vite.config({}, { command: 'build' });
     expect(startLintGuard).toHaveBeenCalledWith({
-      settings: { plumeria: { styleProp: 'sx' } },
+      settings: { typedcss: { styleProp: 'css' } },
     });
   });
 
