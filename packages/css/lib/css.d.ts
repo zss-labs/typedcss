@@ -1,8 +1,11 @@
 /**
- * Type definitions. Without runtime implementation.\
  * Bundler plugin required.
  * ```ts
  * type create = <const T extends Record<string, CreateStyleValue>>(rule: T)=> CreateReturnType<T>;
+ * type props = <const T extends Style>(...styles: T[])=> {
+ *   className?: string;
+ *   style?: Record<string, string | number>;
+ * };
  * type createTheme = <const T extends CreateTheme>(themeSelector: CreateThemeSelector, rule: T) => CreateThemeReturnType<T>;
  * type createStatic = <const T extends CreateStatic>(rule: T)=> T;
  * type keyframes = <const T extends Keyframes>(rule: T) => string;
@@ -11,10 +14,9 @@
  * type varType = <const T extends VarType>(rule: T) => CSSVariableKey;
  * type marker = (id: string, pseudo: string) => Marker;
  * type extended = <I extends string, P extends string>(id: I, pseudo: P) => Extended<I, P>;
- * type use = (...rules: Style[]) => string;
  * ```
  */
-declare module '@plumeria/core' {
+declare module '@typedcss/css' {
   import type {
     AtomicClassNameFor,
     AtomicClassStyleFor,
@@ -50,6 +52,18 @@ declare module '@plumeria/core' {
     StaticStyles,
     WithoutProperties,
     CSSProperties,
+  };
+
+  /**
+   * Merges styles into `className` and `style`; the last style wins per property.
+   * ```tsx
+   * <div {...css.props(styles.link, active && styles.active)} />
+   * ```
+   */
+
+  export function props(...styles: Style[]): {
+    className?: string;
+    style?: Record<string, string | number>;
   };
 
   export const create: create;
@@ -90,7 +104,4 @@ declare module '@plumeria/core' {
     id: I,
     pseudo: P,
   ) => Extended<I, P>;
-
-  export const use: use;
-  export type use = (...rules: Style[]) => string;
 }
