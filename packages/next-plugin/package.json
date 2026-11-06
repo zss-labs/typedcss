@@ -1,55 +1,56 @@
 {
-  "name": "@plumeria/next-plugin",
+  "name": "@typedcss/next-plugin",
   "version": "21.1.2",
-  "description": "Plumeria Next.js plugin",
+  "description": "Next.js integration for typedcss.",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://plumeria.dev",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zss-in-js/plumeria.git",
+    "url": "git+https://github.com/zss-labs/typedcss.git",
     "directory": "packages/next-plugin"
   },
   "bugs": {
-    "url": "https://github.com/zss-in-js/plumeria/issues"
+    "url": "https://github.com/zss-labs/typedcss/issues"
   },
-  "keywords": [
-    "plumeria",
-    "next",
-    "nextjs",
-    "turbopack",
-    "webpack",
-    "css",
-    "css-in-js"
-  ],
-  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "default": "./dist/loader.js"
+    },
+    "./css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/css.js"
+    },
+    "./zero-virtual.css": "./zero-virtual.css"
   },
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
   "files": [
-    "dist/"
+    "dist/",
+    "zero-virtual.css"
   ],
   "scripts": {
     "build": "rimraf dist && pnpm cjs",
     "cjs": "tsc --project tsconfig.cjs.json"
   },
-  "dependencies": {
-    "@plumeria/eslint-plugin": "workspace:*",
-    "@plumeria/turbopack-loader": "workspace:*"
+  "peerDependencies": {
+    "@typedcss/css": "workspace:^",
+    "@typedcss/oxide": "workspace:^",
+    "next": ">=16"
   },
   "devDependencies": {
-    "next": "catalog:",
-    "webpack": "catalog:"
+    "@typedcss/oxide": "workspace:^",
+    "next": "catalog:"
   },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
+  "engines": {
+    "node": ">=22.17"
+  },
+  "dependencies": {
+    "@typedcss/eslint-plugin": "workspace:^"
   }
 }
