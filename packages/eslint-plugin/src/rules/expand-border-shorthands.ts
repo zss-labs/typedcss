@@ -32,25 +32,25 @@ export const expandBorderShorthands: Rule.RuleModule = {
   },
 
   create(context) {
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
     const sourceCode = context.sourceCode;
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (
               specifier.type === 'ImportNamespaceSpecifier' ||
               specifier.type === 'ImportDefaultSpecifier'
             ) {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const spec = specifier as ImportSpecifier;
               const importedName =
                 spec.imported.type === 'Identifier'
                   ? spec.imported.name
                   : String(spec.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -61,7 +61,7 @@ export const expandBorderShorthands: Rule.RuleModule = {
         if (node.callee.type === 'MemberExpression') {
           if (
             node.callee.object.type === 'Identifier' &&
-            plumeriaAliases[node.callee.object.name] === 'NAMESPACE'
+            coreAliases[node.callee.object.name] === 'NAMESPACE'
           ) {
             const propertyName =
               node.callee.property.type === 'Identifier'
@@ -78,7 +78,7 @@ export const expandBorderShorthands: Rule.RuleModule = {
             }
           }
         } else if (node.callee.type === 'Identifier') {
-          const aliasName = plumeriaAliases[node.callee.name];
+          const aliasName = coreAliases[node.callee.name];
           if (
             aliasName === 'create' ||
             aliasName === 'keyframes' ||
@@ -188,7 +188,7 @@ export const expandBorderShorthands: Rule.RuleModule = {
             : `\`${restored}\``;
         };
         const indent = ' '.repeat(prop.loc!.start.column);
-        const declarations = (['width', 'style', 'color'] as const)
+        const declarations = (['color', 'style', 'width'] as const)
           .map(
             (part) =>
               `${kebabToCamelCase(`${kebab}-${part}`)}: ${render(parts[part])}`,
