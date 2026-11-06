@@ -1,5 +1,5 @@
 import esbuild from 'esbuild';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 esbuild
   .build({
@@ -7,7 +7,7 @@ esbuild
     bundle: true,
     outfile: 'dist/bundle.js',
     plugins: [
-      plumeria.esbuild({
+      typedcss.esbuild({
         include: /\.[jt]sx?$/,
       }),
     ],
