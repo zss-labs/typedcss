@@ -1,4 +1,4 @@
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
@@ -12,7 +12,7 @@ export default {
     format: 'esm',
   },
   plugins: [
-    plumeria.rollup(),
+    typedcss.rollup(),
     postcss({ extract: true }),
     resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'] }),
     commonjs(),
