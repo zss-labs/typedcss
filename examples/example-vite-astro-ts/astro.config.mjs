@@ -2,12 +2,12 @@
 // @ts-nocheck
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 // https://astro.build/config
 export default defineConfig({
   vite: {
-    plugins: [plumeria.vite()],
+    plugins: [typedcss.vite()],
   },
   integrations: [react()],
 });
