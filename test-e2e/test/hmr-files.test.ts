@@ -15,13 +15,13 @@ const addedFile = (project: string) =>
 
 const offsetFor = (project: string) => 10 + project.length;
 
-const addedSource = (offset: number) => `import * as css from '@plumeria/core';
+const addedSource = (offset: number) => `import * as css from '@typedcss/css';
 
 const hmrAdded = css.create({
   marker: { outlineOffset: ${offset} },
 });
 
-export const HmrAdded = () => <div classStyle={hmrAdded.marker} />;
+export const HmrAdded = () => <div sx={hmrAdded.marker} />;
 `;
 
 const hasRule = (page: Page, declaration: string) =>
