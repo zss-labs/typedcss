@@ -1,5 +1,3 @@
-jest.mock('@rust-gear/glob', () => ({ globSync: jest.fn(() => []) }));
-
 import vite from '../src/vite';
 import { unpluginFactory } from '../src/core';
 
@@ -63,7 +61,7 @@ it('transforms before a framework plugin that also enforces pre and is listed fi
 
   expect(
     resolveTransformOrder([framework('vite-plugin-solid'), plugin]),
-  ).toEqual(['@plumeria/unplugin:vite', 'vite-plugin-solid']);
+  ).toEqual(['@typedcss/unplugin:vite', 'vite-plugin-solid']);
 });
 
 it('would run second without the pre order, which is the regression this guards', () => {
@@ -76,5 +74,5 @@ it('would run second without the pre order, which is the regression this guards'
 
   expect(
     resolveTransformOrder([framework('vite-plugin-solid'), withoutOrder]),
-  ).toEqual(['vite-plugin-solid', '@plumeria/unplugin:vite']);
+  ).toEqual(['vite-plugin-solid', '@typedcss/unplugin:vite']);
 });
