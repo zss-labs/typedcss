@@ -35,7 +35,7 @@ impl PathsMatcher {
         PathsMatcher { exact, wildcard }
     }
 
-    fn candidates(&self, specifier: &str) -> Vec<PathBuf> {
+    pub fn candidates(&self, specifier: &str) -> Vec<PathBuf> {
         for pattern in &self.exact {
             if pattern.prefix == specifier {
                 return pattern
@@ -493,16 +493,23 @@ pub fn resolve_with_extension(base: &Path) -> Option<String> {
 #[derive(Default)]
 pub struct Resolver {
     matcher: Option<Option<PathsMatcher>>,
+    loaded_for: Option<PathBuf>,
 }
 
 impl Resolver {
+    #[cfg(test)]
     pub fn reset(&mut self, cwd: &Path) {
         self.matcher = Some(load_paths_matcher(&cwd.join("tsconfig.json")));
+        self.loaded_for = Some(cwd.to_path_buf());
     }
 
     fn matcher(&mut self) -> Option<&PathsMatcher> {
+        let cwd = std::env::current_dir().unwrap_or_default();
+        if self.loaded_for.as_ref() != Some(&cwd) {
+            self.matcher = None;
+            self.loaded_for = Some(cwd.clone());
+        }
         if self.matcher.is_none() {
-            let cwd = std::env::current_dir().unwrap_or_default();
             let config = cwd.join("tsconfig.json");
             self.matcher = Some(if exists(&config) {
                 load_paths_matcher(&config)
@@ -514,7 +521,7 @@ impl Resolver {
     }
 
     pub fn resolve_import_path(&mut self, import_path: &str, importer: &str) -> Option<String> {
-        if import_path == "@plumeria/core" {
+        if import_path == "@typedcss/css" {
             return None;
         }
         if import_path.starts_with('.') {
@@ -538,6 +545,9 @@ impl Resolver {
                 return None;
             }
             if exists(&current.join("package.json")) {
+                if let Some(file) = resolve_source_package(import_path, &current) {
+                    return Some(file.to_string_lossy().into_owned());
+                }
                 return resolve_with_extension(&resolve(&current, import_path));
             }
             match current.parent() {
@@ -546,4 +556,160 @@ impl Resolver {
             }
         }
     }
+}
+
+pub const SOURCE_CONDITION: &str = "typedcss";
+
+fn source_target_of(entry: &Json) -> Option<String> {
+    match entry {
+        Json::Object(conditions) => match conditions.get(SOURCE_CONDITION)? {
+            Json::String(target) => Some(target.clone()),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn source_target(exports: &Json, subpath: &str) -> Option<String> {
+    let map = match exports {
+        Json::Object(map) if map.keys().any(|key| key.starts_with('.')) => map,
+        other if subpath == "." => return source_target_of(other),
+        _ => return None,
+    };
+    if let Some(entry) = map.get(subpath) {
+        return source_target_of(entry);
+    }
+    let (key, matched) = map
+        .keys()
+        .filter_map(|key| {
+            let (prefix, suffix) = key.split_once('*')?;
+            (!suffix.contains('*')
+                && subpath.len() >= key.len()
+                && subpath.starts_with(prefix)
+                && subpath.ends_with(suffix))
+            .then(|| (key, &subpath[prefix.len()..subpath.len() - suffix.len()]))
+        })
+        .max_by_key(|(key, _)| (key.find('*').unwrap_or(0), key.len()))?;
+    Some(source_target_of(map.get(key)?)?.replace('*', matched))
+}
+
+pub fn resolve_source_package(specifier: &str, root: &Path) -> Option<PathBuf> {
+    if specifier.starts_with('.') || specifier.starts_with('/') {
+        return None;
+    }
+    let name = package_name_of(specifier);
+    let subpath = match specifier.get(name.len()..) {
+        Some(rest) if !rest.is_empty() => format!(".{rest}"),
+        _ => ".".to_string(),
+    };
+    let app = read_config(&root.join("package.json"))?;
+    let declared = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]
+        .iter()
+        .any(|field| matches!(app.get(*field), Some(Json::Object(map)) if map.contains_key(&name)));
+    if !declared {
+        return None;
+    }
+    let dir = root.join("node_modules").join(&name);
+    let manifest = read_config(&dir.join("package.json"))?;
+    let target = source_target(manifest.get("exports")?, &subpath)?;
+    let resolved = resolve(&dir, &target);
+    resolve_with_extension(&resolved).map(PathBuf::from)
+}
+
+pub struct SourcePackage {
+    pub name: String,
+    pub dir: PathBuf,
+    pub exports: Json,
+    pub source_dirs: Vec<PathBuf>,
+}
+
+fn source_dirs_of(dir: &Path, exports: &Json) -> Vec<PathBuf> {
+    let entries: Vec<&Json> = match exports {
+        Json::Object(map) if map.keys().any(|key| key.starts_with('.')) => map.values().collect(),
+        other => vec![other],
+    };
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    for target in entries.into_iter().filter_map(source_target_of) {
+        let source_dir = match target.find('*') {
+            None => resolve(dir, &target).parent().map(Path::to_path_buf),
+            Some(star) if target[..star].ends_with('/') => Some(resolve(dir, &target[..star])),
+            Some(star) => resolve(dir, &target[..star]).parent().map(Path::to_path_buf),
+        };
+        if let Some(source_dir) = source_dir.filter(|source_dir| source_dir.starts_with(dir))
+            && !dirs.contains(&source_dir)
+        {
+            dirs.push(source_dir);
+        }
+    }
+    let nested = |candidate: &PathBuf| dirs.iter().any(|other| other != candidate && candidate.starts_with(other));
+    dirs.iter().filter(|candidate| !nested(candidate)).cloned().collect()
+}
+
+/// The dependencies of the app at `root` that point the typedcss condition at their
+/// source. `dir` is the package as the app sees it under node_modules, and
+/// `source_dirs` holds each source directory both there and at its real path,
+/// so a bundler that follows symlinks finds the file under either.
+pub fn source_packages(root: &Path) -> Vec<SourcePackage> {
+    let Some(app) = read_config(&root.join("package.json")) else {
+        return Vec::new();
+    };
+    let mut names: Vec<&String> = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]
+        .iter()
+        .filter_map(|field| match app.get(*field) {
+            Some(Json::Object(map)) => Some(map.keys()),
+            _ => None,
+        })
+        .flatten()
+        .collect();
+    names.sort();
+    names.dedup();
+    names
+        .into_iter()
+        .filter_map(|name| {
+            let dir = resolve(root, &format!("node_modules/{name}"));
+            let exports = read_config(&dir.join("package.json"))?.get("exports")?.clone();
+            let linked = source_dirs_of(&dir, &exports);
+            if linked.is_empty() {
+                return None;
+            }
+            let mut source_dirs = linked.clone();
+            if let Ok(real) = std::fs::canonicalize(&dir)
+                && real != dir
+            {
+                for source_dir in &linked {
+                    if let Ok(rest) = source_dir.strip_prefix(&dir) {
+                        source_dirs.push(real.join(rest));
+                    }
+                }
+            }
+            Some(SourcePackage {
+                name: name.clone(),
+                dir,
+                exports,
+                source_dirs,
+            })
+        })
+        .collect()
+}
+
+/// Changes whenever the app manifest or a dependency manifest under node_modules
+/// changes, so a file whose imports went through a source package is extracted
+/// again when that package starts pointing the typedcss condition elsewhere.
+pub fn source_packages_stamp(root: &Path) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = rustc_hash::FxHasher::default();
+    let manifest = root.join("package.json");
+    let stamp_of = |path: &Path| super::source::stamp(&path.to_string_lossy()).ok();
+    stamp_of(&manifest).hash(&mut hasher);
+    if let Some(app) = read_config(&manifest) {
+        for field in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"] {
+            if let Some(Json::Object(map)) = app.get(field) {
+                for name in map.keys() {
+                    name.hash(&mut hasher);
+                    stamp_of(&root.join("node_modules").join(name).join("package.json")).hash(&mut hasher);
+                }
+            }
+        }
+    }
+    hasher.finish()
 }
