@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
 
   let n = 0;
   const compile = (body: string) => {
@@ -20,12 +20,12 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
   afterAll(() => fs.rmSync(FIXTURE_DIR, { recursive: true, force: true }));
 
   const keyframes = `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const fade = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 `;
 
   const viewTransitionClass = `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const vt = css.viewTransitionClass({ old: { animationDuration: '1s' }, new: { animationDuration: '2s' } });
 `;
 
@@ -38,7 +38,7 @@ export const vt = css.viewTransitionClass({ old: { animationDuration: '1s' }, ne
         keyframes +
           `
 export const s = css.create({ a: { animation: \`\${fade} 1s ease\` } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `,
       );
       expect(css).toMatch(/animation: kf-\w+ 1s ease/);
@@ -50,14 +50,14 @@ export const A = () => <div classStyle={s.a} />;
         keyframes +
           `
 export const s = css.create({ a: { animationName: fade } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `,
       );
       const templated = compile(
         keyframes +
           `
 export const s = css.create({ a: { animationName: \`\${fade}\` } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `,
       );
       const nameOf = (css: string) => css.match(/animation-name: (\S+);/)?.[1];
@@ -70,7 +70,7 @@ export const A = () => <div classStyle={s.a} />;
         viewTransitionClass +
           `
 export const s = css.create({ a: { viewTransitionClass: \`\${vt}\` } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `,
       );
       expect(css).toMatch(/view-transition-class: vt-\w+;/);
@@ -83,7 +83,7 @@ export const A = () => <div classStyle={s.a} />;
         keyframes +
           `
 export const s = css.create({ a: { animation: fade + ' 2s linear' } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `,
       );
       expect(css).toMatch(/animation: kf-\w+ 2s linear/);
