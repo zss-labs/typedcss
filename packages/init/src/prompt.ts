@@ -104,7 +104,7 @@ export const ask = async (
   if (preset.eslint === undefined) {
     answers.eslint = await confirm(
       asker,
-      'Set up @plumeria/eslint-plugin for ESLint?',
+      'Set up @typedcss/eslint-plugin for ESLint?',
       true,
     );
   }
