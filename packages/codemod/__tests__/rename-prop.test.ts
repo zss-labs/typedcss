@@ -130,7 +130,7 @@ tsTester.run('rename-prop (types)', renameProp, {
       errors: [{ messageId: 'rename' }],
     },
     {
-      // the global augmentation in plumeria.d.ts
+      // the global augmentation in typedcss.d.ts
       code: 'declare global { namespace React { interface HTMLAttributes<T> { styleName?: Style } } }',
       options,
       output:
@@ -144,9 +144,9 @@ tsTester.run('rename-prop (types)', renameProp, {
       errors: [{ messageId: 'rename' }],
     },
     {
-      code: 'interface Props { styleName?: Plumeria.Style }',
+      code: 'interface Props { styleName?: typedcss.Style }',
       options,
-      output: 'interface Props { classStyle?: Plumeria.Style }',
+      output: 'interface Props { classStyle?: typedcss.Style }',
       errors: [{ messageId: 'rename' }],
     },
     {
