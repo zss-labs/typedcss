@@ -12,20 +12,20 @@ describe('resolveStyleProp', () => {
   it('prefers the name given as a rule option', () => {
     expect(
       resolveStyleProp(
-        contextOf([{ styleProp: 'sx' }], { plumeria: { styleProp: 'cx' } }),
+        contextOf([{ styleProp: 'sx' }], { typedcss: { styleProp: 'cx' } }),
       ),
     ).toBe('sx');
   });
 
   it('falls back to the shared setting', () => {
     expect(
-      resolveStyleProp(contextOf([], { plumeria: { styleProp: 'cx' } })),
+      resolveStyleProp(contextOf([], { typedcss: { styleProp: 'cx' } })),
     ).toBe('cx');
   });
 
   it('falls back to the default when neither is set', () => {
     expect(resolveStyleProp(contextOf([], {}))).toBe(DEFAULT_STYLE_PROP);
-    expect(resolveStyleProp(contextOf([], { plumeria: {} }))).toBe(
+    expect(resolveStyleProp(contextOf([], { typedcss: {} }))).toBe(
       DEFAULT_STYLE_PROP,
     );
   });
