@@ -98,20 +98,20 @@ describe('addImport', () => {
 describe('appendToArray', () => {
   it('stays on one line when the array is on one line', () => {
     expect(
-      appendToArray('{ plugins: [react()] }', 'plugins', 'plumeria.vite()'),
-    ).toBe('{ plugins: [react(), plumeria.vite()] }');
+      appendToArray('{ plugins: [react()] }', 'plugins', 'typedcss.vite()'),
+    ).toBe('{ plugins: [react(), typedcss.vite()] }');
   });
 
   it('keeps the indentation when the array spans lines', () => {
     const source = 'export default {\n  plugins: [\n    react(),\n  ],\n};\n';
-    expect(appendToArray(source, 'plugins', 'plumeria.vite()')).toBe(
-      'export default {\n  plugins: [\n    react(),\n    plumeria.vite(),\n  ],\n};\n',
+    expect(appendToArray(source, 'plugins', 'typedcss.vite()')).toBe(
+      'export default {\n  plugins: [\n    react(),\n    typedcss.vite(),\n  ],\n};\n',
     );
   });
 
   it('fills an empty array', () => {
-    expect(appendToArray('{ plugins: [] }', 'plugins', 'plumeria.vite()')).toBe(
-      '{ plugins: [plumeria.vite()] }',
+    expect(appendToArray('{ plugins: [] }', 'plugins', 'typedcss.vite()')).toBe(
+      '{ plugins: [typedcss.vite()] }',
     );
   });
 
@@ -125,40 +125,40 @@ describe('appendToArray', () => {
 describe('wrapDefaultExport', () => {
   it('wraps an identifier', () => {
     expect(
-      wrapDefaultExport('export default nextConfig;\n', 'withPlumeria'),
-    ).toBe('export default withPlumeria(nextConfig);\n');
+      wrapDefaultExport('export default nextConfig;\n', 'withTypedCSS'),
+    ).toBe('export default withTypedCSS(nextConfig);\n');
   });
 
   it('wraps an object literal', () => {
     const source = 'export default {\n  reactStrictMode: true,\n};\n';
-    expect(wrapDefaultExport(source, 'withPlumeria')).toBe(
-      'export default withPlumeria({\n  reactStrictMode: true,\n});\n',
+    expect(wrapDefaultExport(source, 'withTypedCSS')).toBe(
+      'export default withTypedCSS({\n  reactStrictMode: true,\n});\n',
     );
   });
 
   it('wraps a module.exports assignment', () => {
     expect(
-      wrapDefaultExport('module.exports = config;\n', 'withPlumeria'),
-    ).toBe('module.exports = withPlumeria(config);\n');
+      wrapDefaultExport('module.exports = config;\n', 'withTypedCSS'),
+    ).toBe('module.exports = withTypedCSS(config);\n');
   });
 
   it('carries a second argument', () => {
     expect(
       wrapDefaultExport(
         'export default nextConfig;\n',
-        'withPlumeria',
+        'withTypedCSS',
         ', { styleProp: 1 }',
       ),
-    ).toBe('export default withPlumeria(nextConfig, { styleProp: 1 });\n');
+    ).toBe('export default withTypedCSS(nextConfig, { styleProp: 1 });\n');
   });
 
   it('leaves an already wrapped export alone', () => {
-    const source = 'export default withPlumeria(nextConfig);\n';
-    expect(wrapDefaultExport(source, 'withPlumeria')).toBe(source);
+    const source = 'export default withTypedCSS(nextConfig);\n';
+    expect(wrapDefaultExport(source, 'withTypedCSS')).toBe(source);
   });
 
   it('reports a file with no default export', () => {
-    expect(wrapDefaultExport('const a = 1;\n', 'withPlumeria')).toBeUndefined();
+    expect(wrapDefaultExport('const a = 1;\n', 'withTypedCSS')).toBeUndefined();
   });
 
   it('reads delimiters inside strings as part of the exported expression', () => {
@@ -172,8 +172,8 @@ describe('appendToConfigList', () => {
   it('extends a defineConfig call', () => {
     const source =
       'export default defineConfig(\n  eslint.configs.recommended,\n);\n';
-    expect(appendToConfigList(source, ['plumeria.configs.recommended'])).toBe(
-      'export default defineConfig(\n  eslint.configs.recommended,\n  plumeria.configs.recommended,\n);\n',
+    expect(appendToConfigList(source, ['typedcss.configs.recommended'])).toBe(
+      'export default defineConfig(\n  eslint.configs.recommended,\n  typedcss.configs.recommended,\n);\n',
     );
   });
 
@@ -195,15 +195,15 @@ describe('importsModule', () => {
   it('sees an import and a require of the same specifier', () => {
     expect(
       importsModule(
-        "import p from '@plumeria/unplugin';",
-        '@plumeria/unplugin',
+        "import p from '@typedcss/unplugin';",
+        '@typedcss/unplugin',
       ),
     ).toBe(true);
     expect(
-      importsModule("require('@plumeria/unplugin')", '@plumeria/unplugin'),
+      importsModule("require('@typedcss/unplugin')", '@typedcss/unplugin'),
     ).toBe(true);
     expect(
-      importsModule("import p from '@plumeria/core';", '@plumeria/unplugin'),
+      importsModule("import p from '@typedcss/css';", '@typedcss/unplugin'),
     ).toBe(false);
   });
 });
@@ -329,49 +329,49 @@ describe('directProperty', () => {
 
 describe('importedFrom', () => {
   it('names a default import and drops its line from the rest', () => {
-    const source = `import plumeria from '@plumeria/unplugin';\n\nplugins: [plumeria.vite()];\n`;
-    const { names, rest } = importedFrom(source, '@plumeria/unplugin');
-    expect(names).toEqual(['plumeria']);
+    const source = `import typedcss from '@typedcss/unplugin';\n\nplugins: [typedcss.vite()];\n`;
+    const { names, rest } = importedFrom(source, '@typedcss/unplugin');
+    expect(names).toEqual(['typedcss']);
     expect(rest).not.toContain('import');
-    expect(callsMethod(rest, 'plumeria')).toBe(true);
+    expect(callsMethod(rest, 'typedcss')).toBe(true);
   });
 
   it('names a renamed binding', () => {
     const { names } = importedFrom(
-      `import { withPlumeria as wrap } from '@plumeria/next-plugin';`,
-      '@plumeria/next-plugin',
+      `import { withTypedCSS as wrap } from '@typedcss/next-plugin';`,
+      '@typedcss/next-plugin',
     );
     expect(names).toEqual(['wrap']);
   });
 
   it('names a require binding', () => {
     const { names } = importedFrom(
-      `const plumeria = require('@plumeria/unplugin').default;`,
-      '@plumeria/unplugin',
+      `const typedcss = require('@typedcss/unplugin').default;`,
+      '@typedcss/unplugin',
     );
-    expect(names).toEqual(['plumeria']);
+    expect(names).toEqual(['typedcss']);
   });
 
   it('reports an import nothing calls', () => {
-    const source = `import plumeria from '@plumeria/unplugin';\n\nexport default { plugins: [react()] };\n`;
-    const { names, rest } = importedFrom(source, '@plumeria/unplugin');
-    expect(names).toEqual(['plumeria']);
-    expect(callsMethod(rest, 'plumeria')).toBe(false);
+    const source = `import typedcss from '@typedcss/unplugin';\n\nexport default { plugins: [react()] };\n`;
+    const { names, rest } = importedFrom(source, '@typedcss/unplugin');
+    expect(names).toEqual(['typedcss']);
+    expect(callsMethod(rest, 'typedcss')).toBe(false);
   });
 
   it('finds nothing when the module is absent', () => {
     const { names } = importedFrom(
       `import react from 'react';`,
-      '@plumeria/unplugin',
+      '@typedcss/unplugin',
     );
     expect(names).toEqual([]);
   });
 
   it('removes repeated imports from the end toward the start', () => {
-    const source = `import first from '@plumeria/unplugin';
-import second from '@plumeria/unplugin';
+    const source = `import first from '@typedcss/unplugin';
+import second from '@typedcss/unplugin';
 export default [first, second];`;
-    const { names, rest } = importedFrom(source, '@plumeria/unplugin');
+    const { names, rest } = importedFrom(source, '@typedcss/unplugin');
     expect(names).toEqual(['first', 'second']);
     expect(rest).not.toContain('import');
     expect(rest).toContain('export default [first, second]');
@@ -380,53 +380,53 @@ export default [first, second];`;
 
 describe('what counts as using the import', () => {
   it('reads a member call as using it', () => {
-    expect(callsMethod('plugins: [plumeria.vite()]', 'plumeria')).toBe(true);
+    expect(callsMethod('plugins: [typedcss.vite()]', 'typedcss')).toBe(true);
   });
 
   it('does not read a bare property as using it', () => {
-    expect(callsMethod('console.log(plumeria.version);', 'plumeria')).toBe(
+    expect(callsMethod('console.log(typedcss.version);', 'typedcss')).toBe(
       false,
     );
   });
 
   it('does not read a mention in a comment as using it', () => {
     expect(
-      callsMethod('// plumeria.vite()\nexport default {};', 'plumeria'),
+      callsMethod('// typedcss.vite()\nexport default {};', 'typedcss'),
     ).toBe(false);
     expect(
       callsMethod(
-        '/* plugins: [plumeria.vite()] */\nexport default {};',
-        'plumeria',
+        '/* plugins: [typedcss.vite()] */\nexport default {};',
+        'typedcss',
       ),
     ).toBe(false);
   });
 
   it('does not read a mention in a string as using it', () => {
-    expect(callsMethod(`const hint = 'plumeria.vite()';`, 'plumeria')).toBe(
+    expect(callsMethod(`const hint = 'typedcss.vite()';`, 'typedcss')).toBe(
       false,
     );
-    expect(callsMethod('const hint = `plumeria.vite()`;', 'plumeria')).toBe(
+    expect(callsMethod('const hint = `typedcss.vite()`;', 'typedcss')).toBe(
       false,
     );
   });
 
   it('reads a plain call for a named import', () => {
     expect(
-      callsFunction('export default withPlumeria(config);', 'withPlumeria'),
+      callsFunction('export default withTypedCSS(config);', 'withTypedCSS'),
     ).toBe(true);
-    expect(callsFunction('export default config;', 'withPlumeria')).toBe(false);
+    expect(callsFunction('export default config;', 'withTypedCSS')).toBe(false);
   });
 
   it('reads a member the config passes as a value', () => {
     expect(
       readsMember(
-        'export default [plumeria.configs.recommended];',
-        'plumeria',
+        'export default [typedcss.configs.recommended];',
+        'typedcss',
         'configs',
       ),
     ).toBe(true);
     expect(
-      readsMember('export default [plumeria.rules];', 'plumeria', 'configs'),
+      readsMember('export default [typedcss.rules];', 'typedcss', 'configs'),
     ).toBe(false);
   });
 });
@@ -437,9 +437,9 @@ describe('codeMask', () => {
       `const a = 'x';`,
       'a; // b\nc;',
       'a; /* b */ c;',
-      'include: /\\.[jt]sx?$/,',
+      'include: /\\.[jt]classStyle?$/,',
       `const flag = '\u{1F680}';\nimport a from 'b';`,
-      'const q = /[\'"]/;\nplumeria.vite();',
+      'const q = /[\'"]/;\ntypedcss.vite();',
     ]) {
       expect(codeMask(source)).toHaveLength(source.length);
     }
@@ -457,16 +457,16 @@ describe('codeMask', () => {
   });
 
   it('blanks a regex literal rather than reading into it', () => {
-    const source = `const q = /['"]/;\nplumeria.vite();`;
+    const source = `const q = /['"]/;\ntypedcss.vite();`;
     expect(codeMask(source)).toHaveLength(source.length);
-    expect(codeMask(source)).toContain('plumeria.vite();');
+    expect(codeMask(source)).toContain('typedcss.vite();');
     expect(codeMask(source)).not.toContain('"');
   });
 
   it('reads a regex a keyword introduces', () => {
-    const source = `function f() { return /['"]/; }\nplumeria.vite();`;
+    const source = `function f() { return /['"]/; }\ntypedcss.vite();`;
     expect(codeMask(source)).toHaveLength(source.length);
-    expect(codeMask(source)).toContain('plumeria.vite();');
+    expect(codeMask(source)).toContain('typedcss.vite();');
     expect(codeMask(source)).not.toContain('"');
   });
 
@@ -499,83 +499,83 @@ describe('malformed default exports', () => {
 
 describe('a multi-line import', () => {
   const source = `import {
-  withPlumeria,
-} from '@plumeria/next-plugin';
+  withTypedCSS,
+} from '@typedcss/next-plugin';
 
 export default config;
 `;
 
   it('is recognised across its lines', () => {
-    const { names } = importedFrom(source, '@plumeria/next-plugin');
-    expect(names).toEqual(['withPlumeria']);
+    const { names } = importedFrom(source, '@typedcss/next-plugin');
+    expect(names).toEqual(['withTypedCSS']);
   });
 
   it('is dropped from the rest so its own line never counts as use', () => {
-    const { rest } = importedFrom(source, '@plumeria/next-plugin');
-    expect(callsFunction(rest, 'withPlumeria')).toBe(false);
+    const { rest } = importedFrom(source, '@typedcss/next-plugin');
+    expect(callsFunction(rest, 'withTypedCSS')).toBe(false);
   });
 
   it('does not swallow the imports before it', () => {
     const many = `import react from 'react';
 import {
-  withPlumeria,
-} from '@plumeria/next-plugin';
+  withTypedCSS,
+} from '@typedcss/next-plugin';
 `;
-    expect(importedFrom(many, '@plumeria/next-plugin').names).toEqual([
-      'withPlumeria',
+    expect(importedFrom(many, '@typedcss/next-plugin').names).toEqual([
+      'withTypedCSS',
     ]);
   });
 
   it('names a side-effect import as carrying no binding', () => {
     expect(
-      importedFrom(`import '@plumeria/core';`, '@plumeria/core').names,
+      importedFrom(`import '@typedcss/css';`, '@typedcss/css').names,
     ).toEqual([]);
   });
 });
 
 describe('import-like text outside code', () => {
   it.each([
-    `// import plumeria from '@plumeria/unplugin';`,
-    `/* import plumeria from '@plumeria/unplugin'; */`,
-    `const example = "import plumeria from '@plumeria/unplugin'";`,
-    "const example = `import plumeria from '@plumeria/unplugin'`;",
-    `const example = /import plumeria from '@plumeria\\/unplugin'/;`,
+    `// import typedcss from '@typedcss/unplugin';`,
+    `/* import typedcss from '@typedcss/unplugin'; */`,
+    `const example = "import typedcss from '@typedcss/unplugin'";`,
+    "const example = `import typedcss from '@typedcss/unplugin'`;",
+    `const example = /import typedcss from '@typedcss\\/unplugin'/;`,
   ])('ignores %s', (source) => {
-    expect(importedFrom(source, '@plumeria/unplugin').names).toEqual([]);
+    expect(importedFrom(source, '@typedcss/unplugin').names).toEqual([]);
   });
 
   it('still reads a real import after comment and string noise', () => {
-    const source = `// import fake from '@plumeria/unplugin';
-const example = "import fake from '@plumeria/unplugin'";
-import real from '@plumeria/unplugin';
+    const source = `// import fake from '@typedcss/unplugin';
+const example = "import fake from '@typedcss/unplugin'";
+import real from '@typedcss/unplugin';
 `;
-    expect(importedFrom(source, '@plumeria/unplugin').names).toEqual(['real']);
+    expect(importedFrom(source, '@typedcss/unplugin').names).toEqual(['real']);
   });
 
   it('still reads a require declaration', () => {
-    const source = `const plumeria = require('@plumeria/unplugin').default;`;
-    expect(importedFrom(source, '@plumeria/unplugin').names).toEqual([
-      'plumeria',
+    const source = `const typedcss = require('@typedcss/unplugin').default;`;
+    expect(importedFrom(source, '@typedcss/unplugin').names).toEqual([
+      'typedcss',
     ]);
   });
 });
 
 describe('a regex literal the config holds', () => {
   it('does not hide the registration that follows it', () => {
-    const source = `import plumeria from '@plumeria/unplugin';
+    const source = `import typedcss from '@typedcss/unplugin';
 
 const quoted = /[^"]+/;
 
 export default defineConfig({
-  plugins: [plumeria.vite()],
+  plugins: [typedcss.vite()],
   define: { __Q__: quoted.source },
 });
 `;
-    expect(callsMethod(source, 'plumeria')).toBe(true);
+    expect(callsMethod(source, 'typedcss')).toBe(true);
   });
 
   it('does not hide a registration behind an apostrophe class', () => {
-    expect(callsMethod(`const q = /['"]/;\nplumeria.vite();`, 'plumeria')).toBe(
+    expect(callsMethod(`const q = /['"]/;\ntypedcss.vite();`, 'typedcss')).toBe(
       true,
     );
   });
@@ -584,34 +584,34 @@ export default defineConfig({
 describe('a character outside the basic plane', () => {
   it('leaves every later offset where the mask expects it', () => {
     const source = `const banner = '\u{1F680} build';
-// import plumeria from '@plumeria/unplugin';
+// import typedcss from '@typedcss/unplugin';
 export default { plugins: [] };
 `;
     expect(codeMask(source)).toHaveLength(source.length);
-    expect(importedFrom(source, '@plumeria/unplugin').names).toEqual([]);
+    expect(importedFrom(source, '@typedcss/unplugin').names).toEqual([]);
   });
 
   it('does not move the mask off a real import', () => {
     const source = `const banner = '\u{1F680}\u{1F525}\u{1F41B}';
-import plumeria from '@plumeria/unplugin';
-export default { plugins: [plumeria.vite()] };
+import typedcss from '@typedcss/unplugin';
+export default { plugins: [typedcss.vite()] };
 `;
-    expect(importedFrom(source, '@plumeria/unplugin').names).toEqual([
-      'plumeria',
+    expect(importedFrom(source, '@typedcss/unplugin').names).toEqual([
+      'typedcss',
     ]);
-    expect(callsMethod(source, 'plumeria')).toBe(true);
+    expect(callsMethod(source, 'typedcss')).toBe(true);
   });
 });
 
 describe('the rest an import leaves behind', () => {
   it('cuts the real statement, not a commented copy of it', () => {
-    const source = `// import plumeria from '@plumeria/unplugin';
-import plumeria from '@plumeria/unplugin';
+    const source = `// import typedcss from '@typedcss/unplugin';
+import typedcss from '@typedcss/unplugin';
 export default { plugins: [] };
 `;
-    const { names, rest } = importedFrom(source, '@plumeria/unplugin');
-    expect(names).toEqual(['plumeria']);
-    expect(rest).toContain("// import plumeria from '@plumeria/unplugin';");
-    expect(rest.match(/^import plumeria/m)).toBeNull();
+    const { names, rest } = importedFrom(source, '@typedcss/unplugin');
+    expect(names).toEqual(['typedcss']);
+    expect(rest).toContain("// import typedcss from '@typedcss/unplugin';");
+    expect(rest.match(/^import typedcss/m)).toBeNull();
   });
 });
