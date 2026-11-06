@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
-describe.each(implementations)('$name', ({ scanAll, resolveImportPath }) => {
+describe.each(implementations)('$name', ({ resolveImportPath }) => {
   // get-tsconfig reads the config through its own fs handles, so the config a
   // test declares has to be a real file for the resolver to see it at all.
   const ROOT = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-resolver-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-resolver-')),
   );
 
   let projectCount = 0;
@@ -22,9 +22,11 @@ describe.each(implementations)('$name', ({ scanAll, resolveImportPath }) => {
     return dir;
   };
 
-  // A scan reads the project's tsconfig, which is what points the resolver at it.
+  // typedcss reads the tsconfig of the working directory, which is what a scan
+  // points Plumeria's resolver at.
+  const ORIGINAL = process.cwd();
   const load = (cwd: string) => {
-    scanAll(cwd);
+    process.chdir(cwd);
     return { resolveImportPath };
   };
 
@@ -32,7 +34,10 @@ describe.each(implementations)('$name', ({ scanAll, resolveImportPath }) => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  afterAll(() => fs.rmSync(ROOT, { recursive: true, force: true }));
+  afterAll(() => {
+    process.chdir(ORIGINAL);
+    fs.rmSync(ROOT, { recursive: true, force: true });
+  });
 
   describe('resolver', () => {
     describe('relative imports', () => {
@@ -1043,7 +1048,7 @@ describe.each(implementations)('$name', ({ scanAll, resolveImportPath }) => {
         const existsSync = jest.spyOn(fs, 'existsSync');
 
         expect(
-          resolveImportPath('@plumeria/core', path.join(dir, 'app/page.ts')),
+          resolveImportPath('@typedcss/css', path.join(dir, 'app/page.ts')),
         ).toBeNull();
         expect(statSync).not.toHaveBeenCalled();
         expect(existsSync).not.toHaveBeenCalled();
@@ -1056,16 +1061,16 @@ describe.each(implementations)('$name', ({ scanAll, resolveImportPath }) => {
         const dir = project({
           'app/page.ts': SOURCE,
           'package.json': '{}',
-          '@plumeria/core-extras.ts': SOURCE,
+          '@typedcss/css-extras.ts': SOURCE,
         });
         const { resolveImportPath } = load(dir);
 
         expect(
           resolveImportPath(
-            '@plumeria/core-extras',
+            '@typedcss/css-extras',
             path.join(dir, 'app/page.ts'),
           ),
-        ).toBe(path.join(dir, '@plumeria/core-extras.ts'));
+        ).toBe(path.join(dir, '@typedcss/css-extras.ts'));
       });
     });
   });
