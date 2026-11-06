@@ -1,4 +1,3 @@
-import { customPropsRequireImport } from './rules/custom-props-require-import';
 import { expandBorderShorthands } from './rules/expand-border-shorthands';
 import { noCombinator } from './rules/no-combinator';
 import { noDestructure } from './rules/no-destructure';
@@ -9,7 +8,6 @@ import { noLogicalProperties } from './rules/no-logical-properties';
 import { noMixedStylingProps } from './rules/no-mixed-styling-props';
 import { noMutableBinding } from './rules/no-mutable-binding';
 import { noPhysicalProperties } from './rules/no-physical-properties';
-import { noStylePropRelay } from './rules/no-style-prop-relay';
 import { noOrderDependentOverlap } from './rules/no-order-dependent-overlap';
 import { noUnknownCssProperties } from './rules/no-unknown-css-properties';
 import { noUnresolvedComposition } from './rules/no-unresolved-composition';
@@ -28,7 +26,6 @@ type Configs = {
 };
 
 const rules: Rules = {
-  'custom-props-require-import': customPropsRequireImport,
   'expand-border-shorthands': expandBorderShorthands,
   'no-combinator': noCombinator,
   'no-destructure': noDestructure,
@@ -40,7 +37,6 @@ const rules: Rules = {
   'no-mutable-binding': noMutableBinding,
   'no-physical-properties': noPhysicalProperties,
   'no-order-dependent-overlap': noOrderDependentOverlap,
-  'no-style-prop-relay': noStylePropRelay,
   'no-unknown-css-properties': noUnknownCssProperties,
   'no-unused-keys': noUnusedKeys,
   'no-unresolved-composition': noUnresolvedComposition,
@@ -54,30 +50,28 @@ const rules: Rules = {
 const configs: Configs = {
   recommended: {
     plugins: {
-      '@plumeria': {
+      '@typedcss': {
         rules,
       },
     },
     rules: {
-      '@plumeria/custom-props-require-import': 'error',
-      '@plumeria/expand-border-shorthands': 'warn',
-      '@plumeria/no-combinator': 'error',
-      '@plumeria/no-destructure': 'error',
-      '@plumeria/no-inline-object': 'error',
-      '@plumeria/no-inner-call': 'error',
-      '@plumeria/no-invalid-selector': 'error',
-      '@plumeria/no-mixed-styling-props': 'error',
-      '@plumeria/no-mutable-binding': 'warn',
-      '@plumeria/no-order-dependent-overlap': 'warn',
-      '@plumeria/no-style-prop-relay': 'error',
-      '@plumeria/no-unknown-css-properties': 'error',
-      '@plumeria/no-unused-keys': 'warn',
-      '@plumeria/no-unresolved-composition': 'warn',
-      '@plumeria/sort-properties': 'warn',
-      '@plumeria/format-properties': 'warn',
-      '@plumeria/validate-values': 'warn',
-      '@plumeria/validate-pseudos': 'warn',
-      '@plumeria/validate-at-rules': 'warn',
+      '@typedcss/expand-border-shorthands': 'warn',
+      '@typedcss/no-combinator': 'error',
+      '@typedcss/no-destructure': 'error',
+      '@typedcss/no-inline-object': 'error',
+      '@typedcss/no-inner-call': 'error',
+      '@typedcss/no-invalid-selector': 'error',
+      '@typedcss/no-mixed-styling-props': 'error',
+      '@typedcss/no-mutable-binding': 'warn',
+      '@typedcss/no-order-dependent-overlap': 'warn',
+      '@typedcss/no-unknown-css-properties': 'error',
+      '@typedcss/no-unused-keys': 'warn',
+      '@typedcss/no-unresolved-composition': 'warn',
+      '@typedcss/sort-properties': 'warn',
+      '@typedcss/format-properties': 'warn',
+      '@typedcss/validate-values': 'warn',
+      '@typedcss/validate-pseudos': 'warn',
+      '@typedcss/validate-at-rules': 'warn',
     },
   },
 };
