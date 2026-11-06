@@ -13,11 +13,12 @@ const write = (name: string, source: string) =>
 
 write(
   'tokens.ts',
-  `import * as css from '@plumeria/core';
+  `import * as css from '@typedcss/css';
 export const query = '@media (width >= 640px)' as const;
 export const pseudo: string = ':hover';
 export const bp = css.createStatic({ md: '@media (width >= 768px)' });
 export const plain = { sm: '@media (width >= 480px)' };
+export const scale = css.createStatic({ '500': ':hover' });
 export default ':focus';`,
 );
 write('barrel.ts', `export { query as renamed } from './tokens';`);
@@ -28,7 +29,7 @@ export { pseudo };`,
 );
 write(
   'named.ts',
-  `import { createStatic } from '@plumeria/core';
+  `import { createStatic } from '@typedcss/css';
 export const bp = createStatic({ lg: '@media (width >= 1024px)' });`,
 );
 
@@ -104,8 +105,8 @@ describe('staticValueResolver', () => {
   it('reads members of createStatic and plain objects in the file', () => {
     expect(
       resolveKeys(`
-        import * as css from '@plumeria/core';
-        import { createStatic } from '@plumeria/core';
+        import * as css from '@typedcss/css';
+        import { createStatic } from '@typedcss/css';
         const bp = css.createStatic({ md: '@media (width >= 768px)' });
         const named = createStatic({ lg: '@media (width >= 1024px)' } as const);
         const plain = { sm: '@media (width >= 480px)' };
@@ -209,7 +210,7 @@ describe('staticValueResolver', () => {
   it('reads createStatic through the default import of the core package', () => {
     expect(
       resolveKeys(`
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         const bp = css.createStatic({ md: '@media (width >= 768px)' });
         ({ [bp.md]: {} });
       `),
@@ -250,7 +251,39 @@ describe('staticValueResolver', () => {
     ).toEqual([true, null, null]);
   });
 
-  it('leaves a member unresolved when its key is not a string', () => {
+  it('reads a number as the quoted key it names', () => {
+    expect(
+      resolveKeys(`
+        import * as css from '@typedcss/css';
+        import { scale } from './tokens';
+        import * as tokens from './tokens';
+        const local = css.createStatic({ '500': ':focus' });
+        const plain = { '500': ':active' };
+        const n = 500;
+        ({
+          [local[500]]: {},
+          [local[0x1f4]]: {},
+          [local[500 as number]]: {},
+          [local[n]]: {},
+          [plain[500]]: {},
+          [scale[500]]: {},
+          [tokens.scale[500]]: {},
+          [local[999]]: {},
+        });
+      `),
+    ).toEqual([
+      ':focus',
+      ':focus',
+      ':focus',
+      ':focus',
+      ':active',
+      ':hover',
+      ':hover',
+      null,
+    ]);
+  });
+
+  it('leaves a member unresolved when its key is unquoted or unknown', () => {
     expect(
       resolveKeys(`
         const obj = { a: ':hover', 1: ':focus' };
@@ -286,7 +319,7 @@ describe('staticValueResolver', () => {
   it('leaves a createStatic call without an argument unresolved', () => {
     expect(
       resolveKeys(`
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const empty = css.createStatic();
         ({ [empty.md]: {} });
       `),
