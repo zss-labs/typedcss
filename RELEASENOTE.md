@@ -1,5 +1,124 @@
 # Release Notes
 
+
+## 21.2.7 (Nov 3, 2026) Up to this point, Plumeria
+
+- Feat: opt-in `no-use-in-jsx` rule that disallows `css.use()` in `.jsx` and `.tsx` files, so the styling prop is the one way to apply styles there
+
+- Feat: init asks whether `.jsx` and `.tsx` files apply styles only through the styling prop, and turns on `no-use-in-jsx` unless told otherwise with `--allow-use`
+
+## 21.2.6 (Nov 3, 2026)
+
+- Fix: resolve and compile component source from packages exposing the plumeria condition
+
+- Fix: full-reload when a prop-driven update reaches a module that cannot accept it
+
+- Fix: keep node_modules out of the lint guard
+
+- Feat: `sourcePackages()` in the compiler lists the packages exposing the plumeria condition, so the bundler plugins share the compiler's discovery instead of scanning dependencies themselves
+
+## 21.2.5 (Nov 3, 2026)
+
+- Fix: a style passed to a component that React's `lazy` loads is handed to the export its `import()` names, as in `lazy(() => import('./Card'))` or `lazy(() => import('./Card').then((m) => ({ default: m.Card })))`, instead of being resolved to a `className` the component never reads
+
+- Fix: only a `lazy` imported from `react`, including `React.lazy` and a renamed import, is read this way, and a loader or pick written as a block is read like one written as an expression
+
+- Fix: the module a lazy component loads is a dependency of the file that loads it, so a change to that module, or the module appearing later, rescans the call site
+
+## 21.2.4 (Nov 2, 2026)
+
+- Fix: a style passed to a default export, or to a component that `memo` or `forwardRef` wraps, is handed to that component and applied
+
+- Fix: the component a call makes is the argument that renders, wherever it sits, so `memo(Component, compare)` and a wrapper that takes options first pass a style on, and a component name the call takes, as in `memo(Inner, compare)`, stands for that component
+
+- Fix: a call with more than one argument that could be the component stops the build with an error when a style is passed to it, instead of guessing which one receives it
+
+- Fix: `no-style-prop-relay` reads the component a call wraps as the compiler does, so it no longer checks a comparator or an options value in place of the component
+
+- Fix: a value read through a call handed a definition, such as `pick(T).w`, is reported as unresolvable instead of being read as the definition
+
+- Fix: a namespace import reads its exports when the file already declares a name such as `t$blue`, and when it sits next to a default import, as in `import def, * as t from './tokens'`
+
+- Fix: the Vite plugin leaves a package that exports only Plumeria source, under a `plumeria` condition with no fallback, out of dependency pre-bundling
+
+- Refactor: namespace reads are resolved on the AST instead of by rewriting the source
+
+## 21.2.3 (Oct 31, 2026)
+
+- Fix: a `css.createStatic` or `css.createTheme` key read by number, such as `blue[500]`, compiles like `blue['500']`, instead of dropping the declaration without an error in a style imported from another file or in `css.keyframes`, and instead of stopping the build in a template literal, a computed key or the module that defines it
+
+- Fix: a key read through a const, such as `blue[k]` after `const k = '500'`, compiles like the quoted key in a style imported from another file and in the module that defines it
+
+- Fix: the lint rules that read a static value, such as `validate-at-rules`, check `[bp[500]]` as they check `[bp['500']]`
+
+## 21.2.2 (Oct 31, 2026)
+
+- Fix: a computed key the build cannot inline, such as `[MOBILE]` read from a plain module, stops the build and points at `css.createStatic` instead of dropping the rule without an error
+
+- Fix: a spread of a function call, such as `...mixin()`, stops the build instead of dropping what it returns without an error
+
+- Fix: a shorthand holding a runtime value, such as `{ margin }`, stops the build like the same property written out instead of dropping the declaration without an error
+
+- Fix: a shorthand holding `css.keyframes`, such as `{ animationName }`, compiles like the same property written out
+
+- Fix: a method or an accessor in a style, such as `get margin() { ... }`, stops the build instead of dropping the declaration without an error
+
+- Fix: `migrate --from plumeria` joins a `classStyle` list member it cannot name, such as a prop, as a class string, instead of exporting the styles and leaving a list that no longer builds
+
+- Update: lead README.md with what decides the winning style
+
+## 21.2.1 (Oct 30, 2026)
+
+- Update: use a namespace import in README.md
+
+## 21.2.0 (Oct 30, 2026)
+
+- Feat: a package can share its Plumeria definitions as source: when its `exports` point a `plumeria` condition at its TypeScript files, as in `"plumeria": "./src/index.ts"`, an app that lists it in its dependencies reads the definitions it exports, such as `css.createStatic` values, `css.create` styles and `css.keyframes` names, as it reads a local module, including subpath and pattern exports and packages linked from a pnpm store
+
+- Feat: `@plumeria/wind` provides the Tailwind CSS v4.3.3 design tokens, such as the color palettes, spacing, type scale, radius, shadows and animations, as `css.createStatic` values; each value is compiled into the styles that read it, so the package adds nothing to the bundle
+
+- Feat: a definition read by name through a namespace import, such as `tokens.blue[500]` after `import * as tokens from './tokens'`, compiles as it does through `import { blue }`; a string key, destructuring, a rest element or the namespace passed as a whole still stops the build and asks for a named import
+
+- Fix: an import whose names are all compiled away, such as a `css.createStatic` import read only inside `css.create`, is removed from the output, so the bundler no longer resolves or loads that module; an import still read at runtime, rendered as a component or re-exported is kept
+
+- Fix: reading a module's exports before the first project scan, as `resolveExport` and `resolveExportValue` can, no longer leaves that module out of the scan
+
+- Fix: `no-combinator` checks only the `css.createStatic` values that start with `:` or `[`, the ones that become a selector when used as a key, so a value with spaces, such as a shadow or a font stack, is no longer reported
+
+- Update: `no-unknown-css-properties` accepts `fit-tolerance`, `min-size` and `max-size`, from the latest MDN and webref data
+
+## 21.1.8 (Oct 28, 2026)
+
+- Update README.md
+
+- Update: Describe Plumeria as a React styling library for reliable interfaces in package.json
+
+## 21.1.7 (Oct 28, 2026)
+
+- Fix: `no-unused-keys` treats any non-literal bracket key, such as `styles[item.kind]`, as dynamic access instead of reporting every key as unused
+
+- Fix: `no-unused-keys` recognizes dynamic access that appears before the `css.create` call, such as inside a hoisted function
+
+## 21.1.6 (Oct 26, 2026)
+
+- Fix: a dynamic style parameter inside a color, filter or scale function, such as `hsl()`, `brightness()` or `scaleX()`, no longer gets a `px` unit
+
+## 21.1.5 (Oct 26, 2026)
+
+- Fix: write `plumeria.d.ts` into `src/` when the project has one, so a tsconfig that includes only `src`, such as the Vite React template, reads the `classStyle` declaration
+
+- Fix: `expand-border-shorthands` writes the longhands in the order `sort-properties` expects, so a single `oxlint --fix` pass settles both rules
+
+- Fix: `sort-properties` keeps the trailing comma and moves each property's comments with it when it reorders an object
+
+## 21.1.4 (Oct 26, 2026)
+
+- Perf: Check the `classStyle` prop against a lighter type and map created styles without a conditional wrapper, so type checking spends about 12% less time on files with many styles
+
+## 21.1.3 (Oct 25, 2026)
+
+- Update: Move repository links to the zss-labs organization
+
 ## 21.1.2 (Oct 23, 2026)
 
 - Fix: a received style can be composed onto a component the build never scans, such as a `@plumeria/headlessui` part, with `classStyle={[styles.base, classStyle]}` instead of failing the build
