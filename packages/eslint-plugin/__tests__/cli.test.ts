@@ -30,7 +30,7 @@ describe('stylePropFromESLint', () => {
   let cwd: string;
 
   beforeEach(() => {
-    cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'plumerialint-'));
+    cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcsslint-'));
   });
 
   afterEach(() => {
@@ -63,7 +63,9 @@ ${loadESLint ? 'exports.loadESLint = async () => ESLint;' : ''}
   };
 
   it('returns nothing without eslint', async () => {
-    await expect(stylePropFromESLint(cwd)).resolves.toBeUndefined();
+    await expect(
+      stylePropFromESLint('/typedcss-no-eslint'),
+    ).resolves.toBeUndefined();
   });
 
   it('returns nothing without an eslint config', async () => {
@@ -77,26 +79,39 @@ ${loadESLint ? 'exports.loadESLint = async () => ESLint;' : ''}
   });
 
   it('reads the styling prop from the eslint settings', async () => {
-    fakeESLint({ plumeria: { styleProp: 'sx' } });
+    fakeESLint({ typedcss: { styleProp: 'sx' } });
     await expect(stylePropFromESLint(cwd)).resolves.toBe('sx');
   });
 
   it('reads the settings through an eslint without loadESLint', async () => {
-    fakeESLint({ plumeria: { styleProp: 'sx' } }, { loadESLint: false });
+    fakeESLint({ typedcss: { styleProp: 'sx' } }, { loadESLint: false });
     await expect(stylePropFromESLint(cwd)).resolves.toBe('sx');
   });
 
   it('prefers the flag over the eslint settings', async () => {
-    fakeESLint({ plumeria: { styleProp: 'sx' } });
+    fakeESLint({ typedcss: { styleProp: 'sx' } });
     await expect(
       cliOverrides(['--style-prop', 'css', '--fix'], cwd),
     ).resolves.toEqual({
-      overrides: { settings: { plumeria: { styleProp: 'css' } } },
+      overrides: { settings: { typedcss: { styleProp: 'css' } } },
       rest: ['--fix'],
     });
     await expect(cliOverrides([], cwd)).resolves.toEqual({
-      overrides: { settings: { plumeria: { styleProp: 'sx' } } },
+      overrides: { settings: { typedcss: { styleProp: 'sx' } } },
       rest: [],
     });
   });
+});
+
+it('returns nothing when loading the resolved eslint module fails', async () => {
+  jest.resetModules();
+  jest.doMock('eslint', () => {
+    throw new Error('load failed');
+  });
+  let isolated: typeof stylePropFromESLint;
+  jest.isolateModules(() => {
+    isolated = require('../src/cli').stylePropFromESLint;
+  });
+  await expect(isolated!('/tmp')).resolves.toBeUndefined();
+  jest.dontMock('eslint');
 });
