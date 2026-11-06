@@ -31,7 +31,7 @@ export const validateAtRules: Rule.RuleModule = {
     schema: [],
   },
   create(context) {
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
     const staticValue = staticValueResolver(context);
 
     function getKeyString(node: TSESTree.Node): string | null {
@@ -61,19 +61,19 @@ export const validateAtRules: Rule.RuleModule = {
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value !== '@plumeria/core') return;
+        if (node.source.value !== '@typedcss/css') return;
         node.specifiers.forEach((specifier) => {
           if (
             specifier.type === 'ImportNamespaceSpecifier' ||
             specifier.type === 'ImportDefaultSpecifier'
           ) {
-            plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+            coreAliases[specifier.local.name] = 'NAMESPACE';
           } else {
             const importedName =
               specifier.imported.type === 'Identifier'
                 ? specifier.imported.name
                 : String(specifier.imported.value);
-            plumeriaAliases[specifier.local.name] = importedName;
+            coreAliases[specifier.local.name] = importedName;
           }
         });
       },
@@ -82,14 +82,14 @@ export const validateAtRules: Rule.RuleModule = {
         if (
           node.callee.type === 'MemberExpression' &&
           node.callee.object.type === 'Identifier' &&
-          plumeriaAliases[node.callee.object.name] === 'NAMESPACE' &&
+          coreAliases[node.callee.object.name] === 'NAMESPACE' &&
           node.callee.property.type === 'Identifier' &&
           node.callee.property.name === 'create'
         ) {
           isCssCreate = true;
         } else if (
           node.callee.type === 'Identifier' &&
-          plumeriaAliases[node.callee.name] === 'create'
+          coreAliases[node.callee.name] === 'create'
         ) {
           isCssCreate = true;
         }
