@@ -1,5 +1,5 @@
 /**
- * @fileoverview Rename a Plumeria API across a codebase
+ * @fileoverview Rename a typedcss API across a codebase
  */
 
 import type { Rule } from 'eslint';
@@ -9,13 +9,13 @@ export interface RenameApiOptions {
   to: string;
 }
 
-const CORE = '@plumeria/core';
+const CORE = '@typedcss/css';
 
 export const renameApi: Rule.RuleModule = {
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Rename a Plumeria API to a new name',
+      description: 'Rename a typedcss API to a new name',
     },
     fixable: 'code',
     messages: {
@@ -59,7 +59,7 @@ export const renameApi: Rule.RuleModule = {
           rename(specifier.imported);
           if (specifier.local.name !== from) continue;
           const [variable] = context.sourceCode.getDeclaredVariables(specifier);
-          for (const reference of variable?.references ?? []) {
+          for (const reference of variable.references) {
             rename(reference.identifier);
           }
         }
