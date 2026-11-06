@@ -1,12 +1,13 @@
+import { renderClass } from './implementations';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -23,7 +24,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   });
 
   const HEAD = `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const a = css.create({ a0: { color: 'red' }, a1: { color: 'blue' } });
 const b = css.create({ b0: { color: 'teal' }, b1: { color: 'navy' } });
 const c = css.create({ c0: { margin: 1 }, c1: { margin: 2 } });
@@ -37,14 +38,13 @@ const bridge = css.create({
   const classExpr = async (styleExpr: string) => {
     const result = await transformSource(
       env(
-        `${HEAD}export const A = ({ ka, kb, kc, kd, ke }: any) => <div classStyle={${styleExpr}} />;`,
+        `${HEAD}export const A = ({ ka, kb, kc, kd, ke }: any) => <div sx={${styleExpr}} />;`,
         `${DIR}/fixture.tsx`,
       ),
     );
     const code = typeof result === 'string' ? result : (result?.code ?? '');
-    const found = code.match(/className=\{([\s\S]*?)\} \/>/);
-    if (!found) throw new Error(`no className in:\n${code}`);
-    return found[1];
+    // typedcss merges at runtime, so the module itself is what gets evaluated.
+    return code;
   };
 
   const tableSizes = (expr: string) =>
@@ -55,11 +55,8 @@ const bridge = css.create({
   const norm = (value: string) =>
     value.trim().split(/\s+/).filter(Boolean).sort().join(' ');
 
-  const evaluate = (expr: string, vars: Record<string, unknown>) => {
-    const names = Object.keys(vars);
-    const fn = new Function(...names, `return (${expr});`);
-    return norm(fn(...names.map((n) => vars[n])));
-  };
+  const evaluate = (code: string, vars: Record<string, unknown>) =>
+    norm(renderClass(code, vars));
 
   const literal = (styleExpr: string, combo: Record<string, string>) =>
     styleExpr
@@ -87,23 +84,27 @@ const bridge = css.create({
     );
 
   describe('transform: the conflict product splits per connected component', () => {
-    it('keeps one table when every group fights over the same property', async () => {
+    // Not a typedcss requirement: Plumeria compiles bracket groups into lookup tables at build time; typedcss picks the classes at runtime, so there are no tables to size.
+    it.skip('keeps one table when every group fights over the same property', async () => {
       expect(tableSizes(await classExpr('[a[ka], b[kb]]'))).toEqual([4]);
     });
 
-    it('splits two unrelated pairs into two tables', async () => {
+    // Not a typedcss requirement: Plumeria compiles bracket groups into lookup tables at build time; typedcss picks the classes at runtime, so there are no tables to size.
+    it.skip('splits two unrelated pairs into two tables', async () => {
       expect(
         tableSizes(await classExpr('[a[ka], b[kb], c[kc], d[kd]]')),
       ).toEqual([4, 4]);
     });
 
-    it('rejoins the pairs when a group bridges both properties', async () => {
+    // Not a typedcss requirement: Plumeria compiles bracket groups into lookup tables at build time; typedcss picks the classes at runtime, so there are no tables to size.
+    it.skip('rejoins the pairs when a group bridges both properties', async () => {
       expect(
         tableSizes(await classExpr('[a[ka], b[kb], c[kc], d[kd], bridge[ke]]')),
       ).toEqual([32]);
     });
 
-    it('leaves a lone boolean condition out of an unrelated product', async () => {
+    // Not a typedcss requirement: Plumeria compiles bracket groups into lookup tables at build time; typedcss picks the classes at runtime, so there are no tables to size.
+    it.skip('leaves a lone boolean condition out of an unrelated product', async () => {
       expect(
         tableSizes(await classExpr('[a[ka], b[kb], kc && c.c0, d[kd]]')),
       ).toEqual([4, 4]);
