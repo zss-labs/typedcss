@@ -1,0 +1,10 @@
+target/
+npm/
+*.node
+*.wasm
+*.wasi.cjs
+*.wasi-browser.js
+wasi-worker*.mjs
+binding.js
+binding.d.ts
+browser.js
