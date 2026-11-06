@@ -1,17 +1,20 @@
 import webpack, { attachWebpackHooks } from '../src/webpack';
 
-const ABSOLUTE_CSS = '/project/Card.zero.css';
-const VIRTUAL_CSS = '/Card.zero.css';
+const ABSOLUTE_CSS = '/project/typedcss.zero.css';
+const VIRTUAL_CSS = '/typedcss.zero.css';
 
 const createBase = () => ({
   name: 'base',
-  __plumeriaInternal: {
+  __typedcssInternal: {
     cssFileLookup: new Map([[VIRTUAL_CSS, ABSOLUTE_CSS]]),
     cssLookup: new Map([[ABSOLUTE_CSS, '.card {}']]),
     targets: [{ id: '/project/Card.tsx', dependencies: [] }],
+    stylesheetFiles: new Set(['/project/Card.tsx', '/project/tokens.ts']),
     setDev: jest.fn(),
     setRoot: jest.fn(),
     setCssImport: jest.fn(),
+    resolveSource: jest.fn(() => null),
+    inSource: jest.fn(() => false),
   },
   transform: jest.fn(async (code: string) => {
     if (code === 'null') return null;
@@ -30,7 +33,7 @@ it('imports the stylesheet by a relative path with a cache-busting query', async
   const base = createBase();
   const plugin = attachWebpackHooks(base) as any;
 
-  const [cssImport] = base.__plumeriaInternal.setCssImport.mock.calls[0];
+  const [cssImport] = base.__typedcssInternal.setCssImport.mock.calls[0];
 
   expect(
     cssImport({
@@ -39,7 +42,7 @@ it('imports the stylesheet by a relative path with a cache-busting query', async
       cssFilename: ABSOLUTE_CSS,
       css: '.card {}',
     }),
-  ).toMatch(/^\nimport "\.\/Card\.zero\.css\?t=\d+";$/);
+  ).toMatch(/^\nimport "\.\/typedcss\.zero\.css\?t=\d+";$/);
 
   expect(
     cssImport({
@@ -48,7 +51,7 @@ it('imports the stylesheet by a relative path with a cache-busting query', async
       cssFilename: ABSOLUTE_CSS,
       css: '.card {}',
     }),
-  ).toMatch(/^\nimport "\.\.\/Card\.zero\.css\?t=\d+";$/);
+  ).toMatch(/^\nimport "\.\.\/typedcss\.zero\.css\?t=\d+";$/);
 
   await expect(
     plugin.transform('null', '/project/Card.tsx'),
@@ -68,18 +71,22 @@ it('covers unresolved ids and queried absolute ids', () => {
   expect(plugin.resolveId('/project/source.ts')).toBeNull();
 });
 
-it('loads CSS with and without a matching source target', () => {
+it('loads the stylesheet and depends on every file that defines styles', () => {
   const plugin = attachWebpackHooks(createBase()) as any;
+  const addDependency = jest.fn();
 
   expect(plugin.load.call({}, ABSOLUTE_CSS)).toEqual({
     code: '.card {}',
     moduleType: 'css',
   });
-  plugin.__plumeriaInternal.targets.length = 0;
-  expect(plugin.load.call({ addDependency: jest.fn() }, ABSOLUTE_CSS)).toEqual({
+  expect(plugin.load.call({ addDependency }, ABSOLUTE_CSS)).toEqual({
     code: '.card {}',
     moduleType: 'css',
   });
+  expect(addDependency.mock.calls).toEqual([
+    ['/project/Card.tsx'],
+    ['/project/tokens.ts'],
+  ]);
 });
 
 it('configures root without enabling development for production compilers', () => {
@@ -88,8 +95,8 @@ it('configures root without enabling development for production compilers', () =
 
   plugin.webpack(compilerWith(undefined, 'production'));
 
-  expect(base.__plumeriaInternal.setRoot).toHaveBeenCalledWith('/project');
-  expect(base.__plumeriaInternal.setDev).not.toHaveBeenCalled();
+  expect(base.__typedcssInternal.setRoot).toHaveBeenCalledWith('/project');
+  expect(base.__typedcssInternal.setDev).not.toHaveBeenCalled();
 });
 
 it('adapts a matching JavaScript rule when no CSS rule exists', () => {
