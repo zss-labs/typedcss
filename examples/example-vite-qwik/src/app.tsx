@@ -3,7 +3,7 @@ import { component$, useSignal } from '@builder.io/qwik';
 import qwikLogo from './assets/qwik.svg';
 import viteLogo from '/vite.svg';
 import './app.css';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   highlighted: (value: number) => ({
@@ -27,7 +27,7 @@ export const App = component$(() => {
           <img src={qwikLogo} class="logo qwik" alt="Qwik logo" />
         </a>
       </div>
-      <h1 classStyle={styles.highlighted(count.value)}>Vite + Qwik</h1>
+      <h1 sx={styles.highlighted(count.value)}>Vite + Qwik</h1>
       <div class="card">
         <button onClick$={() => count.value++}>count is {count.value}</button>
       </div>
