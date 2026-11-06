@@ -53,8 +53,8 @@ export async function stylePropFromESLint(
     for (const file of PROBED_FILES) {
       const config = (await instance.calculateConfigForFile(
         path.join(cwd, file),
-      )) as { settings?: { plumeria?: { styleProp?: unknown } } } | undefined;
-      const styleProp = config?.settings?.plumeria?.styleProp;
+      )) as { settings?: { typedcss?: { styleProp?: unknown } } } | undefined;
+      const styleProp = config?.settings?.typedcss?.styleProp;
       if (typeof styleProp === 'string') return styleProp;
     }
   } catch {
