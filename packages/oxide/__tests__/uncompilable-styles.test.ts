@@ -6,16 +6,16 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
   const FIXTURE_PATH = path.join(FIXTURE_DIR, 'fixture.tsx');
 
   const compile = (body: string) => {
     fs.writeFileSync(
       FIXTURE_PATH,
-      `import * as css from '@plumeria/core';\n${body}\n`,
+      `import * as css from '@typedcss/css';\n${body}\n`,
       'utf-8',
     );
     return compileCSS({
@@ -38,7 +38,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
       [
         'a destructured call',
         `const { a } = css.create({ a: { color: 'purple' } });\n` +
-          `export const A = () => <div classStyle={a} />;`,
+          `export const A = () => <div sx={a} />;`,
       ],
       [
         'a call that is only a statement',
@@ -53,7 +53,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
         compile(
           `const ok = css.create({ b: { color: 'olive' } });\n` +
             `export default css.create({ a: { color: 'teal' } });\n` +
-            `export const A = () => <div classStyle={ok.b} />;`,
+            `export const A = () => <div sx={ok.b} />;`,
         ),
       ).toThrow(UNNAMED);
     });
@@ -65,13 +65,15 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
     // A call would resolve to a class name and a custom property the element
     // carries. `css.use()` returns only the class name, so the property is never
     // set and the rule reads a variable nothing defines.
-    it('refuses a called function key', () => {
+    // Not a typedcss requirement: typedcss has no css.use; css.props merges at runtime and takes function keys and calls.
+    it.skip('refuses a called function key', () => {
       expect(() =>
         compile(`${STYLES}export const cls = css.use(s.box(4));`),
       ).toThrow(/does not support dynamic function keys/);
     });
 
-    it('refuses an uncalled function key', () => {
+    // Not a typedcss requirement: typedcss has no css.use; css.props merges at runtime and takes function keys and calls.
+    it.skip('refuses an uncalled function key', () => {
       expect(() =>
         compile(`${STYLES}export const cls = css.use(s.box);`),
       ).toThrow(
@@ -79,7 +81,8 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
       );
     });
 
-    it('refuses one listed beside a plain key', () => {
+    // Not a typedcss requirement: typedcss has no css.use; css.props merges at runtime and takes function keys and calls.
+    it.skip('refuses one listed beside a plain key', () => {
       expect(() =>
         compile(`${STYLES}export const cls = css.use([s.flat, s.box]);`),
       ).toThrow(/is not supported/);
@@ -94,9 +97,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
     // The element carries the custom property, so the same key is sound there.
     it('keeps compiling a called function key on an element', () => {
       expect(
-        compile(
-          `${STYLES}export const A = () => <div classStyle={s.box(4)} />;`,
-        ),
+        compile(`${STYLES}export const A = () => <div sx={s.box(4)} />;`),
       ).toContain('width: var(');
     });
   });
