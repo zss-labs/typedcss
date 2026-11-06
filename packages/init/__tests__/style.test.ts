@@ -13,7 +13,7 @@ const unlessColorIsForced =
 
 describe('paint', () => {
   unlessColorIsForced('adds nothing when the target is not a terminal', () => {
-    expect(paint(sink(), 'green', 'plumeria.d.ts')).toBe('plumeria.d.ts');
+    expect(paint(sink(), 'green', 'typedcss.d.ts')).toBe('typedcss.d.ts');
     expect(paint(sink(), ['bold', 'cyan'], '1:')).toBe('1:');
   });
 
