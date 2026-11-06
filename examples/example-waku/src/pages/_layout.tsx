@@ -1,7 +1,7 @@
 import '../styles.css';
 
 import type { ReactNode } from 'react';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { Footer } from '../components/footer';
 import { Header } from '../components/header';
 
@@ -29,12 +29,12 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   const data = await getData();
 
   return (
-    <div classStyle={styles.root}>
+    <div sx={styles.root}>
       <meta name="description" content={data.description} />
       <link rel="icon" type="image/png" href={data.icon} />
       <Header />
-      <main classStyle={styles.main}>
-        <div classStyle={styles.page}>{children}</div>
+      <main sx={styles.main}>
+        <div sx={styles.page}>{children}</div>
       </main>
       <Footer />
     </div>
