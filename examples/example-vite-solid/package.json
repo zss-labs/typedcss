@@ -13,8 +13,8 @@
     "solid-js": "2.0.0-rc.8"
   },
   "devDependencies": {
-    "@plumeria/core": "workspace:^",
-    "@plumeria/unplugin": "workspace:^",
+    "@typedcss/css": "workspace:^",
+    "@typedcss/unplugin": "workspace:^",
     "@solidjs/vite-plugin": "3.0.0-next.43",
     "@types/node": "^25.8.0",
     "typescript": "~6.0.3",
