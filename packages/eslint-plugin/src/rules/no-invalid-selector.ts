@@ -1,5 +1,5 @@
 /**
- * @fileoverview Disallow invalid selector nesting (e.g. Pseudo -> Query, Query -> Query) based on Plumeria rules.
+ * @fileoverview Disallow invalid selector nesting (e.g. Pseudo -> Query, Query -> Query) based on typedcss rules.
  */
 
 import type { TSESTree } from '@typescript-eslint/utils';
@@ -228,7 +228,7 @@ export const noInvalidSelector: Rule.RuleModule = {
     type: 'problem',
     docs: {
       description:
-        'Disallow invalid selector nesting (e.g. Pseudo -> Query, Query -> Query) based on Plumeria rules.',
+        'Disallow invalid selector nesting (e.g. Pseudo -> Query, Query -> Query) based on typedcss rules.',
     },
     messages: {
       invalidKeySelector: 'Invalid key selector.',
@@ -255,7 +255,7 @@ export const noInvalidSelector: Rule.RuleModule = {
     schema: [],
   },
   create(context) {
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
     const staticValue = staticValueResolver(context);
 
     function getSelectorType(node: TSESTree.Node): SelectorType {
@@ -459,19 +459,19 @@ export const noInvalidSelector: Rule.RuleModule = {
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (
               specifier.type === 'ImportNamespaceSpecifier' ||
               specifier.type === 'ImportDefaultSpecifier'
             ) {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const importedName =
                 specifier.imported.type === 'Identifier'
                   ? specifier.imported.name
                   : String(specifier.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -485,7 +485,7 @@ export const noInvalidSelector: Rule.RuleModule = {
         if (node.callee.type === 'MemberExpression') {
           if (
             node.callee.object.type === 'Identifier' &&
-            plumeriaAliases[node.callee.object.name] === 'NAMESPACE'
+            coreAliases[node.callee.object.name] === 'NAMESPACE'
           ) {
             const propertyName =
               node.callee.property.type === 'Identifier'
@@ -497,7 +497,7 @@ export const noInvalidSelector: Rule.RuleModule = {
               isCssViewTransition = true;
           }
         } else if (node.callee.type === 'Identifier') {
-          const alias = plumeriaAliases[node.callee.name];
+          const alias = coreAliases[node.callee.name];
           if (alias === 'create') isCssCreate = true;
           if (alias === 'keyframes') isCssKeyframes = true;
           if (alias === 'viewTransitionClass') isCssViewTransition = true;
