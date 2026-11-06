@@ -1,6 +1,6 @@
-# Contributing to Plumeria
+# Contributing to TypedCSS
 
-We truly value your interest in contributing to Plumeria! Your help is invaluable, and we're grateful for your efforts in improving this project. Here are some guidelines to get you started.
+We truly value your interest in contributing to TypedCSS! Your help is invaluable, and we're grateful for your efforts in improving this project. Here are some guidelines to get you started.
 
 ## AI Usage Policy
 
@@ -44,18 +44,15 @@ Do not react to the generation of zero-virtual.css.
 
 ## Package Structure
 
-- **@plumeria/codemod**: This package contains codemods that migrate CSS Modules in and out and rename the styling prop.
-- **@plumeria/compiler**: The Rust (napi-rs) scanner, transformer and compiler that the bundler integrations use.
-- **@plumeria/core**: This package is the core package that defines types only.
-- **@plumeria/eslint-plugin**: This package contains the eslint rules to keep Plumeria code clean.
-- **@plumeria/headlessui**: This package wraps Radix UI as headless components for Plumeria.
-- **@plumeria/init**: This package sets up Plumeria in a project with one command.
-- **@plumeria/inspector**: This package contains the styled components inspector for development.
-- **@plumeria/next-plugin**: This package contains the Next.js plugin for integrating Plumeria.
-- **@plumeria/swc-jest**: This package contains the Jest transformer that compiles Plumeria before @swc/jest.
-- **@plumeria/turbopack-loader**: This package contains the Turbopack loader for integrating Plumeria.
-- **@plumeria/unplugin**: This package contains the plugins for Vite, webpack, Rspack, Rollup, Rolldown, esbuild, Farm and Bun.
-- **@plumeria/utils**: This package contains the TypeScript reference implementation of the style parse and transform utils functions.
+- **@typedcss/codemod**: This package contains codemods for renaming the styling prop and APIs.
+- **@typedcss/css**: This package is the core package that defines the styling types.
+- **@typedcss/eslint-plugin**: This package contains the ESLint rules that keep TypedCSS code clean.
+- **@typedcss/init**: This package sets up TypedCSS in a project with one command.
+- **@typedcss/next-plugin**: This package contains the Next.js plugin for integrating TypedCSS.
+- **@typedcss/oxide**: This package is the Rust (napi-rs) compiler that the bundler integrations use.
+- **@typedcss/swc-jest**: This package contains the Jest transformer for TypedCSS.
+- **@typedcss/unplugin**: This package contains the plugins for Vite, webpack, Rspack, Rollup, Rolldown, esbuild, Farm and Bun.
+- **@typedcss/wind**: This package provides Tailwind CSS design tokens for TypedCSS.
 
 ## Changesets
 
