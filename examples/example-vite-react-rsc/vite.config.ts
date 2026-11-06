@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import rsc from '@vitejs/plugin-rsc';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -19,7 +19,7 @@ export default defineConfig({
     // to enable client component HMR
     react(),
 
-    plumeria.vite(),
+    typedcss.vite(),
 
     // use https://github.com/antfu-collective/vite-plugin-inspect
     // to understand internal transforms required for RSC.
