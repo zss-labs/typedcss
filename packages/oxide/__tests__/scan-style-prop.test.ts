@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
 
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
@@ -31,24 +31,24 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
 
   write(
     'styles.ts',
-    `import * as css from '@plumeria/core';
+    `import * as css from '@typedcss/css';
 export const styles = css.create({ a: { color: 'teal' } });`,
   );
 
   it('reaches a receiver from a file that writes the style prop without importing the core package', async () => {
     const receiver = write(
       'Alone.tsx',
-      `import * as css from '@plumeria/core';
-export const Alone = ({ classStyle }: { classStyle?: css.Style }) => <div classStyle={classStyle} />;`,
+      `import * as css from '@typedcss/css';
+export const Alone = ({ sx }: { sx?: css.Style }) => <div sx={sx} />;`,
     );
     write(
       'App.tsx',
       `import { styles } from './styles';
 import { Alone } from './Alone';
-export const App = () => <Alone classStyle={styles.a} />;`,
+export const App = () => <Alone sx={styles.a} />;`,
     );
 
-    const { code } = await transform(receiver, 'classStyle');
+    const { code } = await transform(receiver, 'sx');
 
     expect(code).not.toContain('className={""}');
     expect(
@@ -59,20 +59,21 @@ export const App = () => <Alone classStyle={styles.a} />;`,
   it('rescans every file when the style prop changes', async () => {
     const receiver = write(
       'Boxed.tsx',
-      `import * as css from '@plumeria/core';
-export const Boxed = ({ sx }: { sx?: css.Style }) => <div sx={sx} />;`,
+      `import * as css from '@typedcss/css';
+export const Boxed = ({ classStyle }: { classStyle?: css.Style }) => <div classStyle={classStyle} />;`,
     );
     write(
       'Uses.tsx',
       `import { styles } from './styles';
 import { Boxed } from './Boxed';
-export const Uses = () => <Boxed sx={styles.a} />;`,
+export const Uses = () => <Boxed classStyle={styles.a} />;`,
     );
 
-    await transform(receiver, 'classStyle');
-    const { code } = await transform(receiver, 'sx');
+    await transform(receiver, 'sx');
+    const { code } = await transform(receiver, 'classStyle');
 
     expect(code).not.toContain('className={""}');
-    expect(code).toContain('[sx]');
+    // typedcss reads the new prop name and merges it at runtime.
+    expect(code).toContain('__typedcss_props(classStyle)');
   });
 });
