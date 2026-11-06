@@ -1,174 +1,40 @@
-# Plumeria
+# TypedCSS
 
-[![OpenSSF Best Practices](https://img.shields.io/cii/level/15164?label=openssf&color=10B981)](https://www.bestpractices.dev/projects/15164)
-[![Tests](https://img.shields.io/github/actions/workflow/status/zss-in-js/plumeria/tests.yml?logo=github&logoColor=white&label=tests&color=10B981)](https://github.com/zss-in-js/plumeria/actions/workflows/tests.yml)
-![Codecov](https://img.shields.io/codecov/c/github/zss-in-js/plumeria?logo=codecov&logoColor=white&color=6366F1)
+TypedCSS is a second execution model for [Plumeria](https://plumeria.dev) that delegates some of the compilation responsibilities to the runtime resolver.
+It shares an API with Plumeria, so the migration cost is minimal.
 
-**Plumeria** is a **zero-cost abstraction layer** for styling React components. You write type-safe styles in TypeScript, and what ships is a class string — not a style object and a merger. Style composition is a monoid whose operation is fully determined at compile time, which is where the predictability comes from: styles are composable by construction, and strict syntax and linting keep the cognitive overhead low.
-
-> The compiler is written in Rust with oxc, so builds are fast. The CSS types and the property list the linter checks against are generated from MDN data, so properties and keywords follow what MDN documents.
-
-## Example
-
-Styles can be passed to the `classStyle` prop. That prop accepts static and dynamic styles as an array. At build time, the compiler resolves `classStyle` into a static `className`; dynamic values are passed as CSS variables through the `style` attribute — no runtime library is involved.
-
-```tsx
-import * as css from '@plumeria/core';
-
-const styles = css.create({
-  text: {
-    fontSize: 12
-  },
-  cond: {
-    background: 'navy'
-  },
-  scale: (value) => ({
-    scale: value
-  })
-});
-
-export default function App({ cond }) {
-  const scale = useScale(); // from your own hook
-  return (
-    <div
-      classStyle={[
-        styles.text,
-        cond && styles.cond,
-        styles.scale(scale)
-      ]}
-    />
-  );
-}
-```
-
-**Compiled:**
-
-```tsx
-<div
-  className={'xhrr6ses xhxthtyw' + ' ' + (cond ? 'xj00ajs1' : '')}
-  style={{ '--xfuma1qq-value': scale }}
-/>
-```
-
-**Generated CSS:**
-
-```css
-.xhrr6ses:not(#\#) {
-  font-size: 12px;
-}
-.xhxthtyw {
-  scale: var(--xfuma1qq-value);
-}
-.xj00ajs1 {
-  background: navy;
-}
-```
-
-## Getting started
+## Quick start
 
 ```sh
-npx @plumeria/init
+npx @typedcss/init
 ```
 
-It detects the bundler and the package manager, asks the two questions it cannot detect — which spelling of a two-named property the project writes, and what the styling prop is called — then installs the packages and writes the configs. It shows the plan before writing anything.
+### Migrating
 
-## Benchmark
+```sh
+npx @plumeria/codemod migrate-to-typedcss
+```
 
-For how Plumeria compares with other libraries, see the [side-by-side benchmark](https://github.com/refirst11/css-compiler-bench).
+```sh
+npx @typedcss/codemod migrate-to-plumeria
+```
 
-## API Stability
+typedcss and Plumeria share every version number, and each package takes the same options as its Plumeria counterpart:
 
-Plumeria publishes frequently. To make that legible, every public API is rated for **future** change likelihood — not past churn. The rating is a commitment about what will happen next, not a description of what already has.
+| typedcss                  | Plumeria                  |
+| ------------------------- | ------------------------- |
+| `@typedcss/codemod`       | `@plumeria/codemod`       |
+| `@typedcss/css`           | `@plumeria/core`          |
+| `@typedcss/eslint-plugin` | `@plumeria/eslint-plugin` |
+| `@typedcss/init`          | `@plumeria/init`          |
+| `@typedcss/next-plugin`   | `@plumeria/next-plugin`   |
+| `@typedcss/oxide`         | `@plumeria/compiler`      |
+| `@typedcss/swc-jest`      | `@plumeria/swc-jest`      |
+| `@typedcss/unplugin`      | `@plumeria/unplugin`      |
+| `@typedcss/wind`          | `@plumeria/wind`          |
 
-| Rating | Label            | Meaning                                                                                 |
-| ------ | ---------------- | --------------------------------------------------------------------------------------- |
-| ★★★★★  | **Frozen**       | Bug fixes ship continuously. The signature will not change.                             |
-| ★★★★☆  | **Stable**       | Additive only. Existing signatures will not move.                                       |
-| ★★★☆☆  | **Candidate**    | Shape is settled. Details may still change.                                             |
-
-### Core API — `@plumeria/core`
-
-| API                       | Stability |        |
-| ------------------------- | --------- | ------ |
-| `css.create`              | ★★★★★     | Frozen |
-| `css.createTheme`         | ★★★★★     | Frozen |
-| `css.createStatic`        | ★★★★★     | Frozen |
-| `css.keyframes`           | ★★★★★     | Frozen |
-| `css.viewTransitionClass` | ★★★★★     | Frozen |
-| `css.positionTry`         | ★★★★☆     | Stable |
-| `css.varType`             | ★★★★☆     | Stable |
-| `css.marker`              | ★★★★☆     | Stable |
-| `css.extended`            | ★★★★☆     | Stable |
-| `css.use`/`classStyle`    | ★★★★★     | Frozen |
-
-> The **`classStyle`** can be renamed via configuration
-
-### Bundler Integrations
-
-| Package                      | Stability |           |
-| -----------------------------| --------- | --------- |
-| `@plumeria/next-plugin`      | ★★★★☆     | Stable    |
-| `@plumeria/unplugin`         | ★★★★☆     | Stable    |
-| `@plumeria/turbopack-loader` | ★★★★☆     | Stable    |
-
-### Tooling
-
-| Package                   | Stability |           |
-| --------------------------| --------- | --------- |
-| `@plumeria/init`          | ★★★☆☆     | Candidate |
-| `@plumeria/codemod`       | ★★★☆☆     | Candidate |
-| `@plumeria/eslint-plugin` | ★★★★☆     | Stable    |
-| `@plumeria/headlessui`    | ★★★★☆     | Stable    |
-| `@plumeria/inspector`     | ★★★☆☆     | Candidate |
-
-### Internal
-
-| Package              | Stability |        |
-| -------------------- | --------- | ------ |
-| `@plumeria/compiler` | ★★★★☆     | Stable |
-| `@plumeria/utils`    | ★★★★☆     | Stable |
-
-> **Not planned** — a predefined utility atom vocabulary, a runtime style merger, or fallback chains. None can be reconciled with the closed-world static resolution performed by scanAll(). For one-off styles, give them a local name in css.create — the naming requirement is deliberate.
-
-## Structure
-
-Versioning: All versions are standardized for consistency.
-
-- `.github`
-  - Contains workflows used by GitHub Actions.
-  - Contains other templates.
-- `examples`
-  - Example applications using Plumeria.
-- `packages`
-  - Contains the individual packages managed in the monorepo.
-  - [codemod](https://github.com/zss-in-js/plumeria/tree/main/packages/codemod)
-  - [compiler](https://github.com/zss-in-js/plumeria/tree/main/packages/compiler)
-  - [core](https://github.com/zss-in-js/plumeria/tree/main/packages/core)
-  - [eslint-plugin](https://github.com/zss-in-js/plumeria/tree/main/packages/eslint-plugin)
-  - [headlessui](https://github.com/zss-in-js/plumeria/tree/main/packages/headlessui)
-  - [init](https://github.com/zss-in-js/plumeria/tree/main/packages/init)
-  - [inspector](https://github.com/zss-in-js/plumeria/tree/main/packages/inspector)
-  - [next-plugin](https://github.com/zss-in-js/plumeria/tree/main/packages/next-plugin)
-  - [turbopack-loader](https://github.com/zss-in-js/plumeria/tree/main/packages/turbopack-loader)
-  - [unplugin](https://github.com/zss-in-js/plumeria/tree/main/packages/unplugin)
-  - [utils](https://github.com/zss-in-js/plumeria/tree/main/packages/utils)
-- `test-e2e`
-  - Contains e2e tests built with Playwright and Next.js for final quality assurance.
-
-## Contributing
-
-We welcome contributions of all kinds — bug reports, feature ideas, pull requests.
-
-[Contributing Guide](https://github.com/zss-in-js/plumeria/blob/main/.github/CONTRIBUTING.md)
-
-## Acknowledgements
-
-- [Linaria](https://linaria.dev/) - for inspiring the Zero-Runtime architecture
-- [React Native](https://reactnative.dev/docs/stylesheet) - for inspiring the StyleSheet.create
-- [React Native for Web](https://necolas.github.io/react-native-web/) - for inspiring the generation of atomic CSS from CSS-in-JS
-- [StyleX](https://stylexjs.com/) - It inherits the design philosophy.
-- [Tailwind CSS](https://tailwindcss.com/) - for inspiring the brilliance of its approach
+Read [plumeria.dev/docs/typedcss](https://plumeria.dev/docs/typedcss) for what differs, and the Plumeria documentation for everything else.
 
 ## License
 
-Plumeria is [MIT licensed](https://github.com/zss-in-js/plumeria/blob/main/LICENSE).
+TypedCSS is [MIT licensed](https://github.com/zss-labs/typedcss/blob/main/LICENSE).
