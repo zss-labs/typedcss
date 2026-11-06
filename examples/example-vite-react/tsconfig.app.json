@@ -23,5 +23,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "plumeria.d.ts"]
+  "include": ["src", "typedcss.d.ts"]
 }
