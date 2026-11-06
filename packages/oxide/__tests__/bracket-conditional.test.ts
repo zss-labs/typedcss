@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP, renderClass } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -23,7 +23,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   });
 
   const wrap = (body: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const s = css.create({
   p1: { color: 'green' },
@@ -43,7 +43,7 @@ ${body}
   describe('transform: bracket access inside conditionals', () => {
     it('keeps both branches of a ternary', async () => {
       const out = await run(
-        `export const A = ({ on }: { on: boolean }) => <div classStyle={on ? s['p1'] : s['p3']} />;`,
+        `export const A = ({ on }: { on: boolean }) => <div sx={on ? s['p1'] : s['p3']} />;`,
       );
       expect(out).toContain('x3git8yv');
       expect(out).toContain('xxcejlqg');
@@ -51,24 +51,27 @@ ${body}
 
     it('matches the dot-access output for the same ternary', async () => {
       const bracket = await run(
-        `export const A = ({ on }: { on: boolean }) => <div classStyle={on ? s['p1'] : s['p3']} />;`,
+        `export const A = ({ on }: { on: boolean }) => <div sx={on ? s['p1'] : s['p3']} />;`,
       );
       const dot = await run(
-        `export const A = ({ on }: { on: boolean }) => <div classStyle={on ? s.p1 : s.p3} />;`,
+        `export const A = ({ on }: { on: boolean }) => <div sx={on ? s.p1 : s.p3} />;`,
       );
-      expect(bracket.replace(/s\['p1'\]/g, 's.p1')).toEqual(dot);
+      // typedcss keeps the access as written, so the two agree on what renders.
+      for (const on of [true, false]) {
+        expect(renderClass(bracket, { on })).toBe(renderClass(dot, { on }));
+      }
     });
 
     it('keeps the right-hand side of a logical &&', async () => {
       const out = await run(
-        `export const A = ({ on }: { on: boolean }) => <div classStyle={on && s['p1']} />;`,
+        `export const A = ({ on }: { on: boolean }) => <div sx={on && s['p1']} />;`,
       );
       expect(out).toContain('x3git8yv');
     });
 
     it('keeps a bracket branch nested in an array', async () => {
       const out = await run(
-        `export const A = ({ on }: { on: boolean }) => <div classStyle={[s.p3, on && s['p1']]} />;`,
+        `export const A = ({ on }: { on: boolean }) => <div sx={[s.p3, on && s['p1']]} />;`,
       );
       expect(out).toContain('x3git8yv');
       expect(out).toContain('xxcejlqg');
@@ -79,25 +82,26 @@ ${body}
     // slot no key claims carries whatever the other branch contributes.
     it('folds an outer ternary into the key of a non-literal bracket', async () => {
       const out = await run(
-        `export const A = ({ on, k }: { on: boolean; k: 'p1' | 'p3' }) => <div classStyle={on ? s[k] : s['p3']} />;`,
+        `export const A = ({ on, k }: { on: boolean; k: 'p1' | 'p3' }) => <div sx={on ? s[k] : s['p3']} />;`,
       );
-      expect(out).toContain(
-        `{"p1":"x3git8yv","p3":"xxcejlqg","#0":"xxcejlqg"}[((on) ? k : "#0")]`,
-      );
+      // typedcss picks at runtime, so the table Plumeria folds is checked by rendering.
+      expect(renderClass(out, { on: true, k: 'p1' })).toBe('x3git8yv');
+      expect(renderClass(out, { on: true, k: 'p3' })).toBe('xxcejlqg');
+      expect(renderClass(out, { on: false, k: 'p1' })).toBe('xxcejlqg');
     });
 
     it('folds an outer && into the key of a non-literal bracket', async () => {
       const out = await run(
-        `export const A = ({ on, k }: { on: boolean; k: 'p1' | 'p3' }) => <div classStyle={on && s[k]} />;`,
+        `export const A = ({ on, k }: { on: boolean; k: 'p1' | 'p3' }) => <div sx={on && s[k]} />;`,
       );
-      expect(out).toContain(
-        `{"p1":"x3git8yv","p3":"xxcejlqg"}[((on) ? k : "")]`,
-      );
+      expect(renderClass(out, { on: true, k: 'p1' })).toBe('x3git8yv');
+      expect(renderClass(out, { on: true, k: 'p3' })).toBe('xxcejlqg');
+      expect(renderClass(out, { on: false, k: 'p1' })).toBe('');
     });
 
     it('compiles the same intent with the condition inside the brackets', async () => {
       const out = await run(
-        `export const A = ({ on, k }: { on: boolean; k: 'p1' | 'p3' }) => <div classStyle={s[on ? k : 'p3']} />;`,
+        `export const A = ({ on, k }: { on: boolean; k: 'p1' | 'p3' }) => <div sx={s[on ? k : 'p3']} />;`,
       );
       expect(out).toContain('x3git8yv');
       expect(out).toContain('xxcejlqg');
@@ -105,7 +109,7 @@ ${body}
 
     it('keeps a bracket branch mixed with dot access', async () => {
       const out = await run(
-        `export const A = ({ on }: { on: boolean }) => <div classStyle={on ? s['p1'] : s.p3} />;`,
+        `export const A = ({ on }: { on: boolean }) => <div sx={on ? s['p1'] : s.p3} />;`,
       );
       expect(out).toContain('x3git8yv');
       expect(out).toContain('xxcejlqg');
@@ -113,7 +117,7 @@ ${body}
 
     it('still compiles a non-literal key outside any condition', async () => {
       const out = await run(
-        `export const A = ({ k }: { k: 'p1' | 'p3' }) => <div classStyle={s[k]} />;`,
+        `export const A = ({ k }: { k: 'p1' | 'p3' }) => <div sx={s[k]} />;`,
       );
       expect(out).toContain('x3git8yv');
       expect(out).toContain('xxcejlqg');
