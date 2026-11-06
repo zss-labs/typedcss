@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   color: {
@@ -9,4 +9,4 @@ const styles = css.create({
   },
 });
 
-export const vueClass = css.use(styles.color);
+export const vueClass = css.props(styles.color).className;
