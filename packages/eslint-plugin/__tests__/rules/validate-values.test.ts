@@ -9,1233 +9,1266 @@ const ruleTester = new RuleTester({
 
 ruleTester.run('validate-values', validateValues, {
   valid: [
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ other: 1, syntax: '<length>+', initialValue: '1px  2px' });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: '<length>+', initialValue: ' ' });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType(); css.varType(value);`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ ...other, [key]: 1, 'syntax': '*', syntax: value });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: 1, initialValue: 'x' });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: '*', initialValue: value });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: '*', initialValue: true });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: 'unknown+ | *', initialValue: 'anything' });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: '<transform-function>+', initialValue: 'translateX(1px) rotate(2deg)' });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: 'color-mix(in srgb, 20% red, rgb(from blue r g b))' } });`,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: 'rgb(from red r g b)' } });`,
+    },
     // css.varType initial values the browser registers
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: '10px' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: '10px' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: '1vw' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: '1vw' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: 'calc(1px + 2px)' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: 'calc(1px + 2px)' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: '0' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: '0' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length-percentage>', initialValue: '50%' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length-percentage>', initialValue: '50%' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<number>', initialValue: 0.5 });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<number>', initialValue: 0.5 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<integer>', initialValue: '3' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<integer>', initialValue: '3' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<angle>', initialValue: '0deg' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<angle>', initialValue: '0deg' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<time>', initialValue: '200ms' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<time>', initialValue: '200ms' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<resolution>', initialValue: '2x' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<resolution>', initialValue: '2x' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<color>', initialValue: 'red' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<color>', initialValue: 'red' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<color>', initialValue: 'currentcolor' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<color>', initialValue: 'currentcolor' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<color> | <length>', initialValue: 'red' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<color> | <length>', initialValue: 'red' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<color> | <length>', initialValue: '10px' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<color> | <length>', initialValue: '10px' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>+', initialValue: '1px 2px' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>+', initialValue: '1px 2px' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>#', initialValue: '1px, 2px' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>#', initialValue: '1px, 2px' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: 'small | medium', initialValue: 'small' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: 'small | medium', initialValue: 'small' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<transform-function>', initialValue: 'rotate(10deg)' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<transform-function>', initialValue: 'rotate(10deg)' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<transform-list>', initialValue: 'rotate(10deg) scale(2)' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<transform-list>', initialValue: 'rotate(10deg) scale(2)' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<string>', initialValue: '"1em"' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<string>', initialValue: '"1em"' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<custom-ident>', initialValue: 'auto-fill' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<custom-ident>', initialValue: 'auto-fill' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '*', initialValue: 'var(--x)' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '*', initialValue: 'var(--x)' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<lenght>', initialValue: '1px' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<lenght>', initialValue: '1px' });`,
     },
     {
-      code: `import { varType } from '@plumeria/core'; const v = varType({ syntax: '<length>', initialValue: '1px' });`,
+      code: `import { varType } from '@typedcss/css'; const v = varType({ syntax: '<length>', initialValue: '1px' });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: '1em', height: 'var(--x)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: '1em', height: 'var(--x)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'min(100%, calc(50% + 10px))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'min(100%, calc(50% + 10px))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'clamp(1rem, calc(1rem + 2vw), 3rem)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'clamp(1rem, calc(1rem + 2vw), 3rem)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'max(min(10px, 5vw), 1rem)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'max(min(10px, 5vw), 1rem)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'calc(100% - min(10px, (2px + 1px)))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'calc(100% - min(10px, (2px + 1px)))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: '100cqi' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: '100cqi' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { height: '50dvb' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { height: '50dvb' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'translate(calc(100% - 1px), 0) rotate(45deg)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'translate(calc(100% - 1px), 0) rotate(45deg)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 1 calc(50% - (1rem + 2px))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 1 calc(50% - (1rem + 2px))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'currentcolor' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'currentcolor' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'oklch(from var(--brand) l c calc(h + 180))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'oklch(from var(--brand) l c calc(h + 180))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'rgb(from #f00 r g b / 50%)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'rgb(from #f00 r g b / 50%)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'color(from red srgb r g b)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'color(from red srgb r g b)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'color-mix(in srgb, red 50%, color-mix(in srgb, blue, white))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'color-mix(in srgb, red 50%, color-mix(in srgb, blue, white))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundColor: 'color-mix(in oklch, light-dark(white, black), transparent 30%)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundColor: 'color-mix(in oklch, light-dark(white, black), transparent 30%)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { boxShadow: '0 0 2px light-dark(rgb(from red r g b / 50%), black)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { boxShadow: '0 0 2px light-dark(rgb(from red r g b / 50%), black)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundImage: 'image-set(url(a.avif) type("image/avif"), url(a.png) 1x)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundImage: 'image-set(url(a.avif) type("image/avif"), url(a.png) 1x)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskImage: 'image-set("a.png" 1x)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskImage: 'image-set("a.png" 1x)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: '"(" counter(item) ")"' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: '"(" counter(item) ")"' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'open-quote "x" close-quote' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'open-quote "x" close-quote' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'url(a.png) / "alt"' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'url(a.png) / "alt"' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'round(up, 10.5px, 1px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'round(up, 10.5px, 1px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'mod(18px, 5px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'mod(18px, 5px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { margin: 'abs(-10px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { margin: 'abs(-10px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'color(from red --custom r g b)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'color(from red --custom r g b)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(.5, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(.5, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'cubic-bezier(.4, 0, .2, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'cubic-bezier(.4, 0, .2, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { margin: '-.5rem' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { margin: '-.5rem' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { padding: '.5px .25em' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { padding: '.5px .25em' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { opacity: '.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { opacity: '.5' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'oklch(70% .1 200 / .5)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'oklch(70% .1 200 / .5)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImageSlice: '.5 fill' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImageSlice: '.5 fill' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'calc(.5px + 1px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'calc(.5px + 1px)' } });`,
     },
     // Basic keywords
     {
-      code: `import { create } from '@plumeria/core'; const styles = create({ s: { color: 'red' } });`,
+      code: `import { create } from '@typedcss/css'; const styles = create({ s: { color: 'red' } });`,
     },
     {
-      code: `import { keyframes } from '@plumeria/core'; const anim = keyframes({ s: { color: 'red' } });`,
+      code: `import { keyframes } from '@typedcss/css'; const anim = keyframes({ s: { color: 'red' } });`,
     },
     {
-      code: `import { viewTransitionClass } from '@plumeria/core'; const vt = viewTransitionClass({ s: { color: 'red' } });`,
+      code: `import { viewTransitionClass } from '@typedcss/css'; const vt = viewTransitionClass({ s: { color: 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const above = css.positionTry({ positionArea: 'top', marginBottom: '8px' });`,
+      code: `import * as css from '@typedcss/css'; const above = css.positionTry({ positionArea: 'top', marginBottom: '8px' });`,
     },
     {
-      code: `import plumeria from '@plumeria/core'; const styles = plumeria.create({ s: { color: 'red' } });`,
+      code: `import plumeria from '@typedcss/css'; const styles = plumeria.create({ s: { color: 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { 'color': 'red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { 'color': 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: myVar } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: myVar } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: /abc/ } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: /abc/ } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { position: 'absolute' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { position: 'absolute' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'flex' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'flex' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overflow: 'scroll auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overflow: 'scroll auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationIterationCount: '1' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationIterationCount: '1' } });`,
     },
 
     // Length & Color
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSize: '1.5em' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSize: '1.5em' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: '#f00' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: '#f00' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderColor: 'red blue' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderColor: 'red blue' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { margin: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { margin: '10px 20px' } });`,
     },
 
     // Shorthand & Complex
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: '1px solid red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: '1px solid red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { background: 'red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { background: 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { filter: 'blur(5px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { filter: 'blur(5px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transition: 'width 2s ease-in-out' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transition: 'width 2s ease-in-out' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 1 auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 1 auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 2 auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 2 auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 2 10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 2 10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '2 1' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '2 1' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '2 1px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '2 1px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flexFlow: 'row wrap' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flexFlow: 'row wrap' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animation: 'slidein 3s ease' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animation: 'slidein 3s ease' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { grid: '1fr / 1fr' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { grid: '1fr / 1fr' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'translateX(10px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'translateX(10px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { clipPath: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { clipPath: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { cursor: 'url(hand.cur), auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { cursor: 'url(hand.cur), auto' } });`,
     },
 
     // Global values & CSS Vars
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'inherit' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'inherit' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'var(--my-color)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'var(--my-color)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderStyle: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderStyle: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderRadius: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderRadius: '10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { opacity: '0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { opacity: '0.5' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskImage: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskImage: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImageSlice: 'inherit' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImageSlice: 'inherit' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImage: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImage: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { aspectRatio: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { aspectRatio: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionDuration: '0.2s' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionDuration: '0.2s' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationDirection: 'normal' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationDirection: 'normal' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationFillMode: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationFillMode: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationPlayState: 'paused' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationPlayState: 'paused' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationIterationCount: 'inherit' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationIterationCount: 'inherit' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'cover 20%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'cover 20%' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'entry-crossing 50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'entry-crossing 50%' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'calc(100% - 20px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'calc(100% - 20px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 20 } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 20 } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeEnd: 'normal' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeEnd: 'normal' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRange: 'entry 0% exit 100%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRange: 'entry 0% exit 100%' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRange: 'cover 20%, exit 80%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRange: 'cover 20%, exit 80%' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimeline: '--my-timeline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimeline: '--my-timeline' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimeline: 'scroll(root block)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimeline: 'scroll(root block)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { top: 'anchor(--a bottom)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { top: 'anchor(--a bottom)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { insetBlockStart: 'anchor(--a bottom)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { insetBlockStart: 'anchor(--a bottom)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'anchor-size(--a width)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'anchor-size(--a width)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marginTop: 'anchor-size(--a width)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marginTop: 'anchor-size(--a width)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'BLOCK' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'BLOCK' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'COVER' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'COVER' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderColor: 'CURRENTCOLOR' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderColor: 'CURRENTCOLOR' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolation: 'srgb' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolation: 'srgb' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: '10PX' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: '10PX' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'INHERIT' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'INHERIT' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'inherit' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'inherit' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundSize: 'cover' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundSize: 'cover' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundClip: 'initial' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundClip: 'initial' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundPosition: 'top' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundPosition: 'top' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundImage: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundImage: 'none' } });`,
     },
 
     // isFitContentGroup for test
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'fit-content(100px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'fit-content(100px)' } });`,
     },
 
     // isNumber for test
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { lineHeight: '1.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { lineHeight: '1.5' } });`,
     },
 
     // isBorderWidth for test
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderWidth: 'thin' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderWidth: 'thin' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderWidth: 'medium' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderWidth: 'medium' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderWidth: 'thick' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderWidth: 'thick' } });`,
     },
 
     // Translate valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { translate: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { translate: '10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { translate: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { translate: '10px 20px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { translate: '10px 20px 30px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { translate: '10px 20px 30px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { translate: '50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { translate: '50%' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { translate: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { translate: 'none' } });`,
     },
 
     // Transform valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'rotate(45deg)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'rotate(45deg)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'scale(1.5)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'scale(1.5)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'scaleX(var(--progress, 0))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'scaleX(var(--progress, 0))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'translateX(var(--offset)) rotate(var(--angle, 0deg))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'translateX(var(--offset)) rotate(var(--angle, 0deg))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'fit-content(var(--size))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'fit-content(var(--size))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'min(var(--size), 100px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'min(var(--size), 100px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'var(--size, calc(100% - 1rem))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'var(--size, calc(100% - 1rem))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignmentBaseline: 'var(--baseline, var(--fallback, baseline))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignmentBaseline: 'var(--baseline, var(--fallback, baseline))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(var(--columns), minmax(var(--minimum), 1fr))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(var(--columns), minmax(var(--minimum), 1fr))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { clipPath: 'circle(var(--radius))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { clipPath: 'circle(var(--radius))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeOutside: 'inset(var(--offset))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeOutside: 'inset(var(--offset))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offsetPath: 'circle(var(--radius))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offsetPath: 'circle(var(--radius))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'counter(var(--counter))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'counter(var(--counter))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: '"var("' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: '"var("' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'var(--content, "var(")' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'var(--content, "var(")' } });`,
     },
     {
-      code: String.raw`import * as css from '@plumeria/core'; const styles = css.create({ s: { content: '"a\\b var("' } });`,
+      code: String.raw`import * as css from '@typedcss/css'; const styles = css.create({ s: { content: '"a\\b var("' } });`,
     },
     {
-      code: String.raw`import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'scaleX("a\\b(" var(--scale))' } });`,
+      code: String.raw`import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'scaleX("a\\b(" var(--scale))' } });`,
     },
     {
-      code: String.raw`import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'var(--content, "a\\b var(")' } });`,
+      code: String.raw`import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'var(--content, "a\\b var(")' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantAlternates: 'stylistic(var(--style))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantAlternates: 'stylistic(var(--style))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { filter: 'blur(var(--radius))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { filter: 'blur(var(--radius))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { filter: 'drop-shadow(var(--shadow))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { filter: 'drop-shadow(var(--shadow))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'steps(var(--steps), end)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'steps(var(--steps), end)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'steps(2)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'steps(2)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'steps(var(--step-args)), linear(var(--stops)), cubic-bezier(var(--points))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'steps(var(--step-args)), linear(var(--stops)), cubic-bezier(var(--points))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(var(--x1), 0, 1, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(var(--x1), 0, 1, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(0.4, var(--y1), 0.2, var(--y2))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(0.4, var(--y1), 0.2, var(--y2))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(var(--start), var(--end))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(var(--start), var(--end))' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, var(--mid) 50%, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, var(--mid) 50%, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 0.5 var(--position), 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 0.5 var(--position), 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 1.2, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 1.2, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, -0.02, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, -0.02, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 0.5 -10%, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 0.5 -10%, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'linear(0, 0.009, 0.035 2.1%, 0.723 12.9%, 1.149 24.3%, 1.017 43.1%, 0.997 69.8%, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'linear(0, 0.009, 0.035 2.1%, 0.723 12.9%, 1.149 24.3%, 1.017 43.1%, 0.997 69.8%, 1)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSynthesis: 'var(--weight) var(--style)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSynthesis: 'var(--weight) var(--style)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantNumeric: 'var(--figures) var(--spacing)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantNumeric: 'var(--figures) var(--spacing)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'var(--size,)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'var(--size,)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'none' } });`,
     },
 
     // TransformOrigin valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transformOrigin: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transformOrigin: 'center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transformOrigin: 'top left' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transformOrigin: 'top left' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transformOrigin: '50% 50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transformOrigin: '50% 50%' } });`,
     },
 
     // TextEmphasis valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasis: 'filled' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasis: 'filled' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasis: 'filled red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasis: 'filled red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasis: 'dot' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasis: 'dot' } });`,
     },
 
     // TextEmphasisStyle valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisStyle: 'dot' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisStyle: 'dot' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisStyle: 'filled circle' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisStyle: 'filled circle' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisStyle: '"x"' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisStyle: '"x"' } });`,
     },
 
     // TextEmphasisPosition valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisPosition: 'over' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisPosition: 'over' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisPosition: 'over right' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisPosition: 'over right' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisPosition: 'under left' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisPosition: 'under left' } });`,
     },
 
     // ScrollSnapType valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapType: 'x' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapType: 'x' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapType: 'y mandatory' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapType: 'y mandatory' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapType: 'both proximity' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapType: 'both proximity' } });`,
     },
 
     // ScrollSnapAlign valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapAlign: 'start' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapAlign: 'start' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapAlign: 'center end' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapAlign: 'center end' } });`,
     },
 
     // MaskBorderRepeat valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderRepeat: 'stretch' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderRepeat: 'stretch' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderRepeat: 'repeat round' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderRepeat: 'repeat round' } });`,
     },
 
     // JustifyItems valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyItems: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyItems: 'center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyItems: 'safe center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyItems: 'safe center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyItems: 'legacy center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyItems: 'legacy center' } });`,
     },
 
     // JustifySelf valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifySelf: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifySelf: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifySelf: 'safe center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifySelf: 'safe center' } });`,
     },
 
     // JustifyContent valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyContent: 'space-between' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyContent: 'space-between' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyContent: 'safe center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyContent: 'safe center' } });`,
     },
 
     // HangingPunctuation valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { hangingPunctuation: 'first' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { hangingPunctuation: 'first' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { hangingPunctuation: 'first force-end' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { hangingPunctuation: 'first force-end' } });`,
     },
 
     // FlexFlow valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flexFlow: 'column wrap' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flexFlow: 'column wrap' } });`,
     },
 
     // BackgroundRepeat valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundRepeat: 'repeat-x' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundRepeat: 'repeat-x' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundRepeat: 'no-repeat' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundRepeat: 'no-repeat' } });`,
     },
 
     // PlaceSelf valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeSelf: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeSelf: 'center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeSelf: 'start end' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeSelf: 'start end' } });`,
     },
 
     // PlaceItems valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeItems: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeItems: 'center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeItems: 'start end' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeItems: 'start end' } });`,
     },
 
     // PlaceContent valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeContent: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeContent: 'center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeContent: 'space-between' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeContent: 'space-between' } });`,
     },
 
     // Display multi-keyword valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'inline flex' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'inline flex' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'list-item block' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'list-item block' } });`,
     },
 
     // AlignItems valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignItems: 'safe center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignItems: 'safe center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignItems: 'first baseline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignItems: 'first baseline' } });`,
     },
 
     // AlignSelf valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignSelf: 'safe center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignSelf: 'safe center' } });`,
     },
 
     // AlignContent valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignContent: 'safe center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignContent: 'safe center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignContent: 'first baseline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignContent: 'first baseline' } });`,
     },
 
     // TouchAction valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { touchAction: 'pan-x' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { touchAction: 'pan-x' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { touchAction: 'pan-y pinch-zoom' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { touchAction: 'pan-y pinch-zoom' } });`,
     },
 
     // TextShadow valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textShadow: '2px 2px 4px black' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textShadow: '2px 2px 4px black' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textShadow: 'red 2px 2px 4px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textShadow: 'red 2px 2px 4px' } });`,
     },
 
     // TextIndent valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textIndent: '2em' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textIndent: '2em' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textIndent: '2em hanging' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textIndent: '2em hanging' } });`,
     },
 
     // TextDecorationLine valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline overline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline overline' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'var(--decoration)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'var(--decoration)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline var(--decoration)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline var(--decoration)' } });`,
     },
 
     // StrokeMiterlimit valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { strokeMiterlimit: '4' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { strokeMiterlimit: '4' } });`,
     },
 
     // StrokeDasharray valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { strokeDasharray: '5, 10' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { strokeDasharray: '5, 10' } });`,
     },
 
     // Stroke valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { stroke: 'red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { stroke: 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { stroke: 'url(#gradient)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { stroke: 'url(#gradient)' } });`,
     },
 
     // ShapeOutside valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeOutside: 'circle(50%)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeOutside: 'circle(50%)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeOutside: 'margin-box' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeOutside: 'margin-box' } });`,
     },
 
     // ShapeImageThreshold valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeImageThreshold: '0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeImageThreshold: '0.5' } });`,
     },
 
     // ScrollbarColor valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollbarColor: 'red blue' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollbarColor: 'red blue' } });`,
     },
 
     // ScrollPadding valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollPadding: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollPadding: '10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollPadding: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollPadding: '10px 20px' } });`,
     },
 
     // ScrollMargin valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollMargin: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollMargin: '10px' } });`,
     },
 
     // Scale valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scale: '1.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scale: '1.5' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scale: '1.5 2' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scale: '1.5 2' } });`,
     },
 
     // Rotate valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { rotate: '45deg' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { rotate: '45deg' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { rotate: 'x 45deg' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { rotate: 'x 45deg' } });`,
     },
 
     // Quotes valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { quotes: '"«" "»"' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { quotes: '"«" "»"' } });`,
     },
 
     // PaintOrder valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { paintOrder: 'fill' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { paintOrder: 'fill' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { paintOrder: 'stroke fill' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { paintOrder: 'stroke fill' } });`,
     },
 
     // OverscrollBehavior valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overscrollBehavior: 'contain' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overscrollBehavior: 'contain' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overscrollBehavior: 'auto contain' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overscrollBehavior: 'auto contain' } });`,
     },
 
     // OverflowClipMargin valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overflowClipMargin: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overflowClipMargin: '10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overflowClipMargin: 'border-box' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overflowClipMargin: 'border-box' } });`,
     },
 
     // Overflow valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overflow: 'hidden' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overflow: 'hidden' } });`,
     },
 
     // Offset valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offset: 'path("M 0 0 L 100 100")' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offset: 'path("M 0 0 L 100 100")' } });`,
     },
 
     // OffsetPath valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offsetPath: 'path("M 0 0 L 100 100")' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offsetPath: 'path("M 0 0 L 100 100")' } });`,
     },
 
     // OffsetRotate valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offsetRotate: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offsetRotate: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offsetRotate: '45deg' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offsetRotate: '45deg' } });`,
     },
 
     // LengthPosition properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { objectPosition: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { objectPosition: 'center' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { objectPosition: '50% 50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { objectPosition: '50% 50%' } });`,
     },
 
     // MathDepth valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { mathDepth: '2' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { mathDepth: '2' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { mathDepth: 'add(1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { mathDepth: 'add(1)' } });`,
     },
 
     // Mask valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { mask: 'url(mask.png)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { mask: 'url(mask.png)' } });`,
     },
 
     // MaskBorder valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorder: 'url(border.png)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorder: 'url(border.png)' } });`,
     },
 
     // MaskSize valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskSize: 'cover' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskSize: 'cover' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskSize: '100px 200px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskSize: '100px 200px' } });`,
     },
 
     // MaskRepeat valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskRepeat: 'repeat' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskRepeat: 'repeat' } });`,
     },
 
     // MaskPosition valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskPosition: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskPosition: 'center' } });`,
     },
 
     // MaskOrigin valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskOrigin: 'border-box' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskOrigin: 'border-box' } });`,
     },
 
     // MaskMode valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskMode: 'alpha' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskMode: 'alpha' } });`,
     },
 
     // MaskComposite valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskComposite: 'add' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskComposite: 'add' } });`,
     },
 
     // MaskClip valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskClip: 'border-box' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskClip: 'border-box' } });`,
     },
 
     // MaskBorderWidth valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderWidth: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderWidth: '10px' } });`,
     },
 
     // MaskBorderSlice valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderSlice: '10' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderSlice: '10' } });`,
     },
 
     // MaskBorderOutset valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderOutset: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderOutset: '10px' } });`,
     },
 
     // Marker properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marker: 'url(#marker)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marker: 'url(#marker)' } });`,
     },
 
     // MarginPair properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marginBlock: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marginBlock: '10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marginBlock: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marginBlock: '10px 20px' } });`,
     },
 
     // InsetPair properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { insetBlock: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { insetBlock: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { insetBlock: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { insetBlock: '10px 20px' } });`,
     },
 
     // InitialLetter valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { initialLetter: '3' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { initialLetter: '3' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { initialLetter: '3 drop' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { initialLetter: '3 drop' } });`,
     },
 
     // ImageOrientation valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { imageOrientation: 'from-image' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { imageOrientation: 'from-image' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { imageOrientation: '90deg' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { imageOrientation: '90deg' } });`,
     },
 
     // HyphenateLimitChars valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { hyphenateLimitChars: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { hyphenateLimitChars: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { hyphenateLimitChars: '5 2 3' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { hyphenateLimitChars: '5 2 3' } });`,
     },
 
     // Grid valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { grid: 'auto-flow / 1fr' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { grid: 'auto-flow / 1fr' } });`,
     },
 
     // GridTemplate valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplate: '1fr / 1fr' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplate: '1fr / 1fr' } });`,
     },
 
     // GridTemplateColumns/Rows valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: '1fr 2fr' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: '1fr 2fr' } });`,
     },
 
     // GridTemplateAreas valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateAreas: '"header header"' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateAreas: '"header header"' } });`,
     },
 
     // GridAutoColumns/Rows valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridAutoColumns: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridAutoColumns: 'auto' } });`,
     },
 
     // FontFeatureSettings valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontFeatureSettings: '"liga" on' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontFeatureSettings: '"liga" on' } });`,
     },
 
     // FontVariant valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariant: 'small-caps' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariant: 'small-caps' } });`,
     },
 
     // FontLanguageOverride valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontLanguageOverride: 'normal' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontLanguageOverride: 'normal' } });`,
     },
 
     // FontVariationSettings valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariationSettings: '"wght" 700' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariationSettings: '"wght" 700' } });`,
     },
 
     // FontVariantNumeric valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantNumeric: 'lining-nums' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantNumeric: 'lining-nums' } });`,
     },
 
     // FontVariantLigatures valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantLigatures: 'common-ligatures' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantLigatures: 'common-ligatures' } });`,
     },
 
     // FontVariantEastAsian valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantEastAsian: 'jis78' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantEastAsian: 'jis78' } });`,
     },
 
     // FontVariantAlternates valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantAlternates: 'historical-forms' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantAlternates: 'historical-forms' } });`,
     },
 
     // FontSynthesis valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSynthesis: 'weight' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSynthesis: 'weight' } });`,
     },
 
     // FontStyle valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontStyle: 'oblique 10deg' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontStyle: 'oblique 10deg' } });`,
     },
 
     // FontPalette valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontPalette: 'light' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontPalette: 'light' } });`,
     },
 
     // FontSizeAdjust valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: '0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: '0.5' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: 'ex-height 0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: 'ex-height 0.5' } });`,
     },
 
     // FontStretch valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontStretch: '50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontStretch: '50%' } });`,
     },
 
     // Flex valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 1' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 1' } });`,
     },
 
     // Cursor valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { cursor: 'pointer' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { cursor: 'pointer' } });`,
     },
 
     // Content valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: '"text"' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: '"text"' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'url(image.png)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'url(image.png)' } });`,
     },
 
     // Columns valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { columns: '100px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { columns: '100px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { columns: '3' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { columns: '3' } });`,
     },
 
     // ClipPath valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { clipPath: 'circle(50%)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { clipPath: 'circle(50%)' } });`,
     },
 
     // BoxShadow valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { boxShadow: '2px 2px 4px black' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { boxShadow: '2px 2px 4px black' } });`,
     },
 
     // BackgroundAttachment valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundAttachment: 'fixed' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundAttachment: 'fixed' } });`,
     },
 
     // BackgroundBlendMode valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundBlendMode: 'multiply' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundBlendMode: 'multiply' } });`,
     },
 
     // BackgroundOrigin valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundOrigin: 'border-box' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundOrigin: 'border-box' } });`,
     },
 
     // BackgroundPosition quad valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundPosition: 'left 10px top 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundPosition: 'left 10px top 20px' } });`,
     },
 
     // BackgroundSize pair valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundPositionY: 'top, bottom' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundPositionY: 'top, bottom' } });`,
     },
 
     // Filter valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { filter: 'brightness(1.5)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { filter: 'brightness(1.5)' } });`,
     },
 
     // AnimationTimingFunction valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'ease-in-out' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'ease-in-out' } });`,
     },
 
     // AspectRatio valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { aspectRatio: '16 / 9' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { aspectRatio: '16 / 9' } });`,
     },
 
     // Border valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: 'var(--border-width)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: 'var(--border-width)' } });`,
     },
 
     // BorderImage valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImage: 'url(border.png) 30' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImage: 'url(border.png) 30' } });`,
     },
 
     // BorderImageSlice valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImageSlice: '30 fill' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImageSlice: '30 fill' } });`,
     },
 
     // ImageSource properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { listStyleImage: 'url(bullet.png)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { listStyleImage: 'url(bullet.png)' } });`,
     },
 
     // Border properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderTop: 'thin solid red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderTop: 'thin solid red' } });`,
     },
 
     // SingleColor properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { accentColor: 'blue' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { accentColor: 'blue' } });`,
     },
 
     // BorderColor valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderColor: 'red blue green yellow' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderColor: 'red blue green yellow' } });`,
     },
 
     // Integer group properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { columnCount: '3' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { columnCount: '3' } });`,
     },
 
     // Other group properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flexGrow: '2' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flexGrow: '2' } });`,
     },
 
     // LengthValue properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: '100px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: '100px' } });`,
     },
 
     // BorderRadius valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderRadius: '10px / 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderRadius: '10px / 20px' } });`,
     },
 
     // BorderStyle valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderStyle: 'solid dashed' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderStyle: 'solid dashed' } });`,
     },
 
     // MultipleValue properties valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { padding: '10px 20px 30px 40px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { padding: '10px 20px 30px 40px' } });`,
     },
 
     // ============================================
@@ -1244,226 +1277,226 @@ ruleTester.run('validate-values', validateValues, {
 
     // Fill valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fill: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fill: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fill: 'currentColor' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fill: 'currentColor' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fill: 'red' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fill: 'red' } });`,
     },
 
     // FillOpacity valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fillOpacity: '0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fillOpacity: '0.5' } });`,
     },
 
     // FillRule valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fillRule: 'nonzero' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fillRule: 'nonzero' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fillRule: 'evenodd' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fillRule: 'evenodd' } });`,
     },
 
     // AlignmentBaseline valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignmentBaseline: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignmentBaseline: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignmentBaseline: 'middle' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignmentBaseline: 'middle' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignmentBaseline: 'mathematical' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignmentBaseline: 'mathematical' } });`,
     },
 
     // DominantBaseline valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { dominantBaseline: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { dominantBaseline: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { dominantBaseline: 'central' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { dominantBaseline: 'central' } });`,
     },
 
     // BaselineShift valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { baselineShift: 'baseline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { baselineShift: 'baseline' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { baselineShift: 'sub' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { baselineShift: 'sub' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { baselineShift: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { baselineShift: '10px' } });`,
     },
 
     // ShapeMargin valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeMargin: '10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeMargin: '10px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeMargin: '50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeMargin: '50%' } });`,
     },
 
     // ContainerType valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { containerType: 'size' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { containerType: 'size' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { containerType: 'inline-size' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { containerType: 'inline-size' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { containerType: 'normal' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { containerType: 'normal' } });`,
     },
 
     // ContentVisibility valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contentVisibility: 'visible' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contentVisibility: 'visible' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contentVisibility: 'hidden' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contentVisibility: 'hidden' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contentVisibility: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contentVisibility: 'auto' } });`,
     },
 
     // Direction valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { direction: 'ltr' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { direction: 'ltr' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { direction: 'rtl' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { direction: 'rtl' } });`,
     },
 
     // ForcedColorAdjust valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { forcedColorAdjust: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { forcedColorAdjust: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { forcedColorAdjust: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { forcedColorAdjust: 'none' } });`,
     },
 
     // Contain valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'strict' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'strict' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'content' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'content' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'size' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'size' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'inline-size' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'inline-size' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'layout' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'layout' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'style' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'style' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'paint' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'paint' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'size layout' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'size layout' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'inline-size layout style paint' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'inline-size layout style paint' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'paint style layout size' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'paint style layout size' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'layout paint' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'layout paint' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'var(--contain) paint' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'var(--contain) paint' } });`,
     },
 
     // TextSizeAdjust valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textSizeAdjust: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textSizeAdjust: 'none' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textSizeAdjust: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textSizeAdjust: 'auto' } });`,
     },
 
     // ColorInterpolation valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolation: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolation: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolation: 'sRGB' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolation: 'sRGB' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolation: 'linearRGB' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolation: 'linearRGB' } });`,
     },
 
     // ColorInterpolationFilters valid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolationFilters: 'auto' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolationFilters: 'auto' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolationFilters: 'sRGB' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolationFilters: 'sRGB' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolationFilters: 'linearRGB' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolationFilters: 'linearRGB' } });`,
     },
 
     // Number value accepted for length property (not rejected)
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { zIndex: 10 } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { zIndex: 10 } });`,
     },
     {
       // Computed member access
-      code: 'import * as css from "@plumeria/core"; css["create"]({ s: { color: "red" } });',
+      code: 'import * as css from "@typedcss/css"; css["create"]({ s: { color: "red" } });',
     },
     {
       // String literal import
-      code: 'import { "create" as c } from "@plumeria/core"; c({ s: { color: "red" } });',
+      code: 'import { "create" as c } from "@typedcss/css"; c({ s: { color: "red" } });',
     },
     {
       // Non-Identifier object in MemberExpression
-      code: 'import * as css from "@plumeria/core"; (function(){ return css; })().create({ s: { color: "red" } });',
+      code: 'import * as css from "@typedcss/css"; (function(){ return css; })().create({ s: { color: "red" } });',
     },
     {
       // Non-Identifier callee
-      code: 'import * as css from "@plumeria/core"; (function(){})()',
+      code: 'import * as css from "@typedcss/css"; (function(){})()',
     },
     {
       // Non-ObjectExpression argument
-      code: 'import { create } from "@plumeria/core"; create(arg);',
+      code: 'import { create } from "@typedcss/css"; create(arg);',
     },
     {
-      // Non-Plumeria import
+      // Non-typedcss import
       code: 'import * as other from "other"; other.create({ s: { color: "red" } });',
     },
     {
-      // Another non-Plumeria import specifier
+      // Another non-typedcss import specifier
       code: 'import { create } from "other"; create({ s: { color: "red" } });',
     },
     {
       // Non-CSS member access
-      code: 'import * as css from "@plumeria/core"; css.somethingElse();',
+      code: 'import * as css from "@typedcss/css"; css.somethingElse();',
     },
     {
       // Empty color value to hit splitColorValues edge case
-      code: 'import * as css from "@plumeria/core"; const styles = css.create({ s: { borderColor: " " } });',
+      code: 'import * as css from "@typedcss/css"; const styles = css.create({ s: { borderColor: " " } });',
     },
     {
       // No arguments
-      code: 'import { create } from "@plumeria/core"; create();',
+      code: 'import { create } from "@typedcss/css"; create();',
     },
     {
       // Multiple arguments
-      code: 'import { create } from "@plumeria/core"; create({}, {});',
+      code: 'import { create } from "@typedcss/css"; create({}, {});',
     },
     {
       // Non-Identifier object in MemberExpression
-      code: 'import * as css from "@plumeria/core"; (css).create({});',
+      code: 'import * as css from "@typedcss/css"; (css).create({});',
     },
     {
       // No imports at all
@@ -1471,23 +1504,23 @@ ruleTester.run('validate-values', validateValues, {
     },
     {
       // Spread element in style object
-      code: 'import { create } from "@plumeria/core"; create({ s: { ...spread } });',
+      code: 'import { create } from "@typedcss/css"; create({ s: { ...spread } });',
     },
     // Coverage for !isCssProperties (no import)
     { code: `create({ s: { color: 'red' } });` },
     // Coverage for prop.value.type !== 'ObjectExpression' in create call
-    { code: `import { create } from '@plumeria/core'; create({ s: 1 });` },
+    { code: `import { create } from '@typedcss/css'; create({ s: 1 });` },
     // Coverage for stringNameProperties branch
     {
-      code: `import { create } from '@plumeria/core'; create({ s: { animationName: 'myAnim', fontFamily: 'Arial' } });`,
+      code: `import { create } from '@typedcss/css'; create({ s: { animationName: 'myAnim', fontFamily: 'Arial' } });`,
     },
     // Coverage for compted property branch
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { ['color']: {} } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { ['color']: {} } });`,
     },
     {
       code: `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     css.create({
       testClass: {
         border: 'var(--my-border-width) var(--my-border-style)',
@@ -1499,146 +1532,170 @@ ruleTester.run('validate-values', validateValues, {
     },
     // Additional tests for remaining coverage
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantEastAsian: 'jis78 full-width ruby' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantEastAsian: 'jis78 full-width ruby' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { columnRuleWidth: 'thin' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { columnRuleWidth: 'thin' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { outlineWidth: 'thin' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { outlineWidth: 'thin' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { outlineWidth: '2px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { outlineWidth: '2px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { outlineWidth: 'calc(1px + 2px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { outlineWidth: 'calc(1px + 2px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundPositionX: 'left' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundPositionX: 'left' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'fit-content(100px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'fit-content(100px)' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateRows: '1fr' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateRows: '1fr' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderSpacing: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderSpacing: '10px 20px' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderTopLeftRadius: '10px 20px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderTopLeftRadius: '10px 20px' } });`,
     },
   ],
 
   invalid: [
     {
-      code: `import * as css from '@plumeria/core'; const above = css.positionTry({ width: 'wide' });`,
+      code: `import * as css from '@typedcss/css'; css.varType({ syntax: '<length>#', initialValue: '1px,' });`,
+      errors: [{ messageId: 'varTypeMismatch' }],
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: 'color-mix(in srgb, red 20% extra, blue)' } });`,
+      errors: 1,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: 'color-mix(in srgb, red, blue' } });`,
+      errors: 1,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: "light-dark('red', blue)" } });`,
+      errors: 1,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: 'rgb(from nope r g b)' } });`,
+      errors: 1,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; css.create({ s: { color: 'color(from red nope r g b)' } });`,
+      errors: 1,
+    },
+    {
+      code: `import * as css from '@typedcss/css'; const above = css.positionTry({ width: 'wide' });`,
       errors: [{ messageId: 'validateValue' }],
     },
     // css.varType initial values the browser drops
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: '1em' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: '1em' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: '1rem' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: '1rem' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: '10cqw' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: '10cqw' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: 'calc(1px + 1em)' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: 'calc(1px + 1em)' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>', initialValue: 'var(--x)' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>', initialValue: 'var(--x)' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<color> | <length>', initialValue: '1em' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<color> | <length>', initialValue: '1em' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<angle>', initialValue: '0' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<angle>', initialValue: '0' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<angle>', initialValue: 'red' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<angle>', initialValue: 'red' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<time>', initialValue: '200' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<time>', initialValue: '200' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>+', initialValue: '1px red' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>+', initialValue: '1px red' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<length>#', initialValue: '1px 2px' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<length>#', initialValue: '1px 2px' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: 'small | medium', initialValue: 'large' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: 'small | medium', initialValue: 'large' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<integer>', initialValue: '1.5' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<integer>', initialValue: '1.5' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const v = css.varType({ syntax: '<custom-ident>', initialValue: 'inherit' });`,
+      code: `import * as css from '@typedcss/css'; const v = css.varType({ syntax: '<custom-ident>', initialValue: 'inherit' });`,
       errors: [{ messageId: 'varTypeMismatch' }],
     },
     {
-      code: `import { varType } from '@plumeria/core'; const v = varType({ syntax: '<length>', initialValue: '1em' });`,
+      code: `import { varType } from '@typedcss/css'; const v = varType({ syntax: '<length>', initialValue: '1em' });`,
       errors: [{ messageId: 'varTypeDependent' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'color(from red bogus r g b)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'color(from red bogus r g b)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundImage: 'image-set()' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundImage: 'image-set()' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskImage: 'image-set( )' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskImage: 'image-set( )' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'rgb(from red r g)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'rgb(from red r g)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'color-mix(in srgb, redd, blue)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'color-mix(in srgb, redd, blue)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'color-mix(srgb, red, blue)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'color-mix(srgb, red, blue)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'light-dark(red)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'light-dark(red)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'color-mix(in srgb, red, blue)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'color-mix(in srgb, red, blue)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: '"a" foo' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: '"a" foo' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: '"a" / ' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: '"a" / ' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     // OutlineWidth
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { outlineWidth: '50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { outlineWidth: '50%' } });`,
       errors: [
         {
           message:
@@ -1649,7 +1706,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Inline object at second level
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { wrapper: { color: { valueOf() { return 'hello'; } } } } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { wrapper: { color: { valueOf() { return 'hello'; } } } } });`,
       errors: [
         {
           message:
@@ -1660,7 +1717,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Position
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { position: 'center' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { position: 'center' } });`,
       errors: [
         {
           message:
@@ -1671,7 +1728,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ZIndex
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { zIndex: 'high' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { zIndex: 'high' } });`,
       errors: [
         {
           message: "'zIndex' has an invalid value 'high'. Valid values: auto",
@@ -1681,7 +1738,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Display
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'foo' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'foo' } });`,
       errors: [
         {
           message:
@@ -1692,7 +1749,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Flex
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '' } });`,
       errors: [
         {
           message: "'flex' has an invalid value ''. Valid values: none",
@@ -1700,7 +1757,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: 'auto 2' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: 'auto 2' } });`,
       errors: [
         {
           message: "'flex' has an invalid value 'auto 2'. Valid values: none",
@@ -1708,7 +1765,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '10px 1' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '10px 1' } });`,
       errors: [
         {
           message: "'flex' has an invalid value '10px 1'. Valid values: none",
@@ -1716,7 +1773,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: 'auto 2 10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: 'auto 2 10px' } });`,
       errors: [
         {
           message:
@@ -1725,7 +1782,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 auto 10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 auto 10px' } });`,
       errors: [
         {
           message:
@@ -1734,7 +1791,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: 'auto auto 10px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: 'auto auto 10px' } });`,
       errors: [
         {
           message:
@@ -1743,7 +1800,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 2 invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 2 invalid' } });`,
       errors: [
         {
           message:
@@ -1754,7 +1811,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Color
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'invalid-color' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'invalid-color' } });`,
       errors: [
         {
           message:
@@ -1765,7 +1822,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Margin
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { margin: '10px 20px 30px 40px 50px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { margin: '10px 20px 30px 40px 50px' } });`,
       errors: [
         {
           message:
@@ -1776,7 +1833,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Border
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: '1px solid red blue' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: '1px solid red blue' } });`,
       errors: [
         {
           message:
@@ -1786,7 +1843,7 @@ ruleTester.run('validate-values', validateValues, {
     },
     // Check for duplicate width
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: '1px 2em solid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: '1px 2em solid' } });`,
       errors: [
         {
           message:
@@ -1796,7 +1853,7 @@ ruleTester.run('validate-values', validateValues, {
     },
     // Check for duplicate styles
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: 'solid dashed 1px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: 'solid dashed 1px' } });`,
       errors: [
         {
           message:
@@ -1807,7 +1864,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Check for duplicate colors
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: 'red blue solid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: 'red blue solid' } });`,
       errors: [
         {
           message:
@@ -1816,7 +1873,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: 'var(--custom) invalid-value' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: 'var(--custom) invalid-value' } });`,
       errors: [
         {
           message:
@@ -1825,7 +1882,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { border: 'invalid-value' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { border: 'invalid-value' } });`,
       errors: [
         {
           message:
@@ -1836,7 +1893,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Background
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { background: 'url(/foo.png) no-repeat extra' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { background: 'url(/foo.png) no-repeat extra' } });`,
       errors: [
         {
           message:
@@ -1847,7 +1904,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Flex
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: '1 1 auto 0' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: '1 1 auto 0' } });`,
       errors: [
         {
           message:
@@ -1858,7 +1915,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // animationIterationCount invalid case
     {
-      code: `import { create } from '@plumeria/core'; create({ s: { animationIterationCount: 'invalid' } });`,
+      code: `import { create } from '@typedcss/css'; create({ s: { animationIterationCount: 'invalid' } });`,
       errors: [
         {
           message:
@@ -1869,7 +1926,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // animationName invalid case (empty string)
     {
-      code: `import { create } from '@plumeria/core'; create({ s: { animationName: '' } });`,
+      code: `import { create } from '@typedcss/css'; create({ s: { animationName: '' } });`,
       errors: [
         {
           message:
@@ -1880,7 +1937,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Transform
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'translateX(10px) wrong' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'translateX(10px) wrong' } });`,
       errors: [
         {
           message:
@@ -1889,7 +1946,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'scaleX(var(--progress)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'scaleX(var(--progress)' } });`,
       errors: [
         {
           message:
@@ -1898,7 +1955,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'scaleX(var(progress))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'scaleX(var(progress))' } });`,
       errors: [
         {
           message:
@@ -1907,83 +1964,83 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: 'var(--color, var(progress))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: 'var(--color, var(progress))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'steps(-3, end)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'steps(-3, end)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'steps(0, end)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'steps(0, end)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'steps(1, jump-none)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'steps(1, jump-none)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(1.5, 0, 0.2, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(1.5, 0, 0.2, 1)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(var(--x1), 0, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'cubic-bezier(var(--x1), 0, 1)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0.5 50%0.5)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0.5 50%0.5)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 1 2)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 1 2)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 1.2.3, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 1.2.3, 1)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 50%, 1)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionTimingFunction: 'linear(0, 50%, 1)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'repeat()' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'repeat()' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'repeat( )' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'repeat( )' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(())' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(())' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(( ))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'repeat(( ))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImageSource: 'url(var(--image))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImageSource: 'url(var(--image))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { listStyleImage: 'url(var(--image))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { listStyleImage: 'url(var(--image))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderSource: 'url(var(--image))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderSource: 'url(var(--image))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskImage: 'url(var(--image))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskImage: 'url(var(--image))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marker: 'url(var(--marker))' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marker: 'url(var(--marker))' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'myvar(--size)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'myvar(--size)' } });`,
       errors: [
         {
           message:
@@ -1992,17 +2049,17 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: String.raw`import * as css from '@plumeria/core'; const styles = css.create({ s: { width: '\u0001' } });`,
+      code: String.raw`import * as css from '@typedcss/css'; const styles = css.create({ s: { width: '\u0001' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'var(--size, "100px)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'var(--size, "100px)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
 
     // Cursor
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { cursor: 'url(hand.cur), auto, pointer' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { cursor: 'url(hand.cur), auto, pointer' } });`,
       errors: [
         {
           message:
@@ -2013,7 +2070,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BorderStyle
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderStyle: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderStyle: 'nones' } });`,
       errors: [
         {
           message:
@@ -2024,7 +2081,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BorderRadius
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderRadius: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderRadius: 'nones' } });`,
       errors: [
         {
           message:
@@ -2035,7 +2092,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Width
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'none' } });`,
       errors: [
         {
           message:
@@ -2046,7 +2103,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Opacity
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { opacity: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { opacity: 'none' } });`,
       errors: [
         { message: "'opacity' has an invalid value 'none'. Valid values: " },
       ],
@@ -2054,7 +2111,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BorderColor
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderColor: 'red green white blue orange' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderColor: 'red green white blue orange' } });`,
       errors: [
         {
           message:
@@ -2065,7 +2122,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskImage
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskImage: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskImage: 'nones' } });`,
       errors: [
         {
           message:
@@ -2076,7 +2133,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BorderImageSlice
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImageSlice: 'inherits' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImageSlice: 'inherits' } });`,
       errors: [
         {
           message:
@@ -2087,7 +2144,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BorderImage
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { borderImage: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { borderImage: 'nones' } });`,
       errors: [
         {
           message:
@@ -2098,7 +2155,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AspectRatio
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { aspectRatio: 'autos' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { aspectRatio: 'autos' } });`,
       errors: [
         {
           message:
@@ -2109,7 +2166,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TransitionDuration
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transitionDuration: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transitionDuration: 'none' } });`,
       errors: [
         {
           message:
@@ -2120,7 +2177,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AnimationDirection
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationDirection: 'normals' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationDirection: 'normals' } });`,
       errors: [
         {
           message:
@@ -2131,7 +2188,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AnimationFillMode
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationFillMode: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationFillMode: 'nones' } });`,
       errors: [
         {
           message:
@@ -2142,7 +2199,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AnimationPlayState
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationPlayState: 'pauseds' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationPlayState: 'pauseds' } });`,
       errors: [
         {
           message:
@@ -2153,7 +2210,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AnimationRange
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'covor 20%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'covor 20%' } });`,
       errors: [
         {
           message:
@@ -2162,7 +2219,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'cover 20' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'cover 20' } });`,
       errors: [
         {
           message:
@@ -2171,7 +2228,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRange: 'entry 0% exit 100% cover 50%' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRange: 'entry 0% exit 100% cover 50%' } });`,
       errors: [
         {
           message:
@@ -2182,7 +2239,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AnimationTimeline
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimeline: 20 } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimeline: 20 } });`,
       errors: [
         {
           message:
@@ -2193,25 +2250,25 @@ ruleTester.run('validate-values', validateValues, {
 
     // Anchor positioning outside the properties that accept it
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { width: 'anchor(--a top)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { width: 'anchor(--a top)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationRangeStart: 'anchor(--a top)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationRangeStart: 'anchor(--a top)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { paddingTop: 'anchor-size(--a width)' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { paddingTop: 'anchor-size(--a width)' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'BLOCKS' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'BLOCKS' } });`,
       errors: [{ messageId: 'validateValue' }],
     },
 
     // AnimationTimingFunction
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { animationTimingFunction: 'inherits' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { animationTimingFunction: 'inherits' } });`,
       errors: [
         {
           message:
@@ -2222,7 +2279,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundSize
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundSize: 'none' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundSize: 'none' } });`,
       errors: [
         {
           message:
@@ -2233,7 +2290,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundClip
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundClip: 'initials' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundClip: 'initials' } });`,
       errors: [
         {
           message:
@@ -2244,7 +2301,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Filter
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { filter: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { filter: 'nones' } });`,
       errors: [
         {
           message: "'filter' has an invalid value 'nones'. Valid values: none",
@@ -2254,7 +2311,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundPosition
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundPosition: 'tops' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundPosition: 'tops' } });`,
       errors: [
         {
           message:
@@ -2265,7 +2322,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundImage
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundImage: 'nones' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundImage: 'nones' } });`,
       errors: [
         {
           message:
@@ -2276,7 +2333,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundBlendMode
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundBlendMode: 'colors' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundBlendMode: 'colors' } });`,
       errors: [
         {
           message:
@@ -2287,7 +2344,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TouchAction
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { touchAction: 'invalid-action' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { touchAction: 'invalid-action' } });`,
       errors: [
         {
           message:
@@ -2296,7 +2353,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { touchAction: 'pan-x pan-x' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { touchAction: 'pan-x pan-x' } });`,
       errors: [
         {
           message:
@@ -2307,7 +2364,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AlignContent
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignContent: 'invalid-align' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignContent: 'invalid-align' } });`,
       errors: [
         {
           message:
@@ -2318,7 +2375,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AlignItems
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignItems: 'invalid-item' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignItems: 'invalid-item' } });`,
       errors: [
         {
           message:
@@ -2329,7 +2386,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AlignSelf
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignSelf: 'invalid-self' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignSelf: 'invalid-self' } });`,
       errors: [
         {
           message:
@@ -2340,7 +2397,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Display invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 'invalid-display' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 'invalid-display' } });`,
       errors: [
         {
           message:
@@ -2351,7 +2408,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FlexFlow
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flexFlow: 'invalid-flow' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flexFlow: 'invalid-flow' } });`,
       errors: [
         {
           message:
@@ -2362,7 +2419,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // HangingPunctuation
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { hangingPunctuation: 'invalid-punctuation' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { hangingPunctuation: 'invalid-punctuation' } });`,
       errors: [
         {
           message:
@@ -2373,7 +2430,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // JustifyContent
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyContent: 'invalid-justify' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyContent: 'invalid-justify' } });`,
       errors: [
         {
           message:
@@ -2384,7 +2441,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // JustifySelf
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifySelf: 'invalid-justify-self' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifySelf: 'invalid-justify-self' } });`,
       errors: [
         {
           message:
@@ -2395,7 +2452,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ScrollSnapAlign
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapAlign: 'invalid-snap' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapAlign: 'invalid-snap' } });`,
       errors: [
         {
           message:
@@ -2406,7 +2463,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Translate
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { translate: 'invalid-translate' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { translate: 'invalid-translate' } });`,
       errors: [
         {
           message:
@@ -2417,7 +2474,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Transform
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transform: 'invalid-transform' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transform: 'invalid-transform' } });`,
       errors: [
         {
           message:
@@ -2428,7 +2485,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TransformOrigin
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { transformOrigin: 'invalid-origin' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { transformOrigin: 'invalid-origin' } });`,
       errors: [
         {
           message:
@@ -2439,7 +2496,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextEmphasis
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasis: 'invalid-emphasis' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasis: 'invalid-emphasis' } });`,
       errors: [
         {
           message:
@@ -2450,7 +2507,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextEmphasisStyle
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisStyle: 'invalid-style' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisStyle: 'invalid-style' } });`,
       errors: [
         {
           message:
@@ -2461,7 +2518,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextEmphasisPosition
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textEmphasisPosition: 'invalid-position' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textEmphasisPosition: 'invalid-position' } });`,
       errors: [
         {
           message:
@@ -2472,7 +2529,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ScrollSnapType
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollSnapType: 'invalid-type' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollSnapType: 'invalid-type' } });`,
       errors: [
         {
           message:
@@ -2483,7 +2540,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskBorderRepeat
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderRepeat: 'invalid-repeat' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderRepeat: 'invalid-repeat' } });`,
       errors: [
         {
           message:
@@ -2494,7 +2551,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // JustifyItems
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { justifyItems: 'invalid-justify-items' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { justifyItems: 'invalid-justify-items' } });`,
       errors: [
         {
           message:
@@ -2505,7 +2562,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundRepeat
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundRepeat: 'invalid-repeat' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundRepeat: 'invalid-repeat' } });`,
       errors: [
         {
           message:
@@ -2516,7 +2573,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // PlaceSelf
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeSelf: 'invalid invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeSelf: 'invalid invalid invalid' } });`,
       errors: [
         {
           message:
@@ -2527,7 +2584,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // PlaceItems
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeItems: 'invalid invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeItems: 'invalid invalid invalid' } });`,
       errors: [
         {
           message:
@@ -2538,7 +2595,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // PlaceContent
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { placeContent: 'invalid invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { placeContent: 'invalid invalid invalid' } });`,
       errors: [
         {
           message:
@@ -2549,7 +2606,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextShadow
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textShadow: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textShadow: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2560,7 +2617,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextIndent
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textIndent: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textIndent: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2571,7 +2628,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextDecorationLine
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline underline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline underline' } });`,
       errors: [
         {
           message:
@@ -2580,7 +2637,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: ' underline' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: ' underline' } });`,
       errors: [
         {
           message:
@@ -2589,7 +2646,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline ' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline ' } });`,
       errors: [
         {
           message:
@@ -2599,7 +2656,7 @@ ruleTester.run('validate-values', validateValues, {
     },
 
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline invalid' } });`,
       errors: [
         {
           message:
@@ -2608,7 +2665,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'xyz' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'xyz' } });`,
       errors: [
         {
           message:
@@ -2617,7 +2674,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: ':' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: ':' } });`,
       errors: [
         {
           message:
@@ -2626,7 +2683,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textDecorationLine: 'underline var' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textDecorationLine: 'underline var' } });`,
       errors: [
         {
           message:
@@ -2637,7 +2694,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // StrokeMiterlimit
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { strokeMiterlimit: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { strokeMiterlimit: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2648,7 +2705,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // StrokeDasharray
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { strokeDasharray: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { strokeDasharray: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2659,7 +2716,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Stroke
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { stroke: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { stroke: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2670,7 +2727,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ShapeOutside
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeOutside: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeOutside: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2681,7 +2738,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ShapeImageThreshold
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { shapeImageThreshold: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { shapeImageThreshold: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2692,7 +2749,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ScrollbarColor
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollbarColor: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollbarColor: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2703,7 +2760,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ScrollPadding
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollPadding: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollPadding: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2714,7 +2771,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ScrollMargin
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scrollMargin: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scrollMargin: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2725,7 +2782,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Scale
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { scale: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { scale: 'invalid' } });`,
       errors: [
         {
           message: "'scale' has an invalid value 'invalid'. Valid values: none",
@@ -2735,7 +2792,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Rotate
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { rotate: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { rotate: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2746,7 +2803,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Quotes
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { quotes: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { quotes: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2757,7 +2814,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // PaintOrder
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { paintOrder: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { paintOrder: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2768,7 +2825,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // OverscrollBehavior
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overscrollBehavior: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overscrollBehavior: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2779,7 +2836,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // OverflowClipMargin
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overflowClipMargin: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overflowClipMargin: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2790,7 +2847,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Overflow
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { overflow: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { overflow: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2801,7 +2858,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Offset
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offset: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offset: 'invalid' } });`,
       errors: [
         {
           message: "'offset' has an invalid value 'invalid'. Valid values: ",
@@ -2811,7 +2868,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // OffsetPath
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offsetPath: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offsetPath: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2822,7 +2879,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // OffsetRotate
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { offsetRotate: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { offsetRotate: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2833,7 +2890,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ObjectPosition
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { objectPosition: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { objectPosition: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2844,7 +2901,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MathDepth
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { mathDepth: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { mathDepth: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2855,7 +2912,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Mask
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { mask: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { mask: 'invalid' } });`,
       errors: [
         {
           message: "'mask' has an invalid value 'invalid'. Valid values: none",
@@ -2865,7 +2922,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskBorder
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorder: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorder: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2876,7 +2933,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskSize
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskSize: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskSize: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2887,7 +2944,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskRepeat
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskRepeat: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskRepeat: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2898,7 +2955,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskPosition
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskPosition: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskPosition: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2909,7 +2966,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskOrigin
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskOrigin: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskOrigin: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2920,7 +2977,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskMode
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskMode: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskMode: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2931,7 +2988,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskComposite
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskComposite: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskComposite: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2942,7 +2999,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskClip
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskClip: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskClip: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2953,7 +3010,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskBorderWidth
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderWidth: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderWidth: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2964,7 +3021,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskBorderSlice
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderSlice: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderSlice: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2975,7 +3032,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MaskBorderOutset
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { maskBorderOutset: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { maskBorderOutset: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2986,7 +3043,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Marker
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marker: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marker: 'invalid' } });`,
       errors: [
         {
           message:
@@ -2997,7 +3054,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // MarginBlock
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { marginBlock: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { marginBlock: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3008,7 +3065,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // InsetBlock
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { insetBlock: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { insetBlock: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3019,7 +3076,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // InitialLetter
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { initialLetter: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { initialLetter: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3030,7 +3087,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ImageOrientation
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { imageOrientation: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { imageOrientation: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3041,7 +3098,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // HyphenateLimitChars
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { hyphenateLimitChars: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { hyphenateLimitChars: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3052,7 +3109,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Grid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { grid: 'invalid invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { grid: 'invalid invalid invalid' } });`,
       errors: [
         {
           message:
@@ -3063,7 +3120,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // GridTemplate
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplate: 'invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplate: 'invalid invalid' } });`,
       errors: [
         {
           message:
@@ -3074,7 +3131,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // GridTemplateColumns
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateColumns: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateColumns: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3085,7 +3142,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // GridTemplateAreas
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridTemplateAreas: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridTemplateAreas: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3096,7 +3153,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // GridAutoColumns
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { gridAutoColumns: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { gridAutoColumns: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3107,7 +3164,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontFeatureSettings
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontFeatureSettings: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontFeatureSettings: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3118,7 +3175,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontVariant
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariant: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariant: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3129,7 +3186,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontVariationSettings
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariationSettings: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariationSettings: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3140,7 +3197,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontVariantNumeric
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantNumeric: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantNumeric: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3151,7 +3208,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontVariantLigatures
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantLigatures: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantLigatures: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3162,7 +3219,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontVariantEastAsian
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantEastAsian: 'jis78 jis83' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantEastAsian: 'jis78 jis83' } });`,
       errors: [
         {
           message:
@@ -3171,7 +3228,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantEastAsian: 'invalid-value' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantEastAsian: 'invalid-value' } });`,
       errors: [
         {
           message:
@@ -3182,7 +3239,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontVariantAlternates
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontVariantAlternates: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontVariantAlternates: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3193,7 +3250,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontSynthesis
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSynthesis: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSynthesis: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3204,7 +3261,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontStyle
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontStyle: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontStyle: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3215,7 +3272,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontPalette
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontPalette: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontPalette: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3226,7 +3283,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontSizeAdjust
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: 'invalid invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: 'invalid invalid invalid' } });`,
       errors: [
         {
           message:
@@ -3235,7 +3292,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: 'ex-height invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: 'ex-height invalid' } });`,
       errors: [
         {
           message:
@@ -3244,7 +3301,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: 'invalid 0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: 'invalid 0.5' } });`,
       errors: [
         {
           message:
@@ -3253,7 +3310,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: '' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: '' } });`,
       errors: [
         {
           message:
@@ -3262,7 +3319,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontSizeAdjust: 'ex-height cap-height 0.5' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontSizeAdjust: 'ex-height cap-height 0.5' } });`,
       errors: [
         {
           message:
@@ -3273,7 +3330,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontStretch
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontStretch: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontStretch: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3284,7 +3341,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Flex invalid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flex: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flex: 'invalid' } });`,
       errors: [
         {
           message: "'flex' has an invalid value 'invalid'. Valid values: none",
@@ -3294,7 +3351,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Cursor invalid cases
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { cursor: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { cursor: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3305,7 +3362,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Content
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { content: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { content: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3316,7 +3373,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Columns
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { columns: 'invalid invalid invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { columns: 'invalid invalid invalid' } });`,
       errors: [
         {
           message:
@@ -3327,7 +3384,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ClipPath
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { clipPath: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { clipPath: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3338,7 +3395,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BoxShadow
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { boxShadow: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { boxShadow: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3349,7 +3406,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundAttachment
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundAttachment: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundAttachment: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3360,7 +3417,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundOrigin
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundOrigin: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundOrigin: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3371,7 +3428,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // BackgroundPositionY
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { backgroundPositionY: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { backgroundPositionY: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3382,7 +3439,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ColumnCount
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { columnCount: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { columnCount: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3393,7 +3450,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FlexGrow
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { flexGrow: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { flexGrow: 'invalid' } });`,
       errors: [
         {
           message: "'flexGrow' has an invalid value 'invalid'. Valid values: ",
@@ -3403,7 +3460,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Padding too many values
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { padding: '10px 20px 30px 40px 50px' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { padding: '10px 20px 30px 40px 50px' } });`,
       errors: [
         {
           message:
@@ -3414,7 +3471,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FontLanguageOverride
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fontLanguageOverride: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fontLanguageOverride: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3429,7 +3486,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // AlignmentBaseline invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { alignmentBaseline: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { alignmentBaseline: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3440,7 +3497,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // DominantBaseline invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { dominantBaseline: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { dominantBaseline: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3451,7 +3508,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // FillRule invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fillRule: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fillRule: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3462,7 +3519,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ContainerType invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { containerType: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { containerType: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3473,7 +3530,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ContentVisibility invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contentVisibility: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contentVisibility: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3484,7 +3541,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Direction invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { direction: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { direction: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3495,7 +3552,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ForcedColorAdjust invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { forcedColorAdjust: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { forcedColorAdjust: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3506,7 +3563,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Contain invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3515,7 +3572,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'strict paint' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'strict paint' } });`,
       errors: [
         {
           message:
@@ -3524,7 +3581,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'size inline-size' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'size inline-size' } });`,
       errors: [
         {
           message:
@@ -3533,7 +3590,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: 'layout layout' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: 'layout layout' } });`,
       errors: [
         {
           message:
@@ -3542,7 +3599,7 @@ ruleTester.run('validate-values', validateValues, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { contain: ' strict' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { contain: ' strict' } });`,
       errors: [
         {
           message:
@@ -3553,7 +3610,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // TextSizeAdjust invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { textSizeAdjust: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { textSizeAdjust: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3564,7 +3621,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ColorInterpolation invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolation: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolation: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3575,7 +3632,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // ColorInterpolationFilters invalid
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { colorInterpolationFilters: 'invalid' } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { colorInterpolationFilters: 'invalid' } });`,
       errors: [
         {
           message:
@@ -3590,7 +3647,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Boolean true rejected
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: true } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: true } });`,
       errors: [
         {
           message:
@@ -3601,7 +3658,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Boolean false rejected
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { color: false } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { color: false } });`,
       errors: [
         {
           message:
@@ -3612,7 +3669,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Null rejected
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { margin: null } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { margin: null } });`,
       errors: [
         {
           message:
@@ -3623,7 +3680,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Number rejected for string-only property
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { display: 123 } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { display: 123 } });`,
       errors: [
         {
           message:
@@ -3634,7 +3691,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Number rejected for fillRule (keyword-only)
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { fillRule: 1 } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { fillRule: 1 } });`,
       errors: [
         {
           message:
@@ -3645,7 +3702,7 @@ ruleTester.run('validate-values', validateValues, {
 
     // Number rejected for direction (keyword-only)
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ s: { direction: 0 } });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ s: { direction: 0 } });`,
       errors: [
         {
           message:
