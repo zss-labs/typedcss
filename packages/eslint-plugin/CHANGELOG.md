@@ -1,3 +1,140 @@
+## 21.2.7
+
+### Patch Changes
+
+- 83e304f: - Feat: opt-in `no-use-in-jsx` rule that disallows `css.use()` in `.jsx` and `.tsx` files, so the styling prop is the one way to apply styles there
+  - Feat: init asks whether `.jsx` and `.tsx` files apply styles only through the styling prop, and turns on `no-use-in-jsx` unless told otherwise with `--allow-use`
+- Updated dependencies [83e304f]
+  - @plumeria/compiler@21.2.7
+
+## 21.2.6
+
+### Patch Changes
+
+- d708d87: - Fix: resolve and compile component source from packages exposing the plumeria condition
+  - Fix: full-reload when a prop-driven update reaches a module that cannot accept it
+  - Fix: keep node_modules out of the lint guard
+  - Feat: `sourcePackages()` in the compiler lists the packages exposing the plumeria condition, so the bundler plugins share the compiler's discovery instead of scanning dependencies themselves
+- Updated dependencies [d708d87]
+  - @plumeria/compiler@21.2.6
+
+## 21.2.5
+
+### Patch Changes
+
+- 40fb1e0: Bump version to 21.2.5
+- Updated dependencies [40fb1e0]
+  - @plumeria/compiler@21.2.5
+
+## 21.2.4
+
+### Patch Changes
+
+- 6c025b8: - Fix: a style passed to a default export, or to a component that `memo` or `forwardRef` wraps, is handed to that component and applied
+  - Fix: the component a call makes is the argument that renders, wherever it sits, so `memo(Component, compare)` and a wrapper that takes options first pass a style on, and a component name the call takes, as in `memo(Inner, compare)`, stands for that component
+  - Fix: a call with more than one argument that could be the component stops the build with an error when a style is passed to it, instead of guessing which one receives it
+  - Fix: `no-style-prop-relay` reads the component a call wraps as the compiler does, so it no longer checks a comparator or an options value in place of the component
+  - Fix: a value read through a call handed a definition, such as `pick(T).w`, is reported as unresolvable instead of being read as the definition
+  - Fix: a namespace import reads its exports when the file already declares a name such as `t$blue`, and when it sits next to a default import, as in `import def, * as t from './tokens'`
+  - Fix: the Vite plugin leaves a package that exports only Plumeria source, under a `plumeria` condition with no fallback, out of dependency pre-bundling
+  - Refactor: namespace reads are resolved on the AST instead of by rewriting the source
+- Updated dependencies [6c025b8]
+  - @plumeria/compiler@21.2.4
+
+## 21.2.3
+
+### Patch Changes
+
+- 1f5ad12: - Fix: a `css.createStatic` or `css.createTheme` key read by number, such as `blue[500]`, compiles like `blue['500']`, instead of dropping the declaration without an error in a style imported from another file or in `css.keyframes`, and instead of stopping the build in a template literal, a computed key or the module that defines it
+  - Fix: a key read through a const, such as `blue[k]` after `const k = '500'`, compiles like the quoted key in a style imported from another file and in the module that defines it
+  - Fix: the lint rules that read a static value, such as `validate-at-rules`, check `[bp[500]]` as they check `[bp['500']]`
+- Updated dependencies [1f5ad12]
+  - @plumeria/compiler@21.2.3
+
+## 21.2.2
+
+### Patch Changes
+
+- 30cfad5: Bump version to 21.2.2
+- Updated dependencies [30cfad5]
+  - @plumeria/compiler@21.2.2
+
+## 21.2.1
+
+### Patch Changes
+
+- 2089b8a: Bump version to 21.2.1
+- Updated dependencies [2089b8a]
+  - @plumeria/compiler@21.2.1
+
+## 21.2.0
+
+### Minor Changes
+
+- fb82771: - Feat: a package can share its Plumeria definitions as source: when its `exports` point a `plumeria` condition at its TypeScript files, as in `"plumeria": "./src/index.ts"`, an app that lists it in its dependencies reads the definitions it exports, such as `css.createStatic` values, `css.create` styles and `css.keyframes` names, as it reads a local module, including subpath and pattern exports and packages linked from a pnpm store
+  - Feat: `@plumeria/wind` provides the Tailwind CSS v4.3.3 design tokens, such as the color palettes, spacing, type scale, radius, shadows and animations, as `css.createStatic` values; each value is compiled into the styles that read it, so the package adds nothing to the bundle
+  - Feat: a definition read by name through a namespace import, such as `tokens.blue[500]` after `import * as tokens from './tokens'`, compiles as it does through `import { blue }`; a string key, destructuring, a rest element or the namespace passed as a whole still stops the build and asks for a named import
+  - Fix: an import whose names are all compiled away, such as a `css.createStatic` import read only inside `css.create`, is removed from the output, so the bundler no longer resolves or loads that module; an import still read at runtime, rendered as a component or re-exported is kept
+  - Fix: reading a module's exports before the first project scan, as `resolveExport` and `resolveExportValue` can, no longer leaves that module out of the scan
+  - Fix: `no-combinator` checks only the `css.createStatic` values that start with `:` or `[`, the ones that become a selector when used as a key, so a value with spaces, such as a shadow or a font stack, is no longer reported
+  - Update: `no-unknown-css-properties` accepts `fit-tolerance`, `min-size` and `max-size`, from the latest MDN and webref data
+
+### Patch Changes
+
+- Updated dependencies [fb82771]
+  - @plumeria/compiler@21.2.0
+
+## 21.1.8
+
+### Patch Changes
+
+- de2791a: Bump version to 21.1.8
+- Updated dependencies [de2791a]
+  - @plumeria/compiler@21.1.8
+
+## 21.1.7
+
+### Patch Changes
+
+- 0f80855: - Fix: `no-unused-keys` treats any non-literal bracket key, such as `styles[item.kind]`, as dynamic access instead of reporting every key as unused
+  - Fix: `no-unused-keys` recognizes dynamic access that appears before the `css.create` call, such as inside a hoisted function
+- Updated dependencies [0f80855]
+  - @plumeria/compiler@21.1.7
+
+## 21.1.6
+
+### Patch Changes
+
+- b94dcc8: - Fix: a dynamic style parameter inside a color, filter or scale function, such as `hsl()`, `brightness()` or `scaleX()`, no longer gets a `px` unit
+- Updated dependencies [b94dcc8]
+  - @plumeria/compiler@21.1.6
+
+## 21.1.5
+
+### Patch Changes
+
+- 17a242d: - Fix: write `plumeria.d.ts` into `src/` when the project has one, so a tsconfig that includes only `src`, such as the Vite React template, reads the `classStyle` declaration
+  - Fix: `expand-border-shorthands` writes the longhands in the order `sort-properties` expects, so a single `oxlint --fix` pass settles both rules
+  - Fix: `sort-properties` keeps the trailing comma and moves each property's comments with it when it reorders an object
+- Updated dependencies [17a242d]
+  - @plumeria/compiler@21.1.5
+
+## 21.1.4
+
+### Patch Changes
+
+- f26493b: Bump version to 21.1.4
+- Updated dependencies [f26493b]
+  - @plumeria/compiler@21.1.4
+
+## 21.1.3
+
+### Patch Changes
+
+- 2bf6c80: - Update: Move repository links to the zss-labs organization
+- Updated dependencies [2bf6c80]
+  - @plumeria/compiler@21.1.3
+
 ## 21.1.2
 
 ### Patch Changes
