@@ -1,7 +1,7 @@
-use std::collections::VecDeque;
+
 use std::sync::{Mutex, OnceLock};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use super::data::DIRECT_LONGHANDS;
 
@@ -49,19 +49,4 @@ fn depth_of(property: &str, memo: &mut FxHashMap<String, usize>) -> usize {
     }
     memo.insert(property.to_string(), depth);
     depth
-}
-
-pub fn covers(shorthand: &str, longhand: &str) -> bool {
-    let mut seen: FxHashSet<&str> = FxHashSet::default();
-    let mut queue: VecDeque<&str> = direct_longhands(shorthand).iter().copied().collect();
-    while let Some(current) = queue.pop_front() {
-        if current == longhand {
-            return true;
-        }
-        if !seen.insert(current) {
-            continue;
-        }
-        queue.extend(direct_longhands(current).iter().copied());
-    }
-    false
 }
