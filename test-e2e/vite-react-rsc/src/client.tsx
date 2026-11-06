@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { shared } from './shared.styles.ts';
 
 const styles = css.create({
@@ -21,7 +21,7 @@ export function ClientCounter() {
   return (
     <button
       data-testid="rsc-client-counter"
-      classStyle={[shared.panel, styles.button, styles.wide]}
+      sx={[shared.panel, styles.button, styles.wide]}
       onClick={() => setCount((count) => count + 1)}
     >
       Client Counter: {count}
