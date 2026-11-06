@@ -1,5 +1,5 @@
 import { Link } from 'waku';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   header: {
@@ -16,8 +16,8 @@ const styles = css.create({
 
 export const Header = () => {
   return (
-    <header classStyle={styles.header}>
-      <h2 classStyle={styles.title}>
+    <header sx={styles.header}>
+      <h2 sx={styles.title}>
         <Link to="/">Waku starter</Link>
       </h2>
     </header>
