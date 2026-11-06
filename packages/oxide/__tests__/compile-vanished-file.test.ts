@@ -1,18 +1,18 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
-const moduleUsing = (color: string) => `import * as css from '@plumeria/core';
+const moduleUsing = (color: string) => `import * as css from '@typedcss/css';
 const styles = css.create({ box: { color: '${color}' } });
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `;
 
 // A link to nothing is listed by the glob but cannot be read, the same state as
 // a file deleted between listing the project and reading it.
 describe.each(implementations)('$name', ({ compileCSS }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-vanished-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-vanished-')),
   );
   const FILE = path.join(DIR, 'box.tsx');
   const GONE = path.join(DIR, 'gone.tsx');
