@@ -11,7 +11,7 @@ export interface RenamePropOptions {
 }
 
 /**
- * A property signature is renamed only when it is annotated with Plumeria's
+ * A property signature is renamed only when it is annotated with typedcss's
  * `Style`, so an unrelated interface that happens to share the key is left
  * alone.
  */
@@ -21,7 +21,7 @@ function isStyleAnnotation(node: any): boolean {
   switch (node.type) {
     case 'TSTypeReference': {
       const name = node.typeName;
-      // Plumeria.Style
+      // typedcss.Style
       if (name?.type === 'TSQualifiedName') return name.right?.name === 'Style';
       return name?.name === 'Style';
     }
