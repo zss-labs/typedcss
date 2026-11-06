@@ -6,6 +6,7 @@ import type {
   SourcePackage,
   StyleFile,
 } from '@typedcss/oxide';
+import { inSourcePackage as inPackage } from 'zss-engine';
 
 export const PACKAGE = '@typedcss/css';
 export const DEFAULT_STYLE_PROP = 'sx';
@@ -79,7 +80,7 @@ export function sourcePackagesOf(root: string): SourcePackage[] {
 }
 
 export function inSourcePackage(root: string, file: string): boolean {
-  return oxide.inSourcePackage(sourcePackagesOf(root), path.resolve(file));
+  return inPackage(sourcePackagesOf(root), path.resolve(file));
 }
 
 const BROAD_NODE_MODULES = new Set(['**/node_modules/**', 'node_modules/**']);
