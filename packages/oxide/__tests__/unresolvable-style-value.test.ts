@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -23,7 +23,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   });
 
   const run = (body: string) =>
-    transformSource(env(`import * as css from '@plumeria/core';\n${body}`));
+    transformSource(env(`import * as css from '@typedcss/css';\n${body}`));
 
   const UNRESOLVABLE = /Cannot resolve the value of/;
 
@@ -281,5 +281,22 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     ])('accepts %s', async (_label, body) => {
       await expect(run(body)).resolves.toBeDefined();
     });
+  });
+
+  // A call handed a definition returns something else, so its result is not
+  // read as that definition.
+  it('rejects a value read through a call handed a definition', async () => {
+    fs.writeFileSync(
+      path.join(DIR, 'picked.ts'),
+      `import * as css from '@typedcss/css';
+export const T = css.createStatic({ w: '10px' });
+const pick = (x: unknown) => ({ w: '99px' });
+export const U = pick(T);`,
+    );
+    await expect(
+      run(
+        `import { U } from './picked';\nconst s = css.create({ a: { width: U.w } });`,
+      ),
+    ).rejects.toThrow(UNRESOLVABLE);
   });
 });
