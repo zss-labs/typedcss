@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   footer: {
@@ -11,14 +11,14 @@ const styles = css.create({
 
 export const Footer = () => {
   return (
-    <footer classStyle={styles.footer}>
+    <footer sx={styles.footer}>
       <div>
         visit{' '}
         <a
           href="https://waku.gg/"
           target="_blank"
           rel="noreferrer"
-          classStyle={styles.link}
+          sx={styles.link}
         >
           waku.gg
         </a>{' '}
