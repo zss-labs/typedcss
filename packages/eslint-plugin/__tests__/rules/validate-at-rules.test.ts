@@ -26,7 +26,7 @@ ruleTester.run('validate-at-rules', validateAtRules, {
   valid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const query = '@media (width >= 640px)' as const;
         css.create({
           box: {
@@ -44,7 +44,7 @@ ruleTester.run('validate-at-rules', validateAtRules, {
     },
     {
       code: `
-        import { "create" as createStyles } from '@plumeria/core';
+        import { "create" as createStyles } from '@typedcss/css';
         createStyles({
           ...sharedStyles,
           shared: sharedStyle,
@@ -59,7 +59,7 @@ ruleTester.run('validate-at-rules', validateAtRules, {
   invalid: [
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         const unknown = '@unknown foo' as const;
         create({
           box: {
@@ -91,7 +91,7 @@ ruleTesterNoType.run(
     valid: [
       {
         code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         let unknown = '@unknown foo';
         css.create({ box: { [unknown]: { color: 'red' } } });
       `,
@@ -100,7 +100,7 @@ ruleTesterNoType.run(
     invalid: [
       {
         code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const unknown = '@unknown foo';
         css.create({ box: { [unknown]: { color: 'red' } } });
       `,
@@ -108,7 +108,7 @@ ruleTesterNoType.run(
       },
       {
         code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({ box: { '@unknown foo': { color: 'red' } } });
       `,
         errors: [{ messageId: 'invalidAtRule' }],
