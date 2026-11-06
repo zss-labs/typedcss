@@ -1,17 +1,17 @@
 {
-  "name": "@plumeria/unplugin",
+  "name": "@typedcss/unplugin",
   "version": "21.1.2",
-  "description": "Universal Plumeria plugin for various build tools",
+  "description": "Universal typedcss plugin for various build tools",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://plumeria.dev",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zss-in-js/plumeria.git",
+    "url": "git+https://github.com/zss-labs/typedcss.git",
     "directory": "packages/unplugin"
   },
   "bugs": {
-    "url": "https://github.com/zss-in-js/plumeria/issues"
+    "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "keywords": [
     "plumeria",
@@ -96,12 +96,16 @@
     "esm": "tsc --project tsconfig.esm.json && node mjs-extension.ts"
   },
   "dependencies": {
-    "@plumeria/compiler": "workspace:*",
-    "@plumeria/eslint-plugin": "workspace:*",
+    "@typedcss/eslint-plugin": "workspace:*",
     "@rollup/pluginutils": "^5.4.0",
     "unplugin": "^3.0.0"
   },
+  "peerDependencies": {
+    "@typedcss/css": "workspace:^",
+    "@typedcss/oxide": "workspace:^"
+  },
   "devDependencies": {
+    "@typedcss/oxide": "workspace:^",
     "vite": "^8.0.13"
   },
   "publishConfig": {
