@@ -27,7 +27,7 @@ const rgb = (hex: string) => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
-const source = (color: string) => `import * as css from '@plumeria/core';
+const source = (color: string) => `import * as css from '@typedcss/css';
 
 export const hmrValue = css.create({
   box: {
