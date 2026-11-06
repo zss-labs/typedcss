@@ -12,8 +12,8 @@
     "preact": "^10.29.1"
   },
   "devDependencies": {
-    "@plumeria/core": "workspace:^",
-    "@plumeria/unplugin": "workspace:^",
+    "@typedcss/css": "workspace:^",
+    "@typedcss/unplugin": "workspace:^",
     "@preact/preset-vite": "^2.10.5",
     "typescript": "~6.0.3",
     "vite": "^8.0.13"
