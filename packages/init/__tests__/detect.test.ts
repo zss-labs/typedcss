@@ -25,7 +25,7 @@ describe('detect', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-init-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-init-')),
     );
   });
 
@@ -103,7 +103,7 @@ describe('detect', () => {
     );
     add(dir, 'vite.config.ts', '');
     add(dir, 'eslint.config.ts', '');
-    add(dir, 'plumeria.d.ts', '');
+    add(dir, 'typedcss.d.ts', '');
     add(dir, 'tsconfig.json', '{}');
     add(dir, 'pnpm-lock.yaml', '');
 
@@ -111,7 +111,7 @@ describe('detect', () => {
       bundler: 'vite',
       bundlerConfig: 'vite.config.ts',
       eslintConfig: 'eslint.config.ts',
-      declaration: 'plumeria.d.ts',
+      declaration: 'typedcss.d.ts',
       packageManager: 'pnpm',
       typescript: true,
     });
@@ -140,6 +140,13 @@ describe('detect', () => {
     expect(defaultConfigName('next', false)).toBe('next.config.mjs');
     expect(defaultConfigName('vite', true)).toBe('vite.config.ts');
     expect(defaultConfigName('vite', false)).toBe('vite.config.mjs');
+
+    const names = configNames('bun') as string[];
+    const saved = [...names];
+    names.splice(0, names.length, 'build.custom');
+    expect(defaultConfigName('bun', true)).toBe('build.custom');
+    expect(defaultConfigName('bun', false)).toBe('build.custom');
+    names.splice(0, names.length, ...saved);
   });
 
   it('exposes the manifest and config-name helpers', () => {
@@ -158,7 +165,7 @@ describe('a package inside a workspace', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-workspace-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-workspace-')),
     );
   });
 
