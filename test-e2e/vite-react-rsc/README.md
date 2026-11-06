@@ -1,7 +1,7 @@
 # vite-react-rsc
 
 The Vite end-to-end target for React Server Components: `@vitejs/plugin-rsc`
-with the Plumeria Vite plugin, in the shape of
+with the typedcss Vite plugin, in the shape of
 `examples/example-vite-react-rsc`, carrying the styles the tests in
 `test-e2e/test/rsc-*.test.ts` read back from the browser.
 
