@@ -1,4 +1,4 @@
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ getStyleRecords }) => {
   describe('getStyleRecords', () => {
