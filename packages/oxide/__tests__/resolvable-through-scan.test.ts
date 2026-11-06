@@ -1,22 +1,22 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
-describe.each(implementations)('$name', ({ transformSource, scanAll }) => {
+describe.each(implementations)('$name', ({ transformSource }) => {
   const dir = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-scan-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-scan-')),
   );
 
   const animation = path.join(dir, 'animation.ts');
   fs.writeFileSync(
     animation,
-    `import * as css from '@plumeria/core';\nexport const spin = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });\n`,
+    `import * as css from '@typedcss/css';\nexport const spin = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });\n`,
   );
 
   const local = path.join(dir, 'local.tsx');
-  const localSource = `import * as css from '@plumeria/core';
+  const localSource = `import * as css from '@typedcss/css';
 const fade = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 const swap = css.viewTransitionClass({ old: { opacity: 0 } });
 const styles = css.create({
@@ -26,7 +26,7 @@ const styles = css.create({
   fs.writeFileSync(local, localSource);
 
   const imported = path.join(dir, 'imported.tsx');
-  const importedSource = `import * as css from '@plumeria/core';
+  const importedSource = `import * as css from '@typedcss/css';
 import { spin } from './animation';
 const styles = css.create({ box: { animationName: spin, animationDuration: '1s' } });
 `;
@@ -52,9 +52,8 @@ const styles = css.create({ box: { animationName: spin, animationDuration: '1s' 
   // absent until the scan has run. These two shapes are the ones that check
   // would reject first if it ever ran ahead of the tables being merged.
   describe('a name the scan resolves is not treated as a dropped value', () => {
-    beforeAll(() => {
-      scanAll(dir);
-    });
+    // typedcss has no separate project scan: each file resolves its own names
+    // and links imported ones when the stylesheet is built.
 
     it('accepts a keyframes and a viewTransitionClass declared in the same file', async () => {
       await expect(compile(local, localSource)).resolves.toBeDefined();
