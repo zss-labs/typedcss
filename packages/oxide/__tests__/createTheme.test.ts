@@ -1,5 +1,5 @@
 import { genBase36Hash } from 'zss-engine';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ createTheme, themeHashOf }) => {
   type Rule = Record<string, { default: string; theme: string }>;
