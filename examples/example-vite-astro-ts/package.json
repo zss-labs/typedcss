@@ -18,7 +18,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@plumeria/core": "workspace:^",
-    "@plumeria/unplugin": "workspace:^"
+    "@typedcss/css": "workspace:^",
+    "@typedcss/unplugin": "workspace:^"
   }
 }
