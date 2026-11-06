@@ -7,11 +7,11 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { genBase36Hash } from 'zss-engine';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
-const box = (color: string) => `import * as css from '@plumeria/core';
+const box = (color: string) => `import * as css from '@typedcss/css';
 const styles = css.create({ box: { color: '${color}' } });
-export const Box = () => <div classStyle={styles.box} />;`;
+export const Box = () => <div sx={styles.box} />;`;
 
 describe.each(implementations)(
   '$name incremental CSS',
@@ -45,7 +45,7 @@ describe.each(implementations)(
     beforeEach(() => {
       jest.replaceProperty(process.env, 'NODE_ENV', 'development');
       dir = fs.realpathSync(
-        fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-css-cache-')),
+        fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-css-cache-')),
       );
     });
     afterEach(() => {
@@ -88,20 +88,20 @@ describe.each(implementations)(
     it('invalidates importers when a dependency changes, even after another scan', () => {
       write(
         'colors.ts',
-        `import * as css from '@plumeria/core'; export const styles = css.create({ box: { color: 'red' } });`,
+        `import * as css from '@typedcss/css'; export const styles = css.create({ box: { color: 'red' } });`,
       );
       write(
         'a.tsx',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 import { styles } from './colors';
-export const Box = () => <div classStyle={styles.box} />;`,
+export const Box = () => <div sx={styles.box} />;`,
       );
       expect(compile()).toContain('red');
       write(
         'colors.ts',
-        `import * as css from '@plumeria/core'; export const styles = css.create({ box: { color: 'blue' } });`,
+        `import * as css from '@typedcss/css'; export const styles = css.create({ box: { color: 'blue' } });`,
       );
-      scanAll(dir);
+      // typedcss has no separate project scan; the next compile reads the edit.
       const edited = compile();
       expect(edited).toContain('blue');
       expect(edited).not.toContain('red');
@@ -111,9 +111,9 @@ export const Box = () => <div classStyle={styles.box} />;`,
     it('updates an unchanged receiver when its parent supplies a different style', () => {
       write(
         'Child.tsx',
-        `export const Child = ({ look }: any) => <div classStyle={look} />;`,
+        `export const Child = ({ look }: any) => <div sx={look} />;`,
       );
-      const parent = (color: string) => `import * as css from '@plumeria/core';
+      const parent = (color: string) => `import * as css from '@typedcss/css';
 import { Child } from './Child';
 const s = css.create({ box: { color: '${color}' } });
 export const Parent = () => <Child look={s.box} />;`;
@@ -156,7 +156,11 @@ export const Parent = () => <Child look={s.box} />;`;
     it('does not return stale output after an error and recovers after a fix', () => {
       write('a.tsx', box('red'));
       compile();
-      write('a.tsx', 'export const broken = ;');
+      // typedcss only reads files that import it; the bundler reports the rest.
+      write(
+        'a.tsx',
+        "import * as css from '@typedcss/css'; export const broken = ;",
+      );
       expect(() => compile()).toThrow();
       expect(() => compile()).toThrow();
       write('a.tsx', box('blue'));
@@ -169,7 +173,7 @@ export const Parent = () => <Child look={s.box} />;`;
       // An unassigned call is extracted here rather than registered by scanning.
       write(
         'a.tsx',
-        `import * as css from '@plumeria/core'; css.keyframes(${JSON.stringify(frames)});`,
+        `import * as css from '@typedcss/css'; css.keyframes(${JSON.stringify(frames)});`,
       );
       const animatedBox = (color: string) =>
         box(color).replace(
@@ -191,11 +195,11 @@ export const Parent = () => <Child look={s.box} />;`;
     it('discards theme and static writes after an extraction error', () => {
       const themedBox = (
         color: string,
-      ) => `import * as css from '@plumeria/core';
+      ) => `import * as css from '@typedcss/css';
 const theme = css.createTheme('.dark', { primary: { default: '${color}', theme: 'pink' } });
 const sizes = css.createStatic({ gap: 4 });
 const styles = css.create({ box: { color: theme.primary, padding: sizes.gap } });
-export const Box = () => <div classStyle={styles.box} />;`;
+export const Box = () => <div sx={styles.box} />;`;
       write('a.tsx', themedBox('red'));
       write('b.tsx', box('blue'));
       const initial = compile();
@@ -204,9 +208,11 @@ export const Box = () => <div classStyle={styles.box} />;`;
 
       const sources = {
         [path.join(dir, 'a.tsx')]: themedBox('green'),
+        // typedcss applies an unknown sx value at runtime, so the error is a
+        // style key the build rejects.
         [path.join(dir, 'b.tsx')]: themedBox('purple').replace(
-          'classStyle={styles.box}',
-          'classStyle={unknownStyle}',
+          'css.create({ box:',
+          'css.create({ 1: {}, box:',
         ),
       };
       expect(() => compile({ sources })).toThrow();
@@ -217,10 +223,10 @@ export const Box = () => <div classStyle={styles.box} />;`;
 
     it('does not reuse a result across include, styleProp, or policy changes', () => {
       write('a.tsx', box('red'));
-      write('b.tsx', box('green').replace('classStyle=', 'sx='));
+      write('b.tsx', box('green').replace('sx=', 'classStyle='));
       compile();
       expect(compile({ include: ['a.tsx'] })).not.toContain('green');
-      expect(compile({ styleProp: 'sx' })).toContain('green');
+      expect(compile({ styleProp: 'classStyle' })).toContain('green');
       write('a.tsx', box('red').replace("color: 'red'", 'marginLeft: 1'));
       compile();
       expect(() => compile({ withoutPhysicalProperties: true })).toThrow();
