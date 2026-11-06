@@ -1,0 +1,46 @@
+{
+  "name": "@typedcss/wind",
+  "version": "21.1.2",
+  "description": "Tailwind CSS design-tokens for typedcss",
+  "author": "Refirst 11",
+  "license": "MIT",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/wind",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zss-labs/typedcss.git",
+    "directory": "packages/wind"
+  },
+  "bugs": {
+    "url": "https://github.com/zss-labs/typedcss/issues"
+  },
+  "keywords": [
+    "typedcss",
+    "tailwindcss",
+    "tokens",
+    "design-tokens",
+    "css-in-js"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "typedcss": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "type": "module",
+  "types": "./src/index.ts",
+  "files": [
+    "src/",
+    "LICENSE-tailwindcss"
+  ],
+  "scripts": {
+    "generate": "node scripts/generate.mjs"
+  },
+  "peerDependencies": {
+    "@typedcss/css": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
