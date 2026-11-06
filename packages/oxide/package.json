@@ -1,28 +1,27 @@
 {
-  "name": "@plumeria/compiler",
+  "name": "@typedcss/oxide",
   "version": "21.1.2",
-  "description": "Plumeria rust based compiler for statically extracting css",
+  "description": "Native typedcss compiler for bundler loaders.",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://plumeria.dev",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zss-in-js/plumeria.git",
-    "directory": "packages/compiler"
+    "url": "git+https://github.com/zss-labs/typedcss.git",
+    "directory": "packages/oxide"
   },
   "bugs": {
-    "url": "https://github.com/zss-in-js/plumeria/issues"
+    "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "main": "index.js",
-  "browser": "browser.js",
   "types": "index.d.ts",
   "files": [
     "index.js",
     "index.d.ts",
-    "browser.js"
+    "binding.js"
   ],
   "napi": {
-    "binaryName": "compiler",
+    "binaryName": "oxide",
     "targets": [
       "aarch64-linux-android",
       "aarch64-apple-darwin",
@@ -39,7 +38,8 @@
     ]
   },
   "scripts": {
-    "build": "napi build --platform --release --js index.js --dts index.d.ts",
+    "build": "napi build --platform --release --features napi --js binding.js --dts binding.d.ts",
+    "build:debug": "napi build --platform --features napi --js binding.js --dts binding.d.ts",
     "packages": "node scripts/generate-platform-packages.ts",
     "readme": "node scripts/generate-platform-readme.ts",
     "update:main": "node scripts/update-main-package.ts"
@@ -49,7 +49,7 @@
     "@napi-rs/wasm-runtime": "1.2.4"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.17"
   },
   "publishConfig": {
     "access": "public",
