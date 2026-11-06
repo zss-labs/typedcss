@@ -1,23 +1,20 @@
 module.exports = {
+  testPathIgnorePatterns: ['/node_modules/', '\\.test-d\\.ts$'],
   transform: {
     '^.+\\.(ts|mjs)$': '@swc/jest',
   },
   transformIgnorePatterns: ['node_modules/\\.pnpm/(?!unplugin@)'],
   moduleNameMapper: {
     '^(\\..+)\\.js$': '$1',
-    '^@plumeria/utils$': '<rootDir>/packages/utils/src/index.ts',
   },
   roots: [
+    '<rootDir>/packages/css/__tests__',
     '<rootDir>/scripts/__tests__',
     '<rootDir>/packages/codemod/__tests__',
     '<rootDir>/packages/eslint-plugin/__tests__',
     '<rootDir>/packages/init/__tests__',
     '<rootDir>/packages/next-plugin/__tests__',
-    '<rootDir>/packages/utils/__tests__',
     '<rootDir>/packages/unplugin/__tests__',
-    '<rootDir>/packages/turbopack-loader/__tests__',
-    '<rootDir>/packages/compiler/__tests__',
-    '<rootDir>/packages/swc-jest/__tests__',
   ],
   testEnvironment: 'node',
   coverageReporters: ['text', 'lcov', 'html'],
@@ -27,16 +24,10 @@ module.exports = {
   ],
   coveragePathIgnorePatterns: [
     '<rootDir>/scripts/',
+    '<rootDir>/packages/oxide/',
     '<rootDir>/packages/codemod/dist/',
-    '<rootDir>/packages/compiler/dist/',
-    '<rootDir>/packages/compiler/index.js',
     '<rootDir>/packages/eslint-plugin/dist/',
     '<rootDir>/packages/init/dist/',
     '<rootDir>/packages/next-plugin/dist/',
-    '<rootDir>/packages/turbopack-loader/dist/',
-    '<rootDir>/packages/turbopack-loader/src/dev-bridge-client.ts',
-    '<rootDir>/packages/swc-jest/dist/',
-    '<rootDir>/packages/utils/dist/',
-    '<rootDir>/packages/utils/src/index.ts',
   ],
 };
