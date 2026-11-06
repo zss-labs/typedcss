@@ -27,6 +27,7 @@
     "example-vite-solid",
     "example-vite-svelte-ts",
     "example-vite-vue-ts",
-    "example-webpack"
+    "example-webpack",
+    "example-ui"
     ]
 }
