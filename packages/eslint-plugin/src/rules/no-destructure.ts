@@ -19,23 +19,23 @@ export const noDestructure: Rule.RuleModule = {
   },
 
   create(context) {
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (specifier.type === 'ImportNamespaceSpecifier') {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else if (specifier.type === 'ImportDefaultSpecifier') {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const spec = specifier as ImportSpecifier;
               const importedName =
                 spec.imported.type === 'Identifier'
                   ? spec.imported.name
                   : String(spec.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -47,7 +47,7 @@ export const noDestructure: Rule.RuleModule = {
           node.init.type === 'Identifier'
         ) {
           const initName = node.init.name;
-          const alias = plumeriaAliases[initName];
+          const alias = coreAliases[initName];
 
           if (alias === 'NAMESPACE') {
             for (const prop of node.id.properties) {
@@ -61,7 +61,7 @@ export const noDestructure: Rule.RuleModule = {
                   keyName === 'viewTransitionClass' ||
                   keyName === 'positionTry' ||
                   keyName === 'varType' ||
-                  keyName === 'use'
+                  keyName === 'props'
                 ) {
                   context.report({
                     node: prop,
