@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { breakpoints } from './breakpoints';
 
 const LOCAL_COLOR = 'purple';
@@ -23,7 +23,7 @@ export function VariableTest() {
       style={{ marginTop: '20px', border: '1px solid #ccc', padding: '10px' }}
     >
       <h3>Variable Resolution Test</h3>
-      <div data-testid="variable-div" classStyle={styles.container}>
+      <div data-testid="variable-div" sx={styles.container}>
         My styles are resolved from local and imported variables
       </div>
     </div>
