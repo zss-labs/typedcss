@@ -10,7 +10,7 @@ import vite from './vite';
 import webpack from './webpack';
 import unloader from './unloader';
 
-const plumeria = {
+const typedcss = {
   bun,
   esbuild,
   farm,
@@ -35,4 +35,4 @@ export {
   webpack,
 };
 
-export default plumeria;
+export default typedcss;
