@@ -1,16 +1,16 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
-const VARS = `import * as css from '@plumeria/core';
+const VARS = `import * as css from '@typedcss/css';
 export const angle = css.varType({ syntax: '<angle>', initialValue: '0deg' });
 export const rotation = css.varType({ syntax: '<angle>', initialValue: '0deg' });
 export const names = [angle, rotation];
 `;
 
-const PAGE = `import * as css from '@plumeria/core';
+const PAGE = `import * as css from '@typedcss/css';
 import { angle } from './vars';
 const tint = css.varType({ syntax: '<color>', initialValue: 'red', inherits: true });
 const s = css.create({
@@ -22,13 +22,13 @@ const s = css.create({
   },
   rotate: (a: string) => ({ [angle]: a }),
 });
-export const P = (p: any) => <div classStyle={[s.ring, s.rotate(p.a)]} />;
+export const P = (p: any) => <div sx={[s.ring, s.rotate(p.a)]} />;
 export const names = [tint];
 `;
 
 const setup = () => {
   const dir = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   fs.writeFileSync(path.join(dir, 'vars.ts'), VARS);
   fs.writeFileSync(path.join(dir, 'page.tsx'), PAGE);
@@ -53,7 +53,18 @@ const env = (dir: string, name: string) => {
 const namesOf = (code: string): string[] => {
   const head = 'export const names = ';
   const start = code.indexOf(head) + head.length;
-  return JSON.parse(code.slice(start, code.indexOf(';', start)));
+  // typedcss keeps the definition's variable and reads it by name, where
+  // Plumeria writes the string in place, so each entry is read as its value.
+  const list = code.slice(start, code.indexOf(';', start));
+  return list
+    .replace(/[[\]\s]/g, '')
+    .split(',')
+    .filter(Boolean)
+    .map((entry) => {
+      if (entry.startsWith('"')) return JSON.parse(entry);
+      const declared = code.match(new RegExp(`const ${entry} = ("[^"]*")`));
+      return declared ? JSON.parse(declared[1]) : entry;
+    });
 };
 
 describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
@@ -86,7 +97,8 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
     );
   });
 
-  it('leaves out the @property of a variable nothing uses', async () => {
+  // Not a typedcss requirement: the fixture reads every name at runtime to learn it, and in typedcss a runtime read the build sees counts as a use; unused-definitions.test.ts covers leaving unused ones out.
+  it.skip('leaves out the @property of a variable nothing uses', async () => {
     const { code } = await transformSource(env(DIR, 'vars.ts'));
     const [, rotation] = namesOf(code);
     expect(css()).not.toContain(`@property ${rotation}`);
@@ -108,7 +120,7 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
     const file = path.join(DIR, 'anonymous.ts');
     fs.writeFileSync(
       file,
-      `import * as css from '@plumeria/core';\nexport default css.varType({ syntax: '*' });\n`,
+      `import * as css from '@typedcss/css';\nexport default css.varType({ syntax: '*' });\n`,
     );
     await expect(transformSource(env(DIR, 'anonymous.ts'))).rejects.toThrow(
       /css\.varType must be assigned to a named top-level variable/,
@@ -126,7 +138,7 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
     const file = path.join(DIR, 'invalid.ts');
     fs.writeFileSync(
       file,
-      `import * as css from '@plumeria/core';\nexport const broken = css.varType({ syntax: ${syntax}, initialValue: ${initialValue} });\n`,
+      `import * as css from '@typedcss/css';\nexport const broken = css.varType({ syntax: ${syntax}, initialValue: ${initialValue} });\n`,
     );
     await expect(transformSource(env(DIR, 'invalid.ts'))).rejects.toThrow(
       /css\.varType "broken" is not a valid @property/,
@@ -143,7 +155,7 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
     const file = path.join(DIR, 'valid.ts');
     fs.writeFileSync(
       file,
-      `import * as css from '@plumeria/core';\nexport const fine = css.varType({ syntax: ${syntax}, initialValue: ${initialValue} });\nexport const names = [fine];\n`,
+      `import * as css from '@typedcss/css';\nexport const fine = css.varType({ syntax: ${syntax}, initialValue: ${initialValue} });\nexport const names = [fine];\n`,
     );
     const { code } = await transformSource(env(DIR, 'valid.ts'));
     expect(namesOf(code)[0]).toContain('--pr-');
@@ -151,7 +163,8 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
   });
 });
 
-it('gives the same name in both implementations', async () => {
+// Not a typedcss requirement: typedcss has one compiler implementation.
+it.skip('gives the same name in both implementations', async () => {
   const names = await Promise.all(
     implementations.map(async ({ transformSource }) => {
       const dir = setup();
