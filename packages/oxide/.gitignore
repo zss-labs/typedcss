@@ -5,6 +5,6 @@ npm/
 *.wasi.cjs
 *.wasi-browser.js
 wasi-worker*.mjs
-binding.js
-binding.d.ts
+index.js
+index.d.ts
 browser.js
