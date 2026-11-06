@@ -1,5 +1,5 @@
 import { defineConfig } from 'rolldown';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 import postcss from 'rollup-plugin-postcss';
 
 export default defineConfig({
@@ -10,5 +10,5 @@ export default defineConfig({
   moduleTypes: {
     css: 'empty',
   },
-  plugins: [plumeria.rolldown(), postcss({ extract: true })],
+  plugins: [typedcss.rolldown(), postcss({ extract: true })],
 });
