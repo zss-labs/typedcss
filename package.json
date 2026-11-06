@@ -1,5 +1,5 @@
 {
-  "name": "plumeria-monorepo",
+  "name": "typedcss-monorepo",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -25,19 +25,14 @@
     "prettier:report": "prettier --check \"**/*.js\" \"**/*.ts\" \"**/*.tsx\"",
     "lint": "oxlint --fix",
     "lint:report": "oxlint --deny-warnings",
-    "changeset:version": "node scripts/update-release-note.js",
-    "codemod:round-trip": "node scripts/codemod-round-trip.js",
-    "codemod:exported-site": "node scripts/codemod-exported-site.js",
-    "build:skill": "node scripts/build-skill.js"
+    "changeset:version": "node scripts/update-release-note.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
     "@mdn/browser-compat-data": "^8.1.5",
     "@playwright/test": "^1.60.0",
-    "@plumeria/codemod": "workspace:^",
-    "@plumeria/eslint-plugin": "workspace:^",
-    "@plumeria/init": "workspace:^",
-    "@plumeria/utils": "workspace:^",
+    "@typedcss/eslint-plugin": "workspace:^",
+    "@typedcss/init": "workspace:^",
     "@swc/core": "catalog:",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
