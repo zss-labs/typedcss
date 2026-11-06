@@ -11,8 +11,8 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@plumeria/core": "workspace:^",
-    "@plumeria/unplugin": "workspace:^",
+    "@typedcss/css": "workspace:^",
+    "@typedcss/unplugin": "workspace:^",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.2",
     "@swc/core": "catalog:",
     "@types/react": "catalog:",
