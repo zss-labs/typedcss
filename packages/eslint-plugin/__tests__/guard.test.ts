@@ -13,7 +13,13 @@ jest.mock('os', () => ({
 
 import * as fs from 'fs';
 import * as os from 'os';
-import { lintOverrides, lowerPriority, startLintGuard } from '../src/guard';
+import {
+  lintConfig,
+  lintEnv,
+  lintOverrides,
+  lowerPriority,
+  startLintGuard,
+} from '../src/guard';
 
 describe('lintOverrides', () => {
   it('turns each spelling option into its rule', () => {
@@ -23,22 +29,22 @@ describe('lintOverrides', () => {
         withoutLogicalProperties: true,
         withoutPhysicalProperties: false,
       }),
-    ).toEqual({ rules: { '@plumeria/no-logical-properties': 'error' } });
+    ).toEqual({ rules: { '@typedcss/no-logical-properties': 'error' } });
     expect(
       lintOverrides({ withoutPhysicalProperties: { sizes: true } }),
     ).toEqual({
       rules: {
-        '@plumeria/no-physical-properties': ['error', { sizes: true }],
+        '@typedcss/no-physical-properties': ['error', { sizes: true }],
       },
     });
     expect(lintOverrides({ withoutLogicalProperties: {} })).toEqual({
-      rules: { '@plumeria/no-logical-properties': 'error' },
+      rules: { '@typedcss/no-logical-properties': 'error' },
     });
   });
 
   it('passes the styling prop to the rules as a setting', () => {
     expect(lintOverrides({ styleProp: 'sx' })).toEqual({
-      settings: { plumeria: { styleProp: 'sx' } },
+      settings: { typedcss: { styleProp: 'sx' } },
     });
   });
 });
@@ -73,7 +79,7 @@ describe('startLintGuard', () => {
   let child: EventEmitter;
 
   beforeEach(() => {
-    delete process.env.PLUMERIA_LINT_GUARD;
+    delete process.env.TYPEDCSS_LINT_GUARD;
     exit = jest.fn();
     process.exit = exit as unknown as typeof process.exit;
     child = new EventEmitter();
@@ -83,17 +89,19 @@ describe('startLintGuard', () => {
 
   afterEach(() => {
     process.exit = realExit;
-    delete process.env.PLUMERIA_LINT_GUARD;
+    delete process.env.TYPEDCSS_LINT_GUARD;
     jest.restoreAllMocks();
   });
 
   it('does not lint when a guard is already running', () => {
-    process.env.PLUMERIA_LINT_GUARD = '1';
+    process.env.TYPEDCSS_LINT_GUARD = '1';
     expect(startLintGuard()).toBe(false);
     expect(spawn).not.toHaveBeenCalled();
   });
 
   it('starts oxlint once with the plumeria config', () => {
+    expect(lintConfig({})).toMatch(/oxlint\.json$/);
+    expect(lintEnv().NODE_COMPILE_CACHE).toContain('typedcss-lint');
     expect(startLintGuard()).toBe(true);
     expect(startLintGuard()).toBe(false);
     expect(spawn).toHaveBeenCalledTimes(1);
@@ -102,9 +110,10 @@ describe('startLintGuard', () => {
     expect(args.slice(1)).toEqual([
       '-c',
       expect.stringMatching(/eslint-plugin[\\/]oxlint\.json$/),
+      '--ignore-pattern=**/node_modules/**',
       '--deny-warnings',
       '--no-error-on-unmatched-pattern',
-      '--threads=2',
+      '--threads=1',
     ]);
   });
 
@@ -112,6 +121,25 @@ describe('startLintGuard', () => {
     startLintGuard();
     child.emit('close', 1);
     expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('reports a process launch error', () => {
+    startLintGuard();
+    child.emit('error', new Error('spawn failed'));
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('treats a missing close code as failure', () => {
+    startLintGuard();
+    child.emit('close', null);
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('forwards an exit without an explicit code after linting', () => {
+    startLintGuard();
+    process.exit();
+    child.emit('close', 0);
+    expect(exit).toHaveBeenCalledWith(undefined);
   });
 
   it('holds the build exit until oxlint finishes', () => {
@@ -139,14 +167,14 @@ describe('startLintGuard', () => {
 
   it('extends the plumeria config with the overrides it is given', () => {
     startLintGuard({
-      rules: { '@plumeria/no-physical-properties': 'error' },
-      settings: { plumeria: { styleProp: 'sx' } },
+      rules: { '@typedcss/no-physical-properties': 'error' },
+      settings: { typedcss: { styleProp: 'sx' } },
     });
     const config = spawn.mock.calls[0][1][2];
     expect(JSON.parse(fs.readFileSync(config, 'utf8'))).toEqual({
       extends: [expect.stringMatching(/eslint-plugin[\\/]oxlint\.json$/)],
-      rules: { '@plumeria/no-physical-properties': 'error' },
-      settings: { plumeria: { styleProp: 'sx' } },
+      rules: { '@typedcss/no-physical-properties': 'error' },
+      settings: { typedcss: { styleProp: 'sx' } },
     });
     child.emit('close', 0);
     expect(fs.existsSync(config)).toBe(false);
