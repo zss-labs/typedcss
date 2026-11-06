@@ -16,100 +16,100 @@ const ruleTester = new RuleTester({
 ruleTester.run('no-inline-object', noInlineObject, {
   valid: [
     {
-      code: "import * as css from '@plumeria/core'; css.variants({ size: { small: { color: 'red' } } });",
+      code: "import * as css from '@typedcss/css'; css.variants({ size: { small: { color: 'red' } } });",
     },
     {
-      code: "import { variants as legacy } from '@plumeria/core'; legacy({ size: { small: { color: 'red' } } });",
+      code: "import { variants as legacy } from '@typedcss/css'; legacy({ size: { small: { color: 'red' } } });",
     },
     {
-      code: "import * as css from '@plumeria/core'; const styles = css.create({ small: { color: 'red' }, large: { color: 'blue' } }); css.use(styles[size]);",
+      code: "import * as css from '@typedcss/css'; const styles = css.create({ small: { color: 'red' }, large: { color: 'blue' } }); css.props(styles[size]);",
     },
     {
-      code: "import * as css from '@plumeria/core'; const styles = css.create({ small: { color: 'red' }, large: { color: 'blue' } }); <div classStyle={styles[size]} />;",
+      code: "import * as css from '@typedcss/css'; const styles = css.create({ small: { color: 'red' }, large: { color: 'blue' } }); <div sx={styles[size]} />;",
     },
 
     // Retired APIs are outside this rule; do not suggest using them differently.
     {
-      code: "import { variants } from '@plumeria/core'; const getStyle = variants({ variant: { style: { color:'red' } } });",
+      code: "import { variants } from '@typedcss/css'; const getStyle = variants({ variant: { style: { color:'red' } } });",
     },
 
     { code: '<div style={{ color: "red" }} />' },
-    { code: '<div classStyle={styles.active} />' },
-    { code: '<div classStyle={[styles.base, isActive && styles.active]} />' },
-    { code: 'css.use(styles.active)' },
-    { code: 'css.use(styles.base, isActive && styles.active)' },
-    { code: '<div className={css.use(styles.active)} />' },
+    { code: '<div sx={styles.active} />' },
+    { code: '<div sx={[styles.base, isActive && styles.active]} />' },
+    { code: 'css.props(styles.active)' },
+    { code: 'css.props(styles.base, isActive && styles.active)' },
+    { code: '<div className={css.props(styles.active)} />' },
     { code: 'css.create({ text: { color: "red" } })' },
-    { code: '<div classStyle={[variants({ size: "small" })]} />' },
-    { code: 'css.use(variants({ size: "small" }))' },
+    { code: '<div sx={[variants({ size: "small" })]} />' },
+    { code: 'css.props(variants({ size: "small" }))' },
     { code: 'foo()()' },
     { code: "import React from 'react';" },
-    { code: 'obj.prop.use()' },
-    { code: 'css["use"]()' },
-    { code: '<div classStyle />' },
+    { code: 'obj.prop.props()' },
+    { code: 'css["props"]()' },
+    { code: '<div sx />' },
     { code: 'css.variants({ ...spread })' },
     { code: 'css.variants({ size: { ...spread } })' },
-    { code: "import { use as myUse } from '@plumeria/core';" },
+    { code: "import { props as myUse } from '@typedcss/css';" },
     {
-      code: "import { 'use' as myUse } from '@plumeria/core'; myUse(styles.base);",
+      code: "import { 'props' as myUse } from '@typedcss/css'; myUse(styles.base);",
     },
     {
-      code: "import { variants } from '@plumeria/core'; variants('not-an-object');",
+      code: "import { variants } from '@typedcss/css'; variants('not-an-object');",
     },
     {
-      code: "import { variants } from '@plumeria/core'; variants({ ...spread });",
+      code: "import { variants } from '@typedcss/css'; variants({ ...spread });",
     },
     {
-      code: "import { variants } from '@plumeria/core'; variants({ size: 'not-an-object' });",
+      code: "import { variants } from '@typedcss/css'; variants({ size: 'not-an-object' });",
     },
     {
-      code: "import { variants } from '@plumeria/core'; variants({ size: { ...nestedSpread } });",
+      code: "import { variants } from '@typedcss/css'; variants({ size: { ...nestedSpread } });",
     },
     {
-      code: "import { variants } from '@plumeria/core'; variants({ size: { small: styles.small } });",
+      code: "import { variants } from '@typedcss/css'; variants({ size: { small: styles.small } });",
     },
     {
       // the default name stops being the styling prop once renamed
-      code: '<div classStyle={{ color: "red" }} />',
-      settings: { plumeria: { styleProp: 'sx' } },
+      code: '<div sx={{ color: "red" }} />',
+      settings: { typedcss: { styleProp: 'classStyle' } },
     },
   ],
   invalid: [
     {
-      code: '<div classStyle={{ color: "red" }} />',
+      code: '<div sx={{ color: "red" }} />',
       errors: [{ messageId: 'noInlineObjectInStyleProp' }],
     },
     {
-      code: '<div classStyle={[styles.base, { color: "red" }]} />',
+      code: '<div sx={[styles.base, { color: "red" }]} />',
       errors: [{ messageId: 'noInlineObjectInStyleProp' }],
     },
     {
-      code: '<div classStyle={{ [styles.active]: isActive }} />',
+      code: '<div sx={{ [styles.active]: isActive }} />',
       errors: [{ messageId: 'noInlineObjectInStyleProp' }],
     },
     {
       // settings retarget this rule too, without per-rule options
-      code: '<div sx={{ color: "red" }} />',
-      settings: { plumeria: { styleProp: 'sx' } },
+      code: '<div classStyle={{ color: "red" }} />',
+      settings: { typedcss: { styleProp: 'classStyle' } },
       errors: [{ messageId: 'noInlineObjectInStyleProp' }],
     },
     {
       // a per-rule option wins over the shared setting
-      code: '<div sx={[styles.base, { color: "red" }]} />',
-      settings: { plumeria: { styleProp: 'classStyle' } },
-      options: [{ styleProp: 'sx' }],
+      code: '<div classStyle={[styles.base, { color: "red" }]} />',
+      settings: { typedcss: { styleProp: 'sx' } },
+      options: [{ styleProp: 'classStyle' }],
       errors: [{ messageId: 'noInlineObjectInStyleProp' }],
     },
     {
-      code: "import { use } from '@plumeria/core'; use({ color: 'red' })",
+      code: "import { props } from '@typedcss/css'; props({ color: 'red' })",
       errors: [{ messageId: 'noInlineObjectInCssUse' }],
     },
     {
-      code: "import * as css from '@plumeria/core'; css.use(styles.base, { background: 'blue' })",
+      code: "import * as css from '@typedcss/css'; css.props(styles.base, { background: 'blue' })",
       errors: [{ messageId: 'noInlineObjectInCssUse' }],
     },
     {
-      code: "import css from '@plumeria/core'; <div className={css.use({ color: 'red' })} />",
+      code: "import css from '@typedcss/css'; <div className={css.props({ color: 'red' })} />",
       errors: [{ messageId: 'noInlineObjectInCssUse' }],
     },
   ],
