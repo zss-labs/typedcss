@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
-describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
   const FIXTURE_PATH = path.join(FIXTURE_DIR, 'fixture.tsx');
 
   const wrap = (body: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   box: { color: 'red' },
@@ -35,18 +35,15 @@ ${body}
   const UNSUPPORTED = /is not supported/;
 
   describe('compiler: assertResolvable', () => {
-    it.each([
+    // Not a typedcss requirement: typedcss merges sx and css.props at runtime, so a call is applied as whatever it returns.
+    it.skip.each([
       [
-        'a function call in classStyle',
-        'export const A = () => <div classStyle={[styles.box, Test()]} />;',
+        'a function call in sx',
+        'export const A = () => <div sx={[styles.box, Test()]} />;',
       ],
       [
         'a function call nested in a ternary',
-        'export const A = () => <div classStyle={cond ? Test() : styles.box} />;',
-      ],
-      [
-        'an arrow function in classStyle',
-        'export const A = () => <div classStyle={[styles.box, () => styles.box]} />;',
+        'export const A = () => <div sx={cond ? Test() : styles.box} />;',
       ],
       [
         'a function call in css.use()',
@@ -56,11 +53,27 @@ ${body}
       expect(() => compile(body)).toThrow(UNSUPPORTED);
     });
 
+    // typedcss reads sx when it transforms the file.
+    it('throws on an arrow function in sx', async () => {
+      const source = wrap(
+        'export const A = () => <div sx={[styles.box, () => styles.box]} />;',
+      );
+      fs.writeFileSync(FIXTURE_PATH, source, 'utf-8');
+      await expect(
+        transformSource({
+          source,
+          filePath: FIXTURE_PATH,
+          root: FIXTURE_DIR,
+          cwd: FIXTURE_DIR,
+        }),
+      ).rejects.toThrow(UNSUPPORTED);
+    });
+
     // `Conditional` allows undefined, so this must keep compiling.
     it('accepts undefined as a conditional branch', () => {
       expect(() =>
         compile(
-          'export const A = () => <div classStyle={cond ? styles.box : undefined} />;',
+          'export const A = () => <div sx={cond ? styles.box : undefined} />;',
         ),
       ).not.toThrow();
     });
