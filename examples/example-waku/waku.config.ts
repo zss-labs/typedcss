@@ -1,9 +1,9 @@
 import react from '@vitejs/plugin-react';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 import { defineConfig } from 'waku/config';
 
 export default defineConfig({
   vite: {
-    plugins: [react(), plumeria.vite()],
+    plugins: [react(), typedcss.vite()],
   },
 });
