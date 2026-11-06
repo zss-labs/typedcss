@@ -51,7 +51,7 @@ describe('ask', () => {
     await expect(ask(asker, {})).resolves.toMatchObject({
       spelling: 'logical',
       sizes: true,
-      styleProp: 'classStyle',
+      styleProp: 'sx',
       eslint: true,
     });
   });
@@ -81,20 +81,20 @@ describe('ask', () => {
     const answers = await ask(asker, {
       spelling: 'physical',
       sizes: false,
-      styleProp: 'sx',
+      styleProp: 'classStyle',
       eslint: false,
     });
     expect(asker.asked).toEqual([]);
     expect(answers).toMatchObject({
       spelling: 'physical',
-      styleProp: 'sx',
+      styleProp: 'classStyle',
       eslint: false,
     });
   });
 
   it('takes a renamed styling prop', async () => {
-    const answers = await ask(scripted(['3', 'sx', 'n']), {});
-    expect(answers.styleProp).toBe('sx');
+    const answers = await ask(scripted(['3', 'classStyle', 'n']), {});
+    expect(answers.styleProp).toBe('classStyle');
   });
 
   it('refuses a styling prop that is not an identifier', async () => {
