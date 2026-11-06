@@ -19,12 +19,13 @@ import {
   DEFAULT_STYLE_PROP,
   getStyleRecords,
   deepMerge,
-} from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+  renderClass,
+} from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource, optimizer }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -126,7 +127,7 @@ describe.each(implementations)('$name', ({ transformSource, optimizer }) => {
   };
 
   const HEAD = [
-    `import * as css from '@plumeria/core';`,
+    `import * as css from '@typedcss/css';`,
     ...Object.entries(DEFS)
       .filter(([name]) => name !== 'fnStyles')
       .map(
@@ -166,16 +167,13 @@ describe.each(implementations)('$name', ({ transformSource, optimizer }) => {
 
   const compile = async (styleExpr: string) => {
     const id = `${DIR}/fixture-${fixtureCount++}.tsx`;
-    const source = `${HEAD}export const A = ({ ${VARS.join(', ')} }: any) => <div classStyle={${styleExpr}} />;\n`;
+    const source = `${HEAD}export const A = ({ ${VARS.join(', ')} }: any) => <div sx={${styleExpr}} />;\n`;
     fs.writeFileSync(id, source);
     const result = await transformSource(env(source, id));
     const code = typeof result === 'string' ? result : (result?.code ?? '');
 
-    // A dynamic style function puts a `style` attribute after the class list.
-    const dynamic = code.match(/className=\{([\s\S]*?)\}(?= style=| \/>)/);
-    const literal = code.match(/className="([^"]*)"/);
-    if (!dynamic && !literal) throw new Error(`no className in:\n${code}`);
-    const expr = dynamic ? dynamic[1] : JSON.stringify(literal![1]);
+    // typedcss merges at runtime, so the class list is read by rendering.
+    const expr = (vars: Record<string, unknown>) => renderClass(code, vars);
 
     const { compileCSS } = implementations.find(
       (implementation) => implementation.transformSource === transformSource,
@@ -190,11 +188,10 @@ describe.each(implementations)('$name', ({ transformSource, optimizer }) => {
   const norm = (value: string) =>
     value.trim().split(/\s+/).filter(Boolean).sort().join(' ');
 
-  const evaluate = (expr: string, vars: Record<string, unknown>) =>
-    norm(
-      new Function(...VARS, `return (${expr});`)(...VARS.map((n) => vars[n])) ??
-        '',
-    );
+  const evaluate = (
+    expr: (vars: Record<string, unknown>) => string,
+    vars: Record<string, unknown>,
+  ) => norm(expr(vars));
 
   // ---------------------------------------------------------------------------
   // Oracle
@@ -722,33 +719,37 @@ describe.each(implementations)('$name', ({ transformSource, optimizer }) => {
       });
     });
 
-    it('leaves nothing of the style objects behind, and backs every class it can emit', async () => {
+    // typedcss keeps the style objects as class maps for the runtime, so only
+    // the second half holds: every class an input can produce has a rule.
+    it('backs every class it can emit', async () => {
       const { expr, css } = await compile(source);
 
-      const leaked = Object.keys(DEFS).filter((name) => expr.includes(name));
-      const unbacked = Array.from(new Set(expr.match(HASH) ?? [])).filter(
+      const emitted = new Set(
+        combosOf(varNames).flatMap(
+          (combo) => evaluate(expr, combo).match(HASH) ?? [],
+        ),
+      );
+      const unbacked = Array.from(emitted).filter(
         (hash) => !css.includes(`.${hash}`),
       );
 
-      expect({ leaked, unbacked }).toEqual({ leaked: [], unbacked: [] });
+      expect(unbacked).toEqual([]);
     });
   });
 
   // A create key is free input, so the lookup table has to survive a key that
   // carries a quote or a backslash. Raw interpolation emitted invalid JavaScript.
   describe('a key that needs escaping', () => {
-    const compileKeys = async (decl: string): Promise<string> => {
-      const source = `import * as css from '@plumeria/core';
+    const compileKeys = async (decl: string) => {
+      const source = `import * as css from '@typedcss/css';
 const escaped = css.create(${decl});
-export const B = ({ k }: any) => <div classStyle={escaped[k]} />;
+export const B = ({ k }: any) => <div sx={escaped[k]} />;
 `;
       const result = await transformSource(
         env(source, `${DIR}/fixture-escape-${fixtureCount++}.tsx`),
       );
       const code = typeof result === 'string' ? result : (result?.code ?? '');
-      const dynamic = code.match(/className=\{([\s\S]*?)\}(?= style=| \/>)/);
-      if (!dynamic) throw new Error(`no className in:\n${code}`);
-      return dynamic[1];
+      return (k: string) => renderClass(code, { k }, 'B');
     };
 
     it.each([
@@ -763,10 +764,7 @@ export const B = ({ k }: any) => <div classStyle={escaped[k]} />;
         String.raw`a\b`,
       ],
     ])('keeps %s in the lookup table', async (_label, decl, key) => {
-      const expr = await compileKeys(decl);
-      const lookup = new Function('k', `return (${expr});`) as (
-        k: string,
-      ) => string;
+      const lookup = await compileKeys(decl);
       expect(lookup(key)).toMatch(/^x[a-z0-9]+$/);
       expect(lookup('plain')).toMatch(/^x[a-z0-9]+$/);
       expect(lookup(key)).not.toBe(lookup('plain'));
