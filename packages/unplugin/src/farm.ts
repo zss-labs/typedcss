@@ -4,7 +4,7 @@ import type { PluginOptions } from './core';
 import { createDiskCssImport } from './disk-css';
 
 function attachFarmHooks(plugin: any) {
-  const { targets, setCssImport } = plugin.__plumeriaInternal;
+  const { targets, setCssImport } = plugin.__typedcssInternal;
   let isDev = false;
   let farmRoot = process.cwd();
 
@@ -18,20 +18,20 @@ function attachFarmHooks(plugin: any) {
   plugin.farm = {
     config(config: any) {
       coreFarm?.config?.(config);
-      if (plugin.__plumeriaInternal) {
+      if (plugin.__typedcssInternal) {
         if (config?.root) {
           farmRoot = config.root;
-          plugin.__plumeriaInternal.setRoot(config.root);
+          plugin.__typedcssInternal.setRoot(config.root);
         }
         isDev = config?.compilation?.mode !== 'production';
-        plugin.__plumeriaInternal.setDev(isDev);
+        plugin.__typedcssInternal.setDev(isDev);
       }
       return config;
     },
     configureCompiler(compiler: any) {
-      if (plugin.__plumeriaInternal) {
+      if (plugin.__typedcssInternal) {
         isDev = compiler.config?.compilation?.mode !== 'production';
-        plugin.__plumeriaInternal.setDev(isDev);
+        plugin.__typedcssInternal.setDev(isDev);
       }
     },
     updateModules: {
@@ -59,7 +59,7 @@ function attachFarmHooks(plugin: any) {
 
   return {
     ...plugin,
-    name: '@plumeria/unplugin:farm',
+    name: '@typedcss/unplugin:farm',
   };
 }
 
