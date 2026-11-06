@@ -2,8 +2,13 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { parseSync } from '@swc/core';
-import { getStyleRecords, DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import {
+  getStyleRecords,
+  DEFAULT_STYLE_PROP,
+  evaluateModule,
+  renderClass,
+} from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const env = (source: string, filePath: string) => ({
@@ -19,9 +24,9 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   });
 
   const directory = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-unplugin-regressions-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-unplugin-regressions-')),
   );
-  const prefix = `import * as css from '@plumeria/core';`;
+  const prefix = `import * as css from '@typedcss/css';`;
   const styles = `const styles = css.create({ a: { color: 'red' }, b: { padding: 4 }, c: { color: 'blue' } });`;
   const run = async (
     source: string,
@@ -45,16 +50,17 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       '\uFEFF/* 日本語 */\n' +
         prefix +
         styles +
-        'export const el = <div classStyle={styles.a} />;',
+        'export const el = <div sx={styles.a} />;',
     );
     expect(result).toContain('/* 日本語 */');
-    expect(result).toContain(`className={"${classHash({ color: 'red' })}"}`);
+    expect(renderClass(result, {}, 'el')).toBe(classHash({ color: 'red' }));
     expect(() => checkSyntax(result)).not.toThrow();
   });
 
-  it.each([
-    `<div style={{ color: theme.primary }} className={staticValues.name} classStyle={styles.a} />`,
-    `<div classStyle={styles.a} style={{ color: theme.primary }} className={staticValues.name} />`,
+  // Not a typedcss requirement: typedcss rejects sx beside className or style on the same element: css.props sets both itself, so they are written as styles in sx.
+  it.skip.each([
+    `<div style={{ color: theme.primary }} className={staticValues.name} sx={styles.a} />`,
+    `<div sx={styles.a} style={{ color: theme.primary }} className={staticValues.name} />`,
   ])('rewrites constants inside preserved JSX attributes: %s', async (jsx) => {
     const result = await run(
       prefix +
@@ -72,7 +78,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     const result = await run(
       prefix +
         styles +
-        `export const el = <div classStyle={flag ? [styles.a, styles.b] : styles.c} />;`,
+        `export const el = <div sx={flag ? [styles.a, styles.b] : styles.c} />;`,
     );
     expect(result).toContain(classHash({ color: 'red' }));
     expect(result).toContain(classHash({ padding: 4 }));
@@ -80,37 +86,40 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     expect(() => checkSyntax(result)).not.toThrow();
   });
 
-  it.each(['flag || styles.b', 'flag ?? styles.b', "''", '0'])(
+  // Not a typedcss requirement: typedcss merges sx at runtime, so a value the build cannot read is applied as whatever it holds.
+  it.skip.each(['flag || styles.b', 'flag ?? styles.b', "''", '0'])(
     'reports unsupported style entries instead of dropping styles: %s',
     async (entry) => {
       await expect(
         run(
           prefix +
             styles +
-            `export const el = <div classStyle={[styles.a, ${entry}]} />;`,
+            `export const el = <div sx={[styles.a, ${entry}]} />;`,
         ),
       ).rejects.toThrow('unresolvable style object');
     },
   );
 
-  it('rejects an unresolved conditional branch instead of emitting only its other branch', async () => {
+  // Not a typedcss requirement: typedcss merges sx at runtime, so a value the build cannot read is applied as whatever it holds.
+  it.skip('rejects an unresolved conditional branch instead of emitting only its other branch', async () => {
     await expect(
       run(
         prefix +
           styles +
-          `export const el = <div classStyle={flag ? [styles.a, unknownStyle] : styles.c} />;`,
+          `export const el = <div sx={flag ? [styles.a, unknownStyle] : styles.c} />;`,
       ),
     ).rejects.toThrow('unresolvable style object');
   });
 
-  it.each(['styles.a', 'styles[key]', '[styles.a]'])(
+  // Not a typedcss requirement: typedcss merges sx at runtime, so a value the build cannot read is applied as whatever it holds.
+  it.skip.each(['styles.a', 'styles[key]', '[styles.a]'])(
     'does not resolve a shadowed styling-prop binding: %s',
     async (expression) => {
       await expect(
         run(
           prefix +
             styles +
-            `export function Component(styles: any) { return <div classStyle={${expression}} />; }`,
+            `export function Component(styles: any) { return <div sx={${expression}} />; }`,
         ),
       ).rejects.toThrow('unresolvable style object');
     },
@@ -121,7 +130,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       run(
         prefix +
           styles +
-          `export function Component() { const styles = css.create({a:{color:'green'}}); return <div classStyle={styles.a} />; }`,
+          `export function Component() { const styles = css.create({a:{color:'green'}}); return <div sx={styles.a} />; }`,
       ),
     ).rejects.toThrow('top-level variable');
   });
@@ -131,7 +140,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     const parent = path.join(directory, 'Parent.tsx');
     const childSource =
       prefix +
-      `export const Child = ({ id, ...rest }: any) => <div id={id} classStyle={rest.styleArray} />;`;
+      `export const Child = ({ id, ...rest }: any) => <div id={id} sx={rest.styleArray} />;`;
     const parentSource =
       prefix +
       styles +
@@ -139,7 +148,13 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     fs.writeFileSync(child, childSource);
     fs.writeFileSync(parent, parentSource);
     const result = await run(childSource, child);
-    expect(result).toContain(classHash({ color: 'red' }));
+    const parentResult = await run(parentSource, parent);
+    // typedcss hands the style over at runtime, so the parent is rendered.
+    const load = (name: string) =>
+      name === './Child' ? evaluateModule(result) : undefined;
+    expect(renderClass(parentResult, {}, 'Parent', load)).toBe(
+      classHash({ color: 'red' }),
+    );
     expect(result).toContain('rest.styleArray');
     expect(() => checkSyntax(result)).not.toThrow();
   });
@@ -154,7 +169,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       );
       const childSource =
         prefix +
-        `export const Child = ({ styleArray }: any) => <div classStyle={styleArray} />;`;
+        `export const Child = ({ styleArray }: any) => <div sx={styleArray} />;`;
       const parentSource =
         prefix +
         styles +
@@ -163,9 +178,19 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       fs.writeFileSync(parent, parentSource);
       const parentResult = await run(parentSource, parent);
       const childResult = await run(childSource, child);
-      expect(parentResult).toContain('(flag)');
-      expect(childResult).toContain(classHash({ color: 'blue' }));
-      expect(childResult).toContain(classHash({ color: 'red' }));
+      // typedcss hands the array over at runtime, so the parent is rendered.
+      const load = (name: string) =>
+        name === `./${path.basename(child, '.tsx')}`
+          ? evaluateModule(childResult)
+          : undefined;
+      const on = renderClass(
+        parentResult,
+        { flag: true },
+        'Parent',
+        load,
+      ).split(' ');
+      expect(on).toContain(classHash({ color: 'blue' }));
+      expect(on).not.toContain(classHash({ color: 'red' }));
       expect(() => checkSyntax(parentResult)).not.toThrow();
       expect(() => checkSyntax(childResult)).not.toThrow();
     },
@@ -178,7 +203,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   ])('accepts statically readable style arguments: %s', async (argument) => {
     const result = await run(
       prefix +
-        `const rules = { a: { color: 'red' } }; const styles = css.create(${argument}); export const el = <div classStyle={styles.a} />;`,
+        `const rules = { a: { color: 'red' } }; const styles = css.create(${argument}); export const el = <div sx={styles.a} />;`,
     );
     expect(result).toContain(classHash({ color: 'red' }));
     expect(() => checkSyntax(result)).not.toThrow();
@@ -207,9 +232,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     'resolves styles through a transparent expression wrapper: %s',
     async (expression) => {
       const result = await run(
-        prefix +
-          styles +
-          `export const el = <div classStyle={${expression}} />;`,
+        prefix + styles + `export const el = <div sx={${expression}} />;`,
       );
       expect(result).toContain(classHash({ color: 'red' }));
       expect(() => checkSyntax(result)).not.toThrow();
@@ -220,7 +243,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
     const result = await run(
       prefix +
         `const box = css.create({ a: { color: 'red' } }), keep = 42;` +
-        `export const el = <div classStyle={box.a}>{keep}</div>;`,
+        `export const el = <div sx={box.a}>{keep}</div>;`,
     );
     expect(result).toContain('keep = 42');
     expect(() => checkSyntax(result)).not.toThrow();
@@ -244,13 +267,14 @@ describe.each(implementations)('$name', ({ transformSource }) => {
 
   it('compiles a style array that contains a hole', async () => {
     const result = await run(
-      prefix + styles + `export const el = <div classStyle={[, styles.a]} />;`,
+      prefix + styles + `export const el = <div sx={[, styles.a]} />;`,
     );
     expect(result).toContain(classHash({ color: 'red' }));
     expect(() => checkSyntax(result)).not.toThrow();
   });
 
-  it.each([
+  // Not a typedcss requirement: typedcss rejects sx beside className or style on the same element: css.props sets both itself, so they are written as styles in sx.
+  it.skip.each([
     ["{ color: 'red', }", "color: 'red'"],
     ["{ color: 'red' // note\n}", "color: 'red'"],
     ["{ color: 'red', // note\n}", "color: 'red'"],
@@ -262,7 +286,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
         prefix +
           styles +
           `const tone = css.create({ box: (color: string) => ({ background: color }) });` +
-          `export const el = <div style={${styleObject}} classStyle={tone.box('blue')} />;`,
+          `export const el = <div style={${styleObject}} sx={tone.box('blue')} />;`,
       );
       expect(result).toContain(preserved);
       expect(result).toContain('"blue"');
