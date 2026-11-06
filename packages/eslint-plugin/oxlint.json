@@ -1,8 +1,8 @@
 {
   "jsPlugins": [
     {
-      "name": "@plumeria",
-      "specifier": "@plumeria/eslint-plugin/oxlint-plugin"
+      "name": "@typedcss",
+      "specifier": "@typedcss/eslint-plugin/oxlint-plugin"
     }
   ],
   "plugins": [],
@@ -10,24 +10,22 @@
   "ignorePatterns": ["**/*.svelte", "**/*.vue"],
 
   "rules": {
-    "@plumeria/custom-props-require-import": "error",
-    "@plumeria/expand-border-shorthands": "warn",
-    "@plumeria/no-combinator": "error",
-    "@plumeria/no-destructure": "error",
-    "@plumeria/no-inline-object": "error",
-    "@plumeria/no-inner-call": "error",
-    "@plumeria/no-invalid-selector": "error",
-    "@plumeria/no-mixed-styling-props": "error",
-    "@plumeria/no-mutable-binding": "warn",
-    "@plumeria/no-order-dependent-overlap": "warn",
-    "@plumeria/no-style-prop-relay": "error",
-    "@plumeria/no-unknown-css-properties": "error",
-    "@plumeria/no-unused-keys": "warn",
-    "@plumeria/no-unresolved-composition": "warn",
-    "@plumeria/sort-properties": "warn",
-    "@plumeria/format-properties": "warn",
-    "@plumeria/validate-values": "warn",
-    "@plumeria/validate-pseudos": "warn",
-    "@plumeria/validate-at-rules": "warn"
+    "@typedcss/expand-border-shorthands": "warn",
+    "@typedcss/no-combinator": "error",
+    "@typedcss/no-destructure": "error",
+    "@typedcss/no-inline-object": "error",
+    "@typedcss/no-inner-call": "error",
+    "@typedcss/no-invalid-selector": "error",
+    "@typedcss/no-mixed-styling-props": "error",
+    "@typedcss/no-mutable-binding": "warn",
+    "@typedcss/no-order-dependent-overlap": "warn",
+    "@typedcss/no-unknown-css-properties": "error",
+    "@typedcss/no-unused-keys": "warn",
+    "@typedcss/no-unresolved-composition": "warn",
+    "@typedcss/sort-properties": "warn",
+    "@typedcss/format-properties": "warn",
+    "@typedcss/validate-values": "warn",
+    "@typedcss/validate-pseudos": "warn",
+    "@typedcss/validate-at-rules": "warn"
   }
 }
