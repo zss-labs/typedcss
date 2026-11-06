@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   container: {
@@ -15,8 +15,8 @@ const styles = css.create({
 
 export const App = () => {
   return (
-    <div classStyle={styles.container}>
-      <h1 classStyle={styles.text}>Hello from Plumeria + Esbuild!</h1>
+    <div sx={styles.container}>
+      <h1 sx={styles.text}>Hello from typedcss + Esbuild!</h1>
     </div>
   );
 };
