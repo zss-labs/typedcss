@@ -11,23 +11,32 @@ const ruleTester = new RuleTester({
 ruleTester.run('no-mutable-binding', noMutableBinding, {
   valid: [
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
+      css.create({ box: { color: unresolvedGlobal } });
+    `,
+    `
+      import { "create" as make } from '@typedcss/css';
+      const value = 'red';
+      make({ box: { color: value } });
+    `,
+    `
+      import * as css from '@typedcss/css';
       const key = 'color';
       const size = 4;
       css.create({ box: { [key]: 'red', padding: size } });
     `,
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
       css.create({ box: (width) => ({ width }) });
     `,
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
       let color = 'red';
       css.create({ box: { color: 'blue' } });
       color = 'green';
     `,
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
       let box = 'red';
       css.create({ box: { color: 'blue' }, other: { borderColor: css.box } });
     `,
@@ -40,7 +49,17 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
+        function make() {
+          let local = 'red';
+          return css.create({ box: () => ({ color: local }) });
+        }
+      `,
+      errors: [{ messageId: 'mutable', data: { name: 'local', kind: 'let' } }],
+    },
+    {
+      code: `
+        import * as css from '@typedcss/css';
         let key = 'color';
         css.create({ box: { [key]: 'red' } });
       `,
@@ -48,7 +67,7 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         var size = 4;
         css.create({ box: { padding: size } });
       `,
@@ -56,7 +75,7 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         let start = '0deg';
         css.varType({ syntax: '<angle>', initialValue: start });
       `,
@@ -64,7 +83,7 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         let gap = 8;
         css.positionTry({ positionArea: 'top', marginBottom: gap });
       `,
@@ -72,7 +91,7 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
     },
     {
       code: `
-        import { createStatic, keyframes } from '@plumeria/core';
+        import { createStatic, keyframes } from '@typedcss/css';
         let query = '@media (min-width: 600px)';
         let opacity = 0.5;
         createStatic({ wide: query });
@@ -85,7 +104,7 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
     },
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         let fg = 'black';
         css.createTheme('.dark', { fg: { default: fg, theme: 'white' } });
       `,
@@ -93,7 +112,7 @@ ruleTester.run('no-mutable-binding', noMutableBinding, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         let gap = 8;
         css.create({ box: (scale) => ({ gap: gap * scale }) });
       `,
