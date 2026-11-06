@@ -1,6 +1,6 @@
-const plumeria = require('./dist/index.js');
+const plugin = require('./dist/index.js');
 
 module.exports = {
-  meta: { name: '@plumeria' },
-  ...plumeria,
+  meta: { name: '@typedcss' },
+  ...plugin,
 };
