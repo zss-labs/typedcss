@@ -6,62 +6,62 @@ const ruleTester = new RuleTester();
 ruleTester.run('no-destructure', noDestructure, {
   valid: [
     {
-      code: "import css from '@plumeria/core'; const { variants: legacy } = css;",
+      code: "import css from '@typedcss/css'; const { variants: legacy } = css;",
     },
 
     // Retired APIs are outside this rule; do not suggest using them differently.
     {
-      code: `import * as css from '@plumeria/core'; const { variants } = css;`,
+      code: `import * as css from '@typedcss/css'; const { variants } = css;`,
     },
 
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({})`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({})`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.use()`,
+      code: `import * as css from '@typedcss/css'; css.props()`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const animate = css.keyframes({})`,
+      code: `import * as css from '@typedcss/css'; const animate = css.keyframes({})`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const transitionName = css.viewTransitionClass({})`,
+      code: `import * as css from '@typedcss/css'; const transitionName = css.viewTransitionClass({})`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const breakpoints = css.createStatic({})`,
+      code: `import * as css from '@typedcss/css'; const breakpoints = css.createStatic({})`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const tokens = css.createTheme({})`,
+      code: `import * as css from '@typedcss/css'; const tokens = css.createTheme({})`,
     },
     {
-      code: `import css from '@plumeria/core'; const styles = css.create({})`,
+      code: `import css from '@typedcss/css'; const styles = css.create({})`,
     },
     {
-      code: `import { "create" as c } from '@plumeria/core';`,
+      code: `import { "create" as c } from '@typedcss/css';`,
     },
     {
-      code: `import { create } from '@plumeria/core';`,
+      code: `import { create } from '@typedcss/css';`,
     },
     // Branch coverages
     {
       code: `import * as css from 'other'; const { create } = css;`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const { create } = other;`,
+      code: `import * as css from '@typedcss/css'; const { create } = other;`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const { ...rest } = css;`,
+      code: `import * as css from '@typedcss/css'; const { ...rest } = css;`,
       settings: { ecmaVersion: 2021 },
     },
     {
-      code: `import * as css from '@plumeria/core'; const { ['create']: create } = css;`,
+      code: `import * as css from '@typedcss/css'; const { ['create']: create } = css;`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const { someOtherThing } = css;`,
+      code: `import * as css from '@typedcss/css'; const { someOtherThing } = css;`,
     },
   ],
   invalid: [
     {
-      code: `import * as css from '@plumeria/core'; const { create } = css;`,
+      code: `import * as css from '@typedcss/css'; const { create } = css;`,
       errors: [
         {
           message:
@@ -70,16 +70,16 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { use } = css;`,
+      code: `import * as css from '@typedcss/css'; const { props } = css;`,
       errors: [
         {
           message:
-            'Do not destructure "use" from "css". Use dot notation instead.',
+            'Do not destructure "props" from "css". Use dot notation instead.',
         },
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { keyframes } = css;`,
+      code: `import * as css from '@typedcss/css'; const { keyframes } = css;`,
       errors: [
         {
           message:
@@ -88,7 +88,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { viewTransitionClass } = css;`,
+      code: `import * as css from '@typedcss/css'; const { viewTransitionClass } = css;`,
       errors: [
         {
           message:
@@ -97,7 +97,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { positionTry } = css;`,
+      code: `import * as css from '@typedcss/css'; const { positionTry } = css;`,
       errors: [
         {
           message:
@@ -106,7 +106,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { varType } = css;`,
+      code: `import * as css from '@typedcss/css'; const { varType } = css;`,
       errors: [
         {
           message:
@@ -115,7 +115,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { createStatic } = css;`,
+      code: `import * as css from '@typedcss/css'; const { createStatic } = css;`,
       errors: [
         {
           message:
@@ -124,7 +124,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { createTheme } = css;`,
+      code: `import * as css from '@typedcss/css'; const { createTheme } = css;`,
       errors: [
         {
           message:
@@ -133,7 +133,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import css from '@plumeria/core'; const { create } = css;`,
+      code: `import css from '@typedcss/css'; const { create } = css;`,
       errors: [
         {
           message:
@@ -142,7 +142,7 @@ ruleTester.run('no-destructure', noDestructure, {
       ],
     },
     {
-      code: `import * as css from '@plumeria/core'; const { create, createStatic, createTheme, keyframes, use, variants } = css;`,
+      code: `import * as css from '@typedcss/css'; const { create, createStatic, createTheme, keyframes, props, variants } = css;`,
       errors: [
         {
           message:
@@ -162,12 +162,12 @@ ruleTester.run('no-destructure', noDestructure, {
         },
         {
           message:
-            'Do not destructure "use" from "css". Use dot notation instead.',
+            'Do not destructure "props" from "css". Use dot notation instead.',
         },
       ],
     },
     {
-      code: `import * as style from '@plumeria/core'; const { create } = style;`,
+      code: `import * as style from '@typedcss/css'; const { create } = style;`,
       errors: [
         {
           message:
