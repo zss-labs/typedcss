@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [preact(), plumeria.vite()],
+  plugins: [preact(), typedcss.vite()],
 });
