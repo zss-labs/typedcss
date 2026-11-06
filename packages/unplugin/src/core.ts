@@ -1,18 +1,14 @@
 import type { UnpluginFactory } from 'unplugin';
 import { createFilter } from '@rollup/pluginutils';
 import * as path from 'path';
-import compiler from '@plumeria/compiler';
-import type { PropertyPolicyOptions } from '@plumeria/compiler';
-import { lintOverrides, startLintGuard } from '@plumeria/eslint-plugin/guard';
-
-const {
-  resolvePropertyPolicy,
-  optimizer,
-  transformSource,
-  compileCSS,
+import * as oxide from '@typedcss/oxide';
+import type { PropertyPolicyOptions, SourcePackage } from '@typedcss/oxide';
+import { lintOverrides, startLintGuard } from '@typedcss/eslint-plugin/guard';
+import {
   DEFAULT_STYLE_PROP,
-  needsCompile,
-} = compiler;
+  compileStylesheet,
+  isRelevant,
+} from './stylesheet';
 
 export type CssImportContext = {
   id: string;
@@ -26,6 +22,7 @@ export type CssImportFormatter = (ctx: CssImportContext) => string | null;
 export interface PluginOptions extends PropertyPolicyOptions {
   include?: string | RegExp | Array<string | RegExp>;
   exclude?: string | RegExp | Array<string | RegExp>;
+  root?: string;
   devEmitToDisk?: boolean;
   styleProp?: string;
   lint?: boolean;
@@ -35,23 +32,66 @@ export interface PluginOptions extends PropertyPolicyOptions {
 export const EXTENSION_PATTERN =
   /* istanbul ignore next */ /\.(ts|tsx|js|jsx)$/;
 
+export const CSS_FILENAME = 'typedcss.zero.css';
+
 export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
   options = {},
   unpluginMeta,
 ) => {
   const filter = createFilter(options.include, options.exclude);
-  const propertyPolicy = resolvePropertyPolicy(options);
   const styleProp = options.styleProp ?? DEFAULT_STYLE_PROP;
-  let classProp: string | undefined;
+  let classProp: 'className' | 'class' = 'className';
+  const policy: PropertyPolicyOptions = {
+    withoutLogicalProperties: options.withoutLogicalProperties,
+    withoutPhysicalProperties: options.withoutPhysicalProperties,
+  };
 
   const cssLookup = new Map<string, string>();
   const cssFileLookup = new Map<string, string>();
   const targets: { id: string; dependencies: string[] }[] = [];
+  const stylesheetFiles = new Set<string>();
 
-  const devCssSheets = new Map<string, Set<string>>();
-  let isDev = false;
   let cssImport: CssImportFormatter | null = null;
   let viteRoot: string = process.cwd();
+
+  const root = () => options.root ?? viteRoot;
+
+  // Dependencies that point the typedcss condition at their source, read once
+  // per root: their files are resolved, transformed and scanned like the app's.
+  let packages: { root: string; list: SourcePackage[] } | undefined;
+  const packagesOf = () => {
+    const at = path.resolve(root());
+    if (packages?.root !== at) {
+      packages = { root: at, list: oxide.sourcePackages(at) };
+    }
+    return packages.list;
+  };
+  const sourceDirs = () =>
+    packagesOf().flatMap((pkg) =>
+      pkg.sourceDirs.filter((dir) => dir.startsWith(pkg.dir + path.sep)),
+    );
+  const inSource = (file: string) =>
+    oxide.inSourcePackage(packagesOf(), path.resolve(file));
+  const cssFilename = () => path.join(viteRoot, CSS_FILENAME);
+  const cssId = () => `/${CSS_FILENAME}`;
+
+  const refresh = (overrides?: Map<string, string>) => {
+    const { css, files } = compileStylesheet(
+      {
+        cwd: viteRoot,
+        root: root(),
+        styleProp,
+        sourceDirs: sourceDirs(),
+        ...policy,
+      },
+      overrides,
+    );
+    stylesheetFiles.clear();
+    for (const file of files) stylesheetFiles.add(file);
+    cssLookup.set(cssFilename(), css);
+    cssFileLookup.set(cssId(), cssFilename());
+    return css;
+  };
 
   const lint = options.lint !== false;
   const startLint = () => {
@@ -61,7 +101,7 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
     hooks: { run: { tap: (name: string, fn: () => void) => void } };
   }) => {
     if (!lint) return;
-    bundler.hooks.run.tap('@plumeria/unplugin', () => {
+    bundler.hooks.run.tap('@typedcss/unplugin', () => {
       startLint();
     });
   };
@@ -72,7 +112,7 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
   };
 
   return {
-    name: '@plumeria/unplugin',
+    name: '@typedcss/unplugin',
     enforce: 'pre',
 
     webpack: lintOnRun,
@@ -91,25 +131,29 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
       },
     },
 
-    // Internal state for bundler-specific hooks
-    __plumeriaInternal: {
+    __typedcssInternal: {
       cssLookup,
       cssFileLookup,
       targets,
-      devCssSheets,
+      stylesheetFiles,
       unpluginMeta,
-      setDev(value: boolean) {
-        isDev = value;
+      cssFilename,
+      refresh,
+      setDev(_value: boolean) {},
+      setClassProp(value: 'className' | 'class') {
+        classProp = value;
       },
-      setRoot(root: string) {
-        viteRoot = root;
+      setRoot(value: string) {
+        viteRoot = value;
       },
       setCssImport(formatter: CssImportFormatter | null) {
         cssImport = formatter;
       },
-      setClassProp(value: string) {
-        classProp = value;
+      sourcePackages: packagesOf,
+      resolveSource(id: string) {
+        return oxide.resolveSourcePackage(packagesOf(), id);
       },
+      inSource,
     },
 
     resolveId(id, importer) {
@@ -124,7 +168,7 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
         }
         return query ? `${pathId}?${query}` : pathId;
       }
-      return null;
+      return oxide.resolveSourcePackage(packagesOf(), id);
     },
 
     loadInclude(id) {
@@ -134,8 +178,11 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
 
     load(id) {
       const [pathId] = id.split('?', 1);
-      const resolved = cssFileLookup.get(pathId) ?? path.join(viteRoot, pathId);
-      return cssLookup.get(resolved) ?? cssLookup.get(pathId) ?? '';
+      const resolved = cssLookup.has(pathId)
+        ? pathId
+        : (cssFileLookup.get(pathId) ?? path.join(viteRoot, pathId));
+      if (!cssLookup.has(resolved)) refresh();
+      return cssLookup.get(resolved) ?? '';
     },
 
     transformInclude(id) {
@@ -145,107 +192,38 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
     transform: {
       order: 'pre',
       async handler(source, id) {
-        if (id.includes('node_modules')) return null;
         const [baseId] = id.split('?');
-        if (!filter(baseId)) return null;
-        if (!needsCompile(source, styleProp, baseId)) return null;
+        if (baseId.includes('node_modules') && !inSource(baseId)) return null;
+        if (!filter(baseId) || !EXTENSION_PATTERN.test(baseId)) return null;
+        if (!isRelevant(source, baseId, styleProp)) return null;
 
-        const dependencies: string[] = [];
-        const addDependency = (depPath: string) => {
-          dependencies.push(depPath);
-          if ((this as any).addWatchFile) {
-            (this as any).addWatchFile(depPath);
-          }
-        };
-
-        const relative = path.relative(viteRoot, baseId).replace(/\\/g, '/');
-        const insideRoot =
-          !relative.startsWith('..') && !path.isAbsolute(relative);
-        const cwd = insideRoot ? viteRoot : path.dirname(baseId);
-
-        const { code: transformedSource } = transformSource({
-          source,
-          moduleId: id,
-          filePath: baseId,
-          root: viteRoot,
+        const transformedSource = oxide.transform(source, baseId, {
+          root: root(),
           styleProp,
           classProp,
-          propertyPolicy,
-          isDev,
-          cwd,
-          addDependency,
+          ...policy,
         });
+        if (transformedSource === null) return null;
 
-        const filePath = path.resolve(baseId);
-        const fileCss = compileCSS({
-          include: [],
-          exclude: [],
-          files: [filePath],
-          cwd,
-          styleProp,
-          withoutLogicalProperties: options.withoutLogicalProperties,
-          withoutPhysicalProperties: options.withoutPhysicalProperties,
-          sources: { [filePath]: source },
-        });
-        const extractedSheets = fileCss ? [fileCss] : [];
+        const filename = cssFilename();
+        const css = refresh(new Map([[path.resolve(baseId), source]]));
 
-        const cssFilename = `${baseId.replace(EXTENSION_PATTERN, '')}.zero.css`;
-        const cssId = `/${path.relative(viteRoot, cssFilename).replace(/\\/g, '/')}`;
-
-        if (isDev) {
-          if (!devCssSheets.has(cssFilename)) {
-            devCssSheets.set(cssFilename, new Set());
-          }
-          const acc = devCssSheets.get(cssFilename)!;
-
-          // Additive in dev: keep previously emitted sheets so classes still
-          // referenced by not-yet-retransformed modules never flash away.
-          // Re-adding moves a sheet to the end so latest-wins order is kept
-          // for :root/theme rules.
-          extractedSheets.forEach((sheet) => {
-            acc.delete(sheet);
-            acc.add(sheet);
-          });
-
-          const accCSS = optimizer(Array.from(acc).join(''));
-          cssLookup.set(cssFilename, accCSS);
+        const targetIndex = targets.findIndex((t) => t.id === id);
+        const dependencies = [...stylesheetFiles];
+        if (targetIndex !== -1) {
+          targets[targetIndex].dependencies = dependencies;
         } else {
-          cssLookup.set(cssFilename, optimizer(extractedSheets.join('')));
+          targets.push({ id, dependencies });
         }
-        cssFileLookup.set(cssId, cssFilename);
 
-        if (extractedSheets.length > 0) {
-          const targetIndex = targets.findIndex((t) => t.id === id);
-          if (targetIndex !== -1) {
-            targets[targetIndex].dependencies = dependencies;
-          } else {
-            targets.push({ id, dependencies });
-          }
+        const statement = cssImport
+          ? cssImport({ id, cssId: cssId(), cssFilename: filename, css })
+          : `\nimport ${JSON.stringify(cssId())};`;
 
-          const statement = cssImport
-            ? cssImport({
-                id,
-                cssId,
-                cssFilename,
-                css: cssLookup.get(cssFilename) ?? '',
-              })
-            : `\nimport ${JSON.stringify(cssId)};`;
-
-          return {
-            code: statement ? transformedSource + statement : transformedSource,
-            map: null,
-          };
-        } else {
-          const targetIndex = targets.findIndex((t) => t.id === id);
-          if (targetIndex !== -1) {
-            targets.splice(targetIndex, 1);
-          }
-
-          return {
-            code: transformedSource,
-            map: null,
-          };
-        }
+        return {
+          code: statement ? transformedSource + statement : transformedSource,
+          map: null,
+        };
       },
     },
   };
