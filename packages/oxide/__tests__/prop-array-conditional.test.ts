@@ -6,12 +6,14 @@ import {
   DEFAULT_STYLE_PROP,
   getStyleRecords,
   deepMerge,
-} from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+  evaluateModule,
+  hostElement,
+} from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   const STYLES = path.join(DIR, 'styles.ts');
   const LEAF = path.join(DIR, 'Leaf.tsx');
@@ -38,17 +40,17 @@ describe.each(implementations)('$name', ({ transformSource }) => {
 
   const files: Record<string, string> = {
     [STYLES]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const styles = css.create(${JSON.stringify({ base: BASE, other: OTHER })});
 `,
     [LEAF]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const Leaf = ({ styleArray }: { styleArray?: css.Style }) => (
-  <div classStyle={styleArray} />
+  <div sx={styleArray} />
 );
 `,
     [PARENT]: `
-import '@plumeria/core';
+import '@typedcss/css';
 import { styles } from './styles';
 import { Leaf } from './Leaf';
 export const Parent = ({ on }: { on?: boolean }) => (
@@ -60,13 +62,13 @@ export const Parent = ({ on }: { on?: boolean }) => (
 );
 `,
     [SHAPES_LEAF]: `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const ShapesLeaf = ({ styleArray }: { styleArray?: css.Style }) => (
-  <div classStyle={styleArray} />
+  <div sx={styleArray} />
 );
 `,
     [SHAPES_PARENT]: `
-import '@plumeria/core';
+import '@typedcss/css';
 import { styles } from './styles';
 import { ShapesLeaf } from './ShapesLeaf';
 export const ShapesParent = ({ on }: { on?: boolean }) => (
@@ -159,6 +161,8 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
       }
     };
     walk(ast);
+    // typedcss spreads css.props onto the element instead of writing className.
+    if (attrName === 'className') return code;
     if (!found || found.value?.type !== 'JSXExpressionContainer') {
       throw new Error(
         `Attribute "${attrName}" with JSXExpressionContainer not found in code`,
@@ -168,8 +172,20 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
     return code.slice(start - 1, end - 1);
   };
 
-  beforeAll(() => {
+  // typedcss passes the style value itself and the leaf merges it at runtime,
+  // so the leaf module is rendered with the value the parent passes.
+  let stylesModule: Record<string, any> = {};
+  const renderLeaf = (code: string, value: unknown) => {
+    const exports = evaluateModule(code);
+    const component = Object.values(exports).find(
+      (entry) => typeof entry === 'function',
+    );
+    return hostElement(component({ styleArray: value }))?.props.className ?? '';
+  };
+
+  beforeAll(async () => {
     for (const [p, src] of Object.entries(files)) fs.writeFileSync(p, src);
+    stylesModule = evaluateModule(await run(STYLES), STYLES);
   });
 
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
@@ -183,10 +199,12 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
       const code = await run(leaf as string);
       const expr = extractJsxExpr(code, 'className');
 
-      const render = (value: unknown) =>
-        norm(new Function('styleArray', `return (${expr});`)(value) ?? '');
+      const render = (value: unknown) => norm(renderLeaf(expr, value) ?? '');
       const valueOf = (source: string, on: boolean) =>
-        new Function('on', `return ${source};`)(on);
+        new Function('on', 'styles', `return ${source};`)(
+          on,
+          stylesModule.styles,
+        );
 
       expect(values).toHaveLength(count);
       for (const [index, value] of values.entries()) {
@@ -207,10 +225,12 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
         const code = await run(SHAPES_LEAF);
         const expr = extractJsxExpr(code, 'className');
 
-        const render = (value: unknown) =>
-          norm(new Function('styleArray', `return (${expr});`)(value) ?? '');
+        const render = (value: unknown) => norm(renderLeaf(expr, value) ?? '');
         const valueOf = (source: string, on: boolean) =>
-          new Function('on', `return ${source};`)(on);
+          new Function('on', 'styles', `return ${source};`)(
+            on,
+            stylesModule.styles,
+          );
 
         expect(render(valueOf(values[0], false))).toBe(
           norm(classesOf(deepMerge(BASE, OTHER))),
@@ -222,10 +242,12 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
         const code = await run(SHAPES_LEAF);
         const expr = extractJsxExpr(code, 'className');
 
-        const render = (value: unknown) =>
-          norm(new Function('styleArray', `return (${expr});`)(value) ?? '');
+        const render = (value: unknown) => norm(renderLeaf(expr, value) ?? '');
         const valueOf = (source: string, on: boolean) =>
-          new Function('on', `return ${source};`)(on);
+          new Function('on', 'styles', `return ${source};`)(
+            on,
+            stylesModule.styles,
+          );
 
         expect(render(valueOf(values[1], true))).toBe(norm(classesOf(BASE)));
         expect(render(valueOf(values[1], false))).toBe('');
@@ -236,10 +258,12 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
         const code = await run(SHAPES_LEAF);
         const expr = extractJsxExpr(code, 'className');
 
-        const render = (value: unknown) =>
-          norm(new Function('styleArray', `return (${expr});`)(value) ?? '');
+        const render = (value: unknown) => norm(renderLeaf(expr, value) ?? '');
         const valueOf = (source: string, on: boolean) =>
-          new Function('on', `return ${source};`)(on);
+          new Function('on', 'styles', `return ${source};`)(
+            on,
+            stylesModule.styles,
+          );
 
         expect(render(valueOf(values[2], true))).toBe(norm(classesOf(BASE)));
         expect(render(valueOf(values[2], false))).toBe(norm(classesOf(OTHER)));
@@ -250,10 +274,12 @@ export const ShapesParent = ({ on }: { on?: boolean }) => (
         const code = await run(SHAPES_LEAF);
         const expr = extractJsxExpr(code, 'className');
 
-        const render = (value: unknown) =>
-          norm(new Function('styleArray', `return (${expr});`)(value) ?? '');
+        const render = (value: unknown) => norm(renderLeaf(expr, value) ?? '');
         const valueOf = (source: string, on: boolean) =>
-          new Function('on', `return ${source};`)(on);
+          new Function('on', 'styles', `return ${source};`)(
+            on,
+            stylesModule.styles,
+          );
 
         expect(render(valueOf(values[3], false))).toBe(norm(classesOf(BASE)));
         expect(render(valueOf(values[3], true))).toBe(
