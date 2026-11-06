@@ -14,7 +14,7 @@
       <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
     </a>
   </div>
-  <h1 class={svelteClass}>Vite + Svelte + Plumeria</h1>
+  <h1 class={svelteClass}>Vite + Svelte + typedcss</h1>
 
   <div class="card">
     <Counter />
