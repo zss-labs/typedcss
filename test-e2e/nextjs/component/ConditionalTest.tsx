@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   base: {
@@ -34,7 +34,7 @@ export function ConditionalTest() {
       <h3>Conditional Styles Test</h3>
       <div
         data-testid="conditional-div"
-        classStyle={[
+        sx={[
           styles.base,
           isActive ? styles.active : styles.inactive,
           isLarge && styles.large,
