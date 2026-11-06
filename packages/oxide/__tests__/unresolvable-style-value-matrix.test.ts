@@ -1,18 +1,18 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
   const run = (body: string) =>
     transformSource({
-      source: `import * as css from '@plumeria/core';\n${body}`,
+      source: `import * as css from '@typedcss/css';\n${body}`,
       moduleId: `${DIR}/fixture.tsx`,
       filePath: `${DIR}/fixture.tsx`,
       root: DIR,
