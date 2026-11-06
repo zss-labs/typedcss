@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
   const FIXTURE_PATH = path.join(FIXTURE_DIR, 'fixture.tsx');
 
   const wrap = (body: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const s = css.create({
   p1: { color: 'green' },
@@ -43,7 +43,7 @@ ${body}
       ['an && nested inside a ternary', `a ? (b && s[k]) : s.p3`],
     ])('emits every key of the group in %s', (_label, expr) => {
       const out = compile(
-        `export const A = ({ on, a, b, k }: any) => <div classStyle={${expr}} />;`,
+        `export const A = ({ on, a, b, k }: any) => <div sx={${expr}} />;`,
       );
       for (const color of ['green', 'olive', 'teal']) {
         expect(out).toContain(`color: ${color}`);
