@@ -1,20 +1,20 @@
 {
-  "name": "@plumeria/eslint-plugin",
-  "version": "21.1.2",
-  "description": "Plumeria ESLint plugin",
+  "name": "@typedcss/eslint-plugin",
+  "version": "21.2.7",
+  "description": "ESLint plugin for typedcss",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://plumeria.dev",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zss-in-js/plumeria.git",
+    "url": "git+https://github.com/zss-labs/typedcss.git",
     "directory": "packages/eslint-plugin"
   },
   "bugs": {
-    "url": "https://github.com/zss-in-js/plumeria/issues"
+    "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "keywords": [
-    "plumeria",
+    "typedcss",
     "eslint",
     "eslint-plugin",
     "oxlint",
@@ -41,8 +41,8 @@
     "oxlint.json"
   ],
   "bin": {
-    "plumeria-lint": "bin/oxlint.js",
-    "plumerialint": "bin/plumerialint.js"
+    "typedcss-lint": "bin/oxlint.js",
+    "typedcsslint": "bin/typedcsslint.js"
   },
   "scripts": {
     "build": "rimraf dist && pnpm cjs",
@@ -62,7 +62,7 @@
     "provenance": true
   },
   "dependencies": {
-    "@plumeria/compiler": "workspace:*",
+    "@typedcss/oxide": "workspace:*",
     "oxlint": "1.87.0",
     "zss-engine": "catalog:"
   }
