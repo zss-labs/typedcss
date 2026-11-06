@@ -74,7 +74,7 @@ describe('source generators', () => {
   });
 
   it('exposes setup defaults and helpers', () => {
-    expect(DEFAULT_STYLE_PROP).toBe('classStyle');
+    expect(DEFAULT_STYLE_PROP).toBe('sx');
     expect(CLEAN_SCRIPT).toBe('rimraf .next');
     expect(rejectedSpelling('none')).toBeUndefined();
     expect(packages).toEqual(expect.any(Function));
@@ -82,30 +82,30 @@ describe('source generators', () => {
 
   it('covers JavaScript and unsupported fresh bundler forms', () => {
     expect(bundlerSource('next', answers(), false)).toContain(
-      'withPlumeria({})',
+      'withTypedCSS({})',
     );
     expect(bundlerSource('astro', answers(), true)).toContain('vite:');
     expect(bundlerSource('webpack', answers(), true)).toBeUndefined();
     expect(eslintSource(answers(), false)).toContain('**/*.{js,jsx}');
     expect(eslintEntries(answers(), false)).toEqual([
-      'plumeria.configs.recommended',
+      'typedcss.configs.recommended',
     ]);
   });
 
   it('names a renamed styling prop in the ESLint settings', () => {
     expect(eslintSource(answers(), true)).not.toContain('settings:');
-    expect(eslintEntries(answers({ styleProp: 'sx' }), false)[1]).toContain(
-      "files: ['**/*.{js,jsx}']",
-    );
-    const source = eslintSource(answers({ styleProp: 'sx' }), true);
-    expect(source).toContain("      plumeria: { styleProp: 'sx' },");
-    expect(eslintEntries(answers({ styleProp: 'sx' }), true)).toEqual([
-      'plumeria.configs.recommended',
+    expect(
+      eslintEntries(answers({ styleProp: 'classStyle' }), false)[1],
+    ).toContain("files: ['**/*.{js,jsx}']");
+    const source = eslintSource(answers({ styleProp: 'classStyle' }), true);
+    expect(source).toContain("      typedcss: { styleProp: 'classStyle' },");
+    expect(eslintEntries(answers({ styleProp: 'classStyle' }), true)).toEqual([
+      'typedcss.configs.recommended',
       [
         '{',
         "  files: ['**/*.{ts,tsx}'],",
         '  settings: {',
-        "    plumeria: { styleProp: 'sx' },",
+        "    typedcss: { styleProp: 'classStyle' },",
         '  },',
         '}',
       ].join('\n'),
@@ -113,18 +113,18 @@ describe('source generators', () => {
   });
 
   it('covers plugin, script, and package-manager variants', () => {
-    expect(pluginOptions(answers({ styleProp: 'sx' }))).toContain(
-      "styleProp: 'sx'",
+    expect(pluginOptions(answers({ styleProp: 'classStyle' }))).toContain(
+      "styleProp: 'classStyle'",
     );
     expect(pluginCall('bun', answers(), 'p')).toBe('p.bun()');
+    expect(buildScript('vite build', 'sx')).toBe('typedcss-lint -- vite build');
     expect(buildScript('vite build', 'classStyle')).toBe(
-      'plumeria-lint -- vite build',
-    );
-    expect(buildScript('vite build', 'sx')).toBe(
-      'plumeria-lint --style-prop sx -- vite build',
+      'typedcss-lint --style-prop classStyle -- vite build',
     );
     expect(installCommand('yarn', ['a'])).toBe('yarn add -D a');
     expect(installCommand('bun', ['a'])).toBe('bun add -d a');
+    expect(installCommand('npm', ['a'], false)).toBe('npm i a');
+    expect(installCommand('pnpm', ['a'], false)).toBe('pnpm add a');
     expect(cleanScripts({ dev: 'x', predev: 'y', build: 'z' })).toEqual({
       prebuild: 'rimraf .next',
     });
@@ -137,13 +137,13 @@ describe('the spelling answer', () => {
       'withoutPhysicalProperties: true',
     );
     expect(spellingRule(answers({ spelling: 'logical' }))).toBe(
-      "'@plumeria/no-physical-properties': 'error'",
+      "'@typedcss/no-physical-properties': 'error'",
     );
     expect(compilerOption(answers({ spelling: 'physical' }))).toBe(
       'withoutLogicalProperties: true',
     );
     expect(spellingRule(answers({ spelling: 'physical' }))).toBe(
-      "'@plumeria/no-logical-properties': 'error'",
+      "'@typedcss/no-logical-properties': 'error'",
     );
   });
 
@@ -153,7 +153,7 @@ describe('the spelling answer', () => {
       'withoutLogicalProperties: { sizes: true }',
     );
     expect(spellingRule(both)).toBe(
-      "'@plumeria/no-logical-properties': ['error', { sizes: true }]",
+      "'@typedcss/no-logical-properties': ['error', { sizes: true }]",
     );
   });
 
@@ -166,14 +166,14 @@ describe('the spelling answer', () => {
 describe('the declaration', () => {
   it('references the shipped one for the default prop', () => {
     expect(declarationSource(answers())).toBe(
-      '/// <reference types="@plumeria/core/class-style" />\n',
+      '/// <reference types="@typedcss/css/sx" />\n',
     );
   });
 
   it('declares the prop the project renamed to', () => {
-    const source = declarationSource(answers({ styleProp: 'sx' }));
-    expect(source).toContain("import type { Style } from '@plumeria/core';");
-    expect(source).toContain('sx?: Style;');
+    const source = declarationSource(answers({ styleProp: 'classStyle' }));
+    expect(source).toContain("import type { Style } from '@typedcss/css';");
+    expect(source).toContain('classStyle?: Style;');
   });
 });
 
@@ -182,7 +182,7 @@ describe('plan', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-plan-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-plan-')),
     );
   });
 
@@ -198,6 +198,32 @@ describe('plan', () => {
     for (const [name, content] of Object.entries(files))
       add(dir, name, content);
   };
+
+  it('declares the styling prop in src when the project has one', () => {
+    project(
+      { name: 'app', devDependencies: { vite: '^8.0.13' } },
+      {
+        'vite.config.ts': VITE_CONFIG,
+        'tsconfig.json': '{}',
+        'src/main.tsx': '',
+      },
+    );
+
+    expect(on(plan(detect(dir), answers()), 'src/typedcss.d.ts').kind).toBe(
+      'write',
+    );
+  });
+
+  it('declares the styling prop at the root without src', () => {
+    project(
+      { name: 'app', devDependencies: { vite: '^8.0.13' } },
+      { 'vite.config.ts': VITE_CONFIG, 'tsconfig.json': '{}' },
+    );
+
+    expect(on(plan(detect(dir), answers()), 'typedcss.d.ts').kind).toBe(
+      'write',
+    );
+  });
 
   it('wraps the Next config and carries the policy into it', () => {
     project(
@@ -216,10 +242,10 @@ describe('plan', () => {
     const patched = contentsOf(on(actions, 'next.config.ts'));
 
     expect(patched).toContain(
-      "import { withPlumeria } from '@plumeria/next-plugin';",
+      "import { withTypedCSS } from '@typedcss/next-plugin';",
     );
     expect(patched).toContain(
-      'export default withPlumeria(nextConfig, { withoutLogicalProperties: { sizes: true } });',
+      'export default withTypedCSS(nextConfig, { withoutLogicalProperties: { sizes: true } });',
     );
   });
 
@@ -231,13 +257,13 @@ describe('plan', () => {
 
     const actions = plan(
       detect(dir),
-      answers({ spelling: 'logical', styleProp: 'sx' }),
+      answers({ spelling: 'logical', styleProp: 'classStyle' }),
     );
     const patched = contentsOf(on(actions, 'vite.config.ts'));
 
-    expect(patched).toContain("import plumeria from '@plumeria/unplugin';");
+    expect(patched).toContain("import typedcss from '@typedcss/unplugin';");
     expect(patched).toContain(
-      "plugins: [react(), plumeria.vite({ styleProp: 'sx', withoutPhysicalProperties: true })]",
+      "plugins: [react(), typedcss.vite({ styleProp: 'classStyle', withoutPhysicalProperties: true })]",
     );
   });
 
@@ -249,7 +275,7 @@ describe('plan', () => {
 
     const action = on(plan(detect(dir), answers()), 'vite.config.ts');
     expect(action.kind).toBe('write');
-    expect(contentsOf(action)).toContain('plugins: [plumeria.vite()]');
+    expect(contentsOf(action)).toContain('plugins: [typedcss.vite()]');
   });
 
   it('hands back a snippet when the plugin cannot be placed', () => {
@@ -259,7 +285,7 @@ describe('plan', () => {
     const manual = actions.find((action) => action.kind === 'manual');
     expect(manual).toBeDefined();
     if (manual?.kind !== 'manual') throw new Error('expected a manual action');
-    expect(manual.snippet).toContain('plugins: [plumeria.esbuild()]');
+    expect(manual.snippet).toContain('plugins: [typedcss.esbuild()]');
   });
 
   it('describes a fresh Bun build as build-script work', () => {
@@ -299,8 +325,8 @@ describe('plan', () => {
         'eslint.config.ts',
       ),
     );
-    expect(written).toContain('plumeria.configs.recommended,');
-    expect(written).toContain("'@plumeria/no-physical-properties': 'error',");
+    expect(written).toContain('typedcss.configs.recommended,');
+    expect(written).toContain("'@typedcss/no-physical-properties': 'error',");
     expect(written).toContain('parserOptions: { projectService: true }');
   });
 
@@ -313,7 +339,7 @@ describe('plan', () => {
     const written = contentsOf(
       on(plan(detect(dir), answers()), 'eslint.config.ts'),
     );
-    expect(written).toContain('plumeria.configs.recommended,');
+    expect(written).toContain('typedcss.configs.recommended,');
     expect(written).not.toContain('rules:');
   });
 
@@ -332,14 +358,16 @@ describe('plan', () => {
     ) as {
       scripts: Record<string, string>;
     };
-    expect(patched.scripts.build).toBe('plumeria-lint -- node build.mjs');
+    expect(patched.scripts.build).toBe('typedcss-lint -- node build.mjs');
   });
 
-  it('renames plumerialint to plumeria-lint in the build script', () => {
+  it('renames typedcsslint to typedcss-lint in the build script', () => {
     project(
       {
         name: 'app',
-        scripts: { build: 'plumerialint --style-prop sx -- node build.mjs' },
+        scripts: {
+          build: 'typedcsslint --style-prop classStyle -- node build.mjs',
+        },
         devDependencies: { esbuild: '^0.28.0' },
       },
       { 'tsconfig.json': '{}' },
@@ -351,7 +379,7 @@ describe('plan', () => {
       scripts: Record<string, string>;
     };
     expect(patched.scripts.build).toBe(
-      'plumeria-lint --style-prop sx -- node build.mjs',
+      'typedcss-lint --style-prop classStyle -- node build.mjs',
     );
   });
 
@@ -367,13 +395,16 @@ describe('plan', () => {
 
     const patched = JSON.parse(
       contentsOf(
-        on(plan(detect(dir), answers({ styleProp: 'sx' })), 'package.json'),
+        on(
+          plan(detect(dir), answers({ styleProp: 'classStyle' })),
+          'package.json',
+        ),
       ),
     ) as {
       scripts: Record<string, string>;
     };
     expect(patched.scripts.build).toBe(
-      'plumeria-lint --style-prop sx -- node build.mjs',
+      'typedcss-lint --style-prop classStyle -- node build.mjs',
     );
   });
 
@@ -398,7 +429,7 @@ describe('plan', () => {
         name: 'app',
         devDependencies: {
           vite: '^8.0.13',
-          '@plumeria/core': '^19.1.1',
+          '@typedcss/css': '^19.1.1',
           oxlint: '1.67.0',
         },
       },
@@ -411,8 +442,33 @@ describe('plan', () => {
     if (install?.kind !== 'install')
       throw new Error('expected an install action');
     expect(install.packages).toEqual([
-      '@plumeria/unplugin',
-      '@plumeria/eslint-plugin',
+      '@typedcss/unplugin',
+      '@typedcss/eslint-plugin',
+    ]);
+  });
+
+  it('installs the runtime separately from development tools', () => {
+    project(
+      {
+        name: 'app',
+        packageManager: 'pnpm@10.20.0',
+        devDependencies: { vite: '^8.0.13', oxlint: '1.67.0' },
+      },
+      { 'tsconfig.json': '{}', 'eslint.config.ts': 'export default [];\n' },
+    );
+
+    const installs = plan(detect(dir), answers()).filter(
+      (action) => action.kind === 'install',
+    );
+    expect(installs).toMatchObject([
+      {
+        command: 'pnpm add @typedcss/css',
+        packages: ['@typedcss/css'],
+      },
+      {
+        command: 'pnpm add -D @typedcss/unplugin @typedcss/eslint-plugin',
+        packages: ['@typedcss/unplugin', '@typedcss/eslint-plugin'],
+      },
     ]);
   });
 
@@ -420,15 +476,14 @@ describe('plan', () => {
     project(
       {
         name: 'app',
-        scripts: { build: 'plumeria-lint -- vite build' },
+        scripts: { build: 'typedcss-lint -- vite build' },
         devDependencies: { vite: '^8.0.13' },
       },
       {
         'tsconfig.json': '{}',
-        'plumeria.d.ts':
-          '/// <reference types="@plumeria/core/class-style" />\n',
-        'vite.config.ts': `import plumeria from '@plumeria/unplugin';\n\nexport default { plugins: [plumeria.vite()] };\n`,
-        'eslint.config.ts': `import plumeria from '@plumeria/eslint-plugin';\n\nexport default [plumeria.configs.recommended];\n`,
+        'typedcss.d.ts': '/// <reference types="@typedcss/css/sx" />\n',
+        'vite.config.ts': `import typedcss from '@typedcss/unplugin';\n\nexport default { plugins: [typedcss.vite()] };\n`,
+        'eslint.config.ts': `import typedcss from '@typedcss/eslint-plugin';\n\nexport default [typedcss.configs.recommended];\n`,
       },
     );
 
@@ -447,7 +502,7 @@ describe('plan', () => {
     );
     expect(
       contentsOf(on(plan(detect(dir), answers()), 'next.config.cjs')),
-    ).toContain("const { withPlumeria } = require('@plumeria/next-plugin');");
+    ).toContain("const { withTypedCSS } = require('@typedcss/next-plugin');");
 
     fs.rmSync(path.join(dir, 'next.config.cjs'));
     project(
@@ -456,14 +511,14 @@ describe('plan', () => {
     );
     expect(
       contentsOf(on(plan(detect(dir), answers()), 'webpack.config.cjs')),
-    ).toContain("const plumeria = require('@plumeria/unplugin').default;");
+    ).toContain("const typedcss = require('@typedcss/unplugin').default;");
   });
 
   it('recognizes an applied Next wrapper and reports an unwrappable config', () => {
     project(
       { dependencies: { next: '1' } },
       {
-        'next.config.ts': `import { withPlumeria } from '@plumeria/next-plugin';\n\nexport default withPlumeria({});\n`,
+        'next.config.ts': `import { withTypedCSS } from '@typedcss/next-plugin';\n\nexport default withTypedCSS({});\n`,
       },
     );
     expect(on(plan(detect(dir), answers()), 'next.config.ts').kind).toBe(
@@ -478,7 +533,7 @@ describe('plan', () => {
     const action = on(plan(detect(dir), answers()), 'next.config.ts');
     expect(action.kind).toBe('manual');
     if (action.kind === 'manual') {
-      expect(action.snippet).toContain('withPlumeria(nextConfig)');
+      expect(action.snippet).toContain('withTypedCSS(nextConfig)');
     }
   });
 
@@ -523,7 +578,7 @@ describe('plan', () => {
     const action = on(plan(detect(dir), answers()), 'eslint.config.cjs');
     expect(action.kind).toBe('manual');
     if (action.kind === 'manual') {
-      expect(action.snippet).toContain('plumeria.configs.recommended');
+      expect(action.snippet).toContain('typedcss.configs.recommended');
     }
   });
 
@@ -533,9 +588,9 @@ describe('plan', () => {
         scripts: { build: 'vite build' },
         devDependencies: {
           vite: '1',
-          '@plumeria/core': '1',
-          '@plumeria/unplugin': '1',
-          '@plumeria/eslint-plugin': '1',
+          '@typedcss/css': '1',
+          '@typedcss/unplugin': '1',
+          '@typedcss/eslint-plugin': '1',
           oxlint: '1',
           eslint: '1',
           '@eslint/js': '1',
@@ -558,7 +613,7 @@ describe('plan', () => {
     );
     const actions = plan(
       detect(dir),
-      answers({ spelling: 'logical', sizes: true, styleProp: 'sx' }),
+      answers({ spelling: 'logical', sizes: true, styleProp: 'classStyle' }),
     );
     expect(
       actions.some(
@@ -578,15 +633,15 @@ describe('plan', () => {
     const config = JSON.parse(contents);
     expect(config.plugins).toEqual(['typescript']);
     expect(config.jsPlugins).toEqual([
-      { name: '@plumeria', specifier: '@plumeria/eslint-plugin/oxlint-plugin' },
+      { name: '@typedcss', specifier: '@typedcss/eslint-plugin/oxlint-plugin' },
     ]);
     expect(config.rules['no-debugger']).toBe('error');
-    expect(config.rules['@plumeria/no-unknown-css-properties']).toBe('error');
-    expect(config.rules['@plumeria/no-physical-properties']).toEqual([
+    expect(config.rules['@typedcss/no-unknown-css-properties']).toBe('error');
+    expect(config.rules['@typedcss/no-physical-properties']).toEqual([
       'error',
       { sizes: true },
     ]);
-    expect(config.settings).toEqual({ plumeria: { styleProp: 'sx' } });
+    expect(config.settings).toEqual({ typedcss: { styleProp: 'classStyle' } });
   });
 
   it('skips an oxlint config that already loads the plugin and hands over one with comments', () => {
@@ -594,7 +649,7 @@ describe('plan', () => {
       { devDependencies: { vite: '1' } },
       {
         'vite.config.ts': VITE_CONFIG,
-        '.oxlintrc.json': `{ "jsPlugins": ["@plumeria/eslint-plugin/oxlint-plugin"] }\n`,
+        '.oxlintrc.json': `{ "jsPlugins": ["@typedcss/eslint-plugin/oxlint-plugin"] }\n`,
       },
     );
     expect(on(plan(detect(dir), answers()), '.oxlintrc.json').kind).toBe(
@@ -654,7 +709,7 @@ describe('what a config already carries', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-carry-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-carry-')),
     );
   });
 
@@ -702,7 +757,7 @@ export default defineConfig({
     const patched = contentsOf(
       on(plan(detect(dir), answers()), 'vite.config.ts'),
     );
-    expect(patched).toContain('plugins: [react(), plumeria.vite()],');
+    expect(patched).toContain('plugins: [react(), typedcss.vite()],');
     expect(patched).toContain('    plugins: [],\n');
   });
 
@@ -730,7 +785,7 @@ export default defineConfig({
       {},
       {
         'vite.config.ts': `import { defineConfig } from 'vite';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 export default defineConfig({
   plugins: [react()],
@@ -742,15 +797,15 @@ export default defineConfig({
     const action = on(plan(detect(dir), answers()), 'vite.config.ts');
     expect(action.kind).toBe('patch');
     const patched = contentsOf(action);
-    expect(patched).toContain('plumeria.vite()');
-    expect(patched.match(/@plumeria\/unplugin/g)).toHaveLength(1);
+    expect(patched).toContain('typedcss.vite()');
+    expect(patched.match(/@typedcss\/unplugin/g)).toHaveLength(1);
   });
 
   it('calls the binding the config already named', () => {
     vite(
       {},
       {
-        'vite.config.ts': `import zero from '@plumeria/unplugin';
+        'vite.config.ts': `import zero from '@typedcss/unplugin';
 
 export default { plugins: [react()] };
 `,
@@ -766,9 +821,9 @@ export default { plugins: [react()] };
     vite(
       {},
       {
-        'vite.config.ts': `import plumeria from '@plumeria/unplugin';
+        'vite.config.ts': `import typedcss from '@typedcss/unplugin';
 
-export default { plugins: [plumeria.vite()] };
+export default { plugins: [typedcss.vite()] };
 `,
       },
     );
@@ -778,7 +833,7 @@ export default { plugins: [plumeria.vite()] };
     );
   });
 
-  it('wraps a Next config that imports withPlumeria without using it', () => {
+  it('wraps a Next config that imports withTypedCSS without using it', () => {
     project(
       {
         name: 'app',
@@ -787,7 +842,7 @@ export default { plugins: [plumeria.vite()] };
       },
       {
         'tsconfig.json': '{}',
-        'next.config.ts': `import { withPlumeria } from '@plumeria/next-plugin';
+        'next.config.ts': `import { withTypedCSS } from '@typedcss/next-plugin';
 
 const nextConfig = {};
 
@@ -799,15 +854,15 @@ export default nextConfig;
     const action = on(plan(detect(dir), answers()), 'next.config.ts');
     expect(action.kind).toBe('patch');
     const patched = contentsOf(action);
-    expect(patched).toContain('export default withPlumeria(nextConfig);');
-    expect(patched.match(/@plumeria\/next-plugin/g)).toHaveLength(1);
+    expect(patched).toContain('export default withTypedCSS(nextConfig);');
+    expect(patched.match(/@typedcss\/next-plugin/g)).toHaveLength(1);
   });
 
   it('extends an ESLint config that imports the plugin without using it', () => {
     vite(
       {},
       {
-        'eslint.config.ts': `import plumeria from '@plumeria/eslint-plugin';
+        'eslint.config.ts': `import typedcss from '@typedcss/eslint-plugin';
 
 export default [base];
 `,
@@ -816,7 +871,7 @@ export default [base];
 
     const action = on(plan(detect(dir), answers()), 'eslint.config.ts');
     expect(action.kind).toBe('patch');
-    expect(contentsOf(action)).toContain('plumeria.configs.recommended,');
+    expect(contentsOf(action)).toContain('typedcss.configs.recommended,');
   });
 });
 
@@ -825,7 +880,7 @@ describe('the Next cache', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-next-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-next-')),
     );
   });
 
@@ -865,7 +920,8 @@ describe('the Next cache', () => {
     next({ dev: 'next dev', build: 'next build' });
 
     const install = plan(detect(dir), answers()).find(
-      (action) => action.kind === 'install',
+      (action) =>
+        action.kind === 'install' && action.packages.includes('rimraf'),
     );
     if (install?.kind !== 'install')
       throw new Error('expected an install action');
@@ -897,7 +953,7 @@ describe('an import the config only mentions', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-mention-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-mention-')),
     );
   });
 
@@ -916,9 +972,9 @@ describe('an import the config only mentions', () => {
   };
 
   it('registers the plugin when only a property of it is read', () => {
-    vite(`import plumeria from '@plumeria/unplugin';
+    vite(`import typedcss from '@typedcss/unplugin';
 
-console.log(plumeria.version);
+console.log(typedcss.version);
 
 export default defineConfig({
   plugins: [react()],
@@ -927,14 +983,14 @@ export default defineConfig({
 
     const action = on(plan(detect(dir), answers()), 'vite.config.ts');
     expect(action.kind).toBe('patch');
-    expect(contentsOf(action)).toContain('plumeria.vite()');
+    expect(contentsOf(action)).toContain('typedcss.vite()');
   });
 
   it('registers the plugin when the call is only in a comment', () => {
-    vite(`import plumeria from '@plumeria/unplugin';
+    vite(`import typedcss from '@typedcss/unplugin';
 
 export default defineConfig({
-  // plugins: [plumeria.vite()],
+  // plugins: [typedcss.vite()],
   plugins: [react()],
 });
 `);
@@ -944,7 +1000,7 @@ export default defineConfig({
     );
   });
 
-  it('wraps a Next config whose withPlumeria import spans lines', () => {
+  it('wraps a Next config whose withTypedCSS import spans lines', () => {
     add(
       dir,
       'package.json',
@@ -955,8 +1011,8 @@ export default defineConfig({
       dir,
       'next.config.ts',
       `import {
-  withPlumeria,
-} from '@plumeria/next-plugin';
+  withTypedCSS,
+} from '@typedcss/next-plugin';
 
 const nextConfig = {};
 
@@ -967,8 +1023,8 @@ export default nextConfig;
     const patched = contentsOf(
       on(plan(detect(dir), answers()), 'next.config.ts'),
     );
-    expect(patched).toContain('export default withPlumeria(nextConfig);');
-    expect(patched.match(/@plumeria\/next-plugin/g)).toHaveLength(1);
+    expect(patched).toContain('export default withTypedCSS(nextConfig);');
+    expect(patched.match(/@typedcss\/next-plugin/g)).toHaveLength(1);
   });
 });
 
@@ -977,7 +1033,7 @@ describe('the pre scripts', () => {
 
   beforeEach(() => {
     dir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-pre-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-pre-')),
     );
   });
 
@@ -999,10 +1055,10 @@ describe('the pre scripts', () => {
 
     const actions = plan(detect(dir), answers());
     expect(on(actions, 'package.json').kind).toBe('skip');
-    const install = actions.find((action) => action.kind === 'install');
-    if (install?.kind !== 'install')
-      throw new Error('expected an install action');
-    expect(install.packages).not.toContain('rimraf');
+    const packages = actions.flatMap((action) =>
+      action.kind === 'install' ? action.packages : [],
+    );
+    expect(packages).not.toContain('rimraf');
   });
 
   it('adds only the one whose script exists', () => {
