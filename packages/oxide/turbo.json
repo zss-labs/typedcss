@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": ["*.node", "index.js", "index.d.ts", "browser.js"]
+      "outputs": ["*.node", "binding.js", "binding.d.ts"]
     }
   }
 }
