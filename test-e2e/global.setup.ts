@@ -22,7 +22,7 @@ export default async function globalSetup() {
       await page.waitForTimeout(250);
     }
 
-    throw new Error('Plumeria development CSS did not become ready');
+    throw new Error('typedcss development CSS did not become ready');
   } finally {
     await browser.close();
   }
