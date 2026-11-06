@@ -11,10 +11,10 @@ import type { Action, Answers } from './setup';
 
 const { version } = require('../package.json') as { version: string };
 
-const USAGE = `@plumeria/init — set up Plumeria in this project
+const USAGE = `@typedcss/init — set up typedcss in this project
 
 Usage
-  npx @plumeria/init
+  npx @typedcss/init
 
 It reads the project, asks what it cannot detect, then installs the packages
 and writes the configs. Nothing is written before the plan is shown.
@@ -23,7 +23,7 @@ Options
   -y, --yes            accept every default, ask nothing
   -d, --dry-run        show the plan without writing
       --bundler <name> ${BUNDLERS.join(', ')}
-      --style-prop <p> the JSX prop that carries styles (default classStyle)
+      --style-prop <p> the JSX prop that carries styles (default sx)
       --logical        this project writes logical properties
       --physical       this project writes physical properties
       --sizes          extend the spelling policy to the size axis
@@ -247,21 +247,24 @@ export async function main(argv: string[]): Promise<number> {
       }
     }
 
-    const wanted = actions.find((action) => action.kind === 'install');
-    if (wanted && answers.install) {
+    const wanted = actions.filter((action) => action.kind === 'install');
+    if (wanted.length > 0 && answers.install) {
       console.log('');
-      const status = install(detected.root, wanted);
-      if (status !== 0) {
-        console.error(
-          `\n${style.failure('✖')} ${wanted.command} failed. Run it yourself and try again.`,
-        );
-        return status;
+      for (const action of wanted) {
+        const status = install(detected.root, action);
+        if (status !== 0) {
+          console.error(
+            `\n${style.failure('✖')} ${action.command} failed. Run it yourself and try again.`,
+          );
+          return status;
+        }
       }
-    } else if (wanted) {
-      console.log(`\n${style.install('➡︎')} run: ${wanted.command}`);
+    } else if (wanted.length > 0) {
+      for (const action of wanted)
+        console.log(`\n${style.install('➡︎')} run: ${action.command}`);
     }
 
-    console.log(`\n${style.ok('✔')} Plumeria is set up.`);
+    console.log(`\n${style.ok('✔')} typedcss is set up.`);
 
     const manual = actions.filter((action) => action.kind === 'manual');
     if (manual.length === 0) return 0;
