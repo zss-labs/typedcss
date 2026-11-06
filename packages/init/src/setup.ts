@@ -59,7 +59,7 @@ export type Action =
     }
   | { kind: 'skip'; label: string; note: string; file: string };
 
-export const DEFAULT_STYLE_PROP = 'classStyle';
+export const DEFAULT_STYLE_PROP = 'sx';
 
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
@@ -94,11 +94,14 @@ const UNPLUGIN_METHOD: Record<Bundler, string> = {
   bun: 'bun',
 };
 
-const INSTALL: Record<PackageManager, string> = {
-  npm: 'npm i -D',
-  pnpm: 'pnpm add -D',
-  yarn: 'yarn add -D',
-  bun: 'bun add -d',
+const INSTALL: Record<
+  PackageManager,
+  { dependency: string; development: string }
+> = {
+  npm: { dependency: 'npm i', development: 'npm i -D' },
+  pnpm: { dependency: 'pnpm add', development: 'pnpm add -D' },
+  yarn: { dependency: 'yarn add', development: 'yarn add -D' },
+  bun: { dependency: 'bun add', development: 'bun add -d' },
 };
 
 export const rejectedSpelling = (
@@ -123,7 +126,7 @@ export const compilerOption = (answers: Answers): string | undefined => {
 export const spellingRule = (answers: Answers): string | undefined => {
   const rejected = rejectedSpelling(answers.spelling);
   if (!rejected) return undefined;
-  const name = `'@plumeria/no-${rejected}-properties'`;
+  const name = `'@typedcss/no-${rejected}-properties'`;
   return answers.sizes
     ? `${name}: ['error', { sizes: true }]`
     : `${name}: 'error'`;
@@ -142,14 +145,14 @@ export const pluginOptions = (answers: Answers): string => {
 export const pluginCall = (
   bundler: Bundler,
   answers: Answers,
-  local = 'plumeria',
+  local = 'typedcss',
 ): string => `${local}.${UNPLUGIN_METHOD[bundler]}(${pluginOptions(answers)})`;
 
 export const declarationSource = (answers: Answers): string => {
   if (answers.styleProp === DEFAULT_STYLE_PROP) {
-    return `/// <reference types="@plumeria/core/class-style" />\n`;
+    return `/// <reference types="@typedcss/css/sx" />\n`;
   }
-  return `import type { Style } from '@plumeria/core';
+  return `import type { Style } from '@typedcss/css';
 
 declare global {
   namespace React {
@@ -177,20 +180,20 @@ export const bundlerSource = (
   if (bundler === 'next') {
     return typescript
       ? `import type { NextConfig } from 'next';
-import { withPlumeria } from '@plumeria/next-plugin';
+import { withTypedCSS } from '@typedcss/next-plugin';
 
 const nextConfig: NextConfig = {};
 
-export default withPlumeria(nextConfig${nextOptions(answers)});
+export default withTypedCSS(nextConfig${nextOptions(answers)});
 `
-      : `import { withPlumeria } from '@plumeria/next-plugin';
+      : `import { withTypedCSS } from '@typedcss/next-plugin';
 
-export default withPlumeria({}${nextOptions(answers)});
+export default withTypedCSS({}${nextOptions(answers)});
 `;
   }
   if (bundler === 'vite') {
     return `import { defineConfig } from 'vite';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 export default defineConfig({
   plugins: [${pluginCall(bundler, answers)}],
@@ -199,7 +202,7 @@ export default defineConfig({
   }
   if (bundler === 'astro') {
     return `import { defineConfig } from 'astro/config';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 export default defineConfig({
   vite: {
@@ -216,7 +219,7 @@ const settingsLines = (answers: Answers): string[] =>
     ? []
     : [
         `settings: {`,
-        `  plumeria: { styleProp: '${answers.styleProp}' },`,
+        `  typedcss: { styleProp: '${answers.styleProp}' },`,
         `},`,
       ];
 
@@ -242,13 +245,13 @@ export const eslintSource = (answers: Answers, typescript: boolean): string => {
     `import eslint from '@eslint/js';`,
     typescript ? `import tseslint from 'typescript-eslint';` : undefined,
     `import { defineConfig } from 'eslint/config';`,
-    `import plumeria from '@plumeria/eslint-plugin';`,
+    `import typedcss from '@typedcss/eslint-plugin';`,
   ].filter((line): line is string => line !== undefined);
 
   const configs = [
     `  eslint.configs.recommended,`,
     typescript ? `  tseslint.configs.recommended,` : undefined,
-    `  plumeria.configs.recommended,`,
+    `  typedcss.configs.recommended,`,
   ].filter((line): line is string => line !== undefined);
 
   return `${head.join('\n')}
@@ -269,7 +272,7 @@ export const eslintEntries = (
   );
 
   const settings = settingsLines(answers);
-  const entries = ['plumeria.configs.recommended'];
+  const entries = ['typedcss.configs.recommended'];
   if (rules.length > 0 || settings.length > 0) {
     entries.push(
       [
@@ -294,14 +297,14 @@ const guardsByScript = (detected: Detected): boolean =>
 export const packages = (detected: Detected, answers: Answers): string[] => {
   const present = installed(detected.manifest);
   const wanted = [
-    '@plumeria/core',
+    '@typedcss/css',
     detected.bundler === 'next'
-      ? '@plumeria/next-plugin'
-      : '@plumeria/unplugin',
+      ? '@typedcss/next-plugin'
+      : '@typedcss/unplugin',
   ];
 
   if (answers.eslint) {
-    wanted.push('@plumeria/eslint-plugin');
+    wanted.push('@typedcss/eslint-plugin');
     if (!detected.eslintConfig && !detected.oxlintConfig) {
       wanted.push('eslint', '@eslint/js');
       if (detected.typescript) wanted.push('typescript-eslint');
@@ -320,7 +323,9 @@ export const packages = (detected: Detected, answers: Answers): string[] => {
 export const installCommand = (
   manager: PackageManager,
   names: readonly string[],
-): string => `${INSTALL[manager]} ${names.join(' ')}`;
+  development = true,
+): string =>
+  `${INSTALL[manager][development ? 'development' : 'dependency']} ${names.join(' ')}`;
 
 const indentOfJson = (source: string): number => {
   const match = /\n(\s+)"/.exec(source);
@@ -329,20 +334,32 @@ const indentOfJson = (source: string): number => {
 
 export const buildScript = (existing: string, styleProp: string): string =>
   styleProp === DEFAULT_STYLE_PROP
-    ? `plumeria-lint -- ${existing}`
-    : `plumeria-lint --style-prop ${styleProp} -- ${existing}`;
+    ? `typedcss-lint -- ${existing}`
+    : `typedcss-lint --style-prop ${styleProp} -- ${existing}`;
 
 export const plan = (detected: Detected, answers: Answers): Action[] => {
   const actions: Action[] = [];
   const names = packages(detected, answers);
+  const dependencies = names.filter((name) => name === '@typedcss/css');
+  const devDependencies = names.filter((name) => name !== '@typedcss/css');
 
-  if (names.length > 0) {
+  if (dependencies.length > 0) {
     actions.push({
       kind: 'install',
       label: 'install',
-      note: names.join(' '),
-      command: installCommand(detected.packageManager, names),
-      packages: names,
+      note: dependencies.join(' '),
+      command: installCommand(detected.packageManager, dependencies, false),
+      packages: dependencies,
+    });
+  }
+
+  if (devDependencies.length > 0) {
+    actions.push({
+      kind: 'install',
+      label: 'install -D',
+      note: devDependencies.join(' '),
+      command: installCommand(detected.packageManager, devDependencies),
+      packages: devDependencies,
     });
   }
 
@@ -358,7 +375,7 @@ export const plan = (detected: Detected, answers: Answers): Action[] => {
       kind: 'write',
       label: 'write',
       note: answers.styleProp,
-      file: 'plumeria.d.ts',
+      file: declarationFile(detected),
       contents: declarationSource(answers),
     });
   }
@@ -373,6 +390,13 @@ export const plan = (detected: Detected, answers: Answers): Action[] => {
 
   return actions;
 };
+
+const declarationFile = (detected: Detected): string =>
+  fs
+    .statSync(path.join(detected.root, 'src'), { throwIfNoEntry: false })
+    ?.isDirectory()
+    ? 'src/typedcss.d.ts'
+    : 'typedcss.d.ts';
 
 const read = (detected: Detected, file: string): string =>
   fs.readFileSync(path.join(detected.root, file), 'utf8');
@@ -409,13 +433,13 @@ const bundlerAction = (detected: Detected, answers: Answers): Action => {
   const kind = moduleKindOf(bundlerConfig, source);
 
   if (bundler === 'next') {
-    const { names, rest } = importedFrom(source, '@plumeria/next-plugin');
+    const { names, rest } = importedFrom(source, '@typedcss/next-plugin');
     const local = names.find((name) => callsFunction(rest, name));
     if (local) {
       return {
         kind: 'skip',
         label: 'skip',
-        note: 'withPlumeria is already applied',
+        note: 'withTypedCSS is already applied',
         file: bundlerConfig,
       };
     }
@@ -426,16 +450,16 @@ const bundlerAction = (detected: Detected, answers: Answers): Action => {
         ? source
         : addImport(
             source,
-            NAMED_IMPORTS[kind]('withPlumeria', '@plumeria/next-plugin'),
+            NAMED_IMPORTS[kind]('withTypedCSS', '@typedcss/next-plugin'),
           ),
-      bound ?? 'withPlumeria',
+      bound ?? 'withTypedCSS',
       nextOptions(answers),
     );
     return wrapped
       ? {
           kind: 'patch',
           label: 'patch',
-          note: `${bound ?? 'withPlumeria'}(...)`,
+          note: `${bound ?? 'withTypedCSS'}(...)`,
           file: bundlerConfig,
           contents: wrapped,
         }
@@ -448,7 +472,7 @@ const bundlerAction = (detected: Detected, answers: Answers): Action => {
         };
   }
 
-  const { names, rest } = importedFrom(source, '@plumeria/unplugin');
+  const { names, rest } = importedFrom(source, '@typedcss/unplugin');
   const used = names.find((name) => callsMethod(rest, name));
   if (used) {
     return {
@@ -460,10 +484,10 @@ const bundlerAction = (detected: Detected, answers: Answers): Action => {
   }
 
   const bound = names[0];
-  const entry = pluginCall(bundler, answers, bound ?? 'plumeria');
+  const entry = pluginCall(bundler, answers, bound ?? 'typedcss');
   const imported = bound
     ? source
-    : addImport(source, IMPORTS[kind]('plumeria', '@plumeria/unplugin'));
+    : addImport(source, IMPORTS[kind]('typedcss', '@typedcss/unplugin'));
 
   const at = pluginsArrayOf(imported);
   const patched =
@@ -512,9 +536,9 @@ const addViteBlock = (source: string, call: string): string | undefined => {
 
 const snippetFor = (bundler: Bundler, call: string): string => {
   if (bundler === 'next') {
-    return `import { withPlumeria } from '@plumeria/next-plugin';\n\nexport default withPlumeria(nextConfig);`;
+    return `import { withTypedCSS } from '@typedcss/next-plugin';\n\nexport default withTypedCSS(nextConfig);`;
   }
-  const imported = `import plumeria from '@plumeria/unplugin';`;
+  const imported = `import typedcss from '@typedcss/unplugin';`;
   if (bundler === 'astro') {
     return `${imported}\n\nvite: {\n  plugins: [${call}],\n}`;
   }
@@ -522,30 +546,28 @@ const snippetFor = (bundler: Bundler, call: string): string => {
 };
 
 export const OXLINT_PLUGIN = {
-  name: '@plumeria',
-  specifier: '@plumeria/eslint-plugin/oxlint-plugin',
+  name: '@typedcss',
+  specifier: '@typedcss/eslint-plugin/oxlint-plugin',
 };
 
 export const OXLINT_RECOMMENDED: Record<string, 'error' | 'warn'> = {
-  '@plumeria/custom-props-require-import': 'error',
-  '@plumeria/expand-border-shorthands': 'warn',
-  '@plumeria/no-combinator': 'error',
-  '@plumeria/no-destructure': 'error',
-  '@plumeria/no-inline-object': 'error',
-  '@plumeria/no-inner-call': 'error',
-  '@plumeria/no-invalid-selector': 'error',
-  '@plumeria/no-mixed-styling-props': 'error',
-  '@plumeria/no-mutable-binding': 'warn',
-  '@plumeria/no-order-dependent-overlap': 'warn',
-  '@plumeria/no-style-prop-relay': 'error',
-  '@plumeria/no-unknown-css-properties': 'error',
-  '@plumeria/no-unused-keys': 'warn',
-  '@plumeria/no-unresolved-composition': 'warn',
-  '@plumeria/sort-properties': 'warn',
-  '@plumeria/format-properties': 'warn',
-  '@plumeria/validate-values': 'warn',
-  '@plumeria/validate-pseudos': 'warn',
-  '@plumeria/validate-at-rules': 'warn',
+  '@typedcss/expand-border-shorthands': 'warn',
+  '@typedcss/no-combinator': 'error',
+  '@typedcss/no-destructure': 'error',
+  '@typedcss/no-inline-object': 'error',
+  '@typedcss/no-inner-call': 'error',
+  '@typedcss/no-invalid-selector': 'error',
+  '@typedcss/no-mixed-styling-props': 'error',
+  '@typedcss/no-mutable-binding': 'warn',
+  '@typedcss/no-order-dependent-overlap': 'warn',
+  '@typedcss/no-unknown-css-properties': 'error',
+  '@typedcss/no-unused-keys': 'warn',
+  '@typedcss/no-unresolved-composition': 'warn',
+  '@typedcss/sort-properties': 'warn',
+  '@typedcss/format-properties': 'warn',
+  '@typedcss/validate-values': 'warn',
+  '@typedcss/validate-pseudos': 'warn',
+  '@typedcss/validate-at-rules': 'warn',
 };
 
 type JsonObject = Record<string, unknown>;
@@ -557,13 +579,13 @@ export const oxlintEntries = (answers: Answers): JsonObject => {
   const rules: JsonObject = { ...OXLINT_RECOMMENDED };
   const rejected = rejectedSpelling(answers.spelling);
   if (rejected) {
-    rules[`@plumeria/no-${rejected}-properties`] = answers.sizes
+    rules[`@typedcss/no-${rejected}-properties`] = answers.sizes
       ? ['error', { sizes: true }]
       : 'error';
   }
   const entries: JsonObject = { jsPlugins: [OXLINT_PLUGIN], rules };
   if (answers.styleProp !== DEFAULT_STYLE_PROP) {
-    entries.settings = { plumeria: { styleProp: answers.styleProp } };
+    entries.settings = { typedcss: { styleProp: answers.styleProp } };
   }
   return entries;
 };
@@ -620,7 +642,7 @@ const oxlintAction = (
   return {
     kind: 'patch',
     label: 'patch',
-    note: 'jsPlugins @plumeria',
+    note: 'jsPlugins @typedcss',
     file,
     contents: `${JSON.stringify(merged, null, indentOfJson(source))}\n`,
   };
@@ -638,7 +660,7 @@ const eslintAction = (detected: Detected, answers: Answers): Action => {
     return {
       kind: 'write',
       label: 'write',
-      note: 'plumeria.configs.recommended',
+      note: 'typedcss.configs.recommended',
       file: typescript ? 'eslint.config.ts' : 'eslint.config.mjs',
       contents: eslintSource(answers, typescript),
     };
@@ -650,12 +672,12 @@ const eslintAction = (detected: Detected, answers: Answers): Action => {
       label: 'manual',
       note: 'flat config only',
       file: eslintConfig,
-      snippet: `{\n  "plugins": ["@plumeria"],\n  "extends": ["plugin:@plumeria/recommended"]\n}`,
+      snippet: `{\n  "plugins": ["@typedcss"],\n  "extends": ["plugin:@typedcss/recommended"]\n}`,
     };
   }
 
   const source = read(detected, eslintConfig);
-  const { names, rest } = importedFrom(source, '@plumeria/eslint-plugin');
+  const { names, rest } = importedFrom(source, '@typedcss/eslint-plugin');
   const used = names.find((name) => readsMember(rest, name, 'configs'));
   if (used) {
     return {
@@ -666,18 +688,18 @@ const eslintAction = (detected: Detected, answers: Answers): Action => {
     };
   }
 
-  const bound = names[0] ?? 'plumeria';
+  const bound = names[0] ?? 'typedcss';
   const patched = appendToConfigList(
     names.length > 0
       ? source
       : addImport(
           source,
           moduleKindOf(eslintConfig, source) === 'cjs'
-            ? `const plumeria = require('@plumeria/eslint-plugin');`
-            : `import plumeria from '@plumeria/eslint-plugin';`,
+            ? `const typedcss = require('@typedcss/eslint-plugin');`
+            : `import typedcss from '@typedcss/eslint-plugin';`,
         ),
     entries.map((entry) =>
-      entry.replace(/^plumeria\.configs\b/, `${bound}.configs`),
+      entry.replace(/^typedcss\.configs\b/, `${bound}.configs`),
     ),
   );
   return patched
@@ -718,10 +740,10 @@ const scriptAction = (detected: Detected, answers: Answers): Action => {
 
   const existing = scripts.build;
   const guard = answers.eslint && guardsByScript(detected);
-  if (guard && existing && existing.includes('plumerialint')) {
-    scripts.build = existing.replace(/plumerialint/g, 'plumeria-lint');
+  if (guard && existing && existing.includes('typedcsslint')) {
+    scripts.build = existing.replace(/typedcsslint/g, 'typedcss-lint');
     notes.push(`build: ${scripts.build}`);
-  } else if (guard && existing && !existing.includes('plumeria-lint')) {
+  } else if (guard && existing && !existing.includes('typedcss-lint')) {
     scripts.build = buildScript(existing, answers.styleProp);
     notes.push(`build: ${scripts.build}`);
   }
