@@ -2,11 +2,11 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { compileCSS } from '../index';
+import { compileCSS } from './implementations';
 
 const temporary = () =>
   fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-gitignore-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-gitignore-')),
   );
 
 const HOME = temporary();
@@ -15,13 +15,13 @@ const MONOREPO = temporary();
 const APP = path.join(MONOREPO, 'apps', 'web');
 
 const source = (color: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   box: { color: '${color}' },
 });
 
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `;
 
 const write = (file: string, contents: string) => {
