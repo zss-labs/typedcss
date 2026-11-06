@@ -4,14 +4,14 @@ import * as path from 'path';
 import {
   type PropertyPolicyOptions,
   DEFAULT_STYLE_PROP,
-} from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+} from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)(
   '$name',
   ({ transformSource, resolvePropertyPolicy }) => {
     const FIXTURE_DIR = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+      fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
     );
 
     const env = (
@@ -37,7 +37,7 @@ describe.each(implementations)(
       options: PropertyPolicyOptions = {},
     ): Promise<string> => {
       const appPath = path.join(FIXTURE_DIR, `app-${fixtureCount++}.tsx`);
-      const source = `import * as css from '@plumeria/core';\n${body}\n`;
+      const source = `import * as css from '@typedcss/css';\n${body}\n`;
 
       fs.writeFileSync(appPath, source, 'utf-8');
 
@@ -49,7 +49,7 @@ describe.each(implementations)(
 
     const style = (declaration: string) =>
       `export const s = css.create({ a: { ${declaration} } });\n` +
-      `export const A = () => <div classStyle={s.a} />;`;
+      `export const A = () => <div sx={s.a} />;`;
 
     describe('resolvePropertyPolicy', () => {
       it.each([
@@ -92,7 +92,7 @@ describe.each(implementations)(
       it('leaves the physical spelling alone', async () => {
         await expect(
           run(style(`marginTop: 0`), { withoutLogicalProperties: true }),
-        ).resolves.toContain('className');
+        ).resolves.toContain('__typedcss_props(');
       });
     });
 
@@ -114,7 +114,7 @@ describe.each(implementations)(
       it('transforms either spelling when neither option is set', async () => {
         await expect(
           run(style(`marginTop: 0, insetInlineStart: 0`)),
-        ).resolves.toContain('className');
+        ).resolves.toContain('__typedcss_props(');
       });
     });
 
@@ -122,7 +122,7 @@ describe.each(implementations)(
       it('leaves an axis property alone by default', async () => {
         await expect(
           run(style(`blockSize: 10`), { withoutLogicalProperties: true }),
-        ).resolves.toContain('className');
+        ).resolves.toContain('__typedcss_props(');
       });
 
       it('rejects an axis property when sizes is on', async () => {
@@ -150,7 +150,7 @@ describe.each(implementations)(
           run(
             `export const k = css.keyframes({ from: { marginBlockStart: 0 } });\n` +
               `export const s = css.create({ a: { animationName: k } });\n` +
-              `export const A = () => <div classStyle={s.a} />;`,
+              `export const A = () => <div sx={s.a} />;`,
             { withoutLogicalProperties: true },
           ),
         ).rejects.toThrow(
@@ -162,7 +162,7 @@ describe.each(implementations)(
         await expect(
           run(
             `export const s = css.create({ a: (v: number) => ({ marginBlockStart: v }) });\n` +
-              `export const A = () => <div classStyle={s.a(0)} />;`,
+              `export const A = () => <div sx={s.a(0)} />;`,
             { withoutLogicalProperties: true },
           ),
         ).rejects.toThrow(
