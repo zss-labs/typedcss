@@ -10,5 +10,5 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["src", "./plumeria.d.ts"]
+  "include": ["src", "./typedcss.d.ts"]
 }
