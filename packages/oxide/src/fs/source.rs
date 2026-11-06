@@ -3,7 +3,7 @@ use std::time::SystemTime;
 
 use rustc_hash::FxHashMap;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct SourceStamp {
     modified: Option<SystemTime>,
     len: u64,
