@@ -12,7 +12,7 @@ ruleTester.run('no-logical-properties', noLogicalProperties, {
   valid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingTop: 4,
@@ -26,7 +26,7 @@ ruleTester.run('no-logical-properties', noLogicalProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({ main: { blockSize: 100, overflowInline: 'auto' } });
       `,
     },
@@ -34,7 +34,7 @@ ruleTester.run('no-logical-properties', noLogicalProperties, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             marginBlockEnd: 8
@@ -50,7 +50,7 @@ ruleTester.run('no-logical-properties', noLogicalProperties, {
               messageId: 'rename',
               data: { counterpart: 'marginBottom' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             marginBottom: 8
@@ -64,7 +64,7 @@ ruleTester.run('no-logical-properties', noLogicalProperties, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({ main: { blockSize: 100 } });
       `,
       options: [{ sizes: true }],
