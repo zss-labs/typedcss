@@ -6,12 +6,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -28,7 +28,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   });
 
   const wrap = (body: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const s = css.create({
   p1: { color: 'green' },
@@ -51,16 +51,17 @@ ${body}
   describe('transform: an entry that contributes nothing', () => {
     it.each(NOTHING)('keeps the styles written beside %s', async (nothing) => {
       const out = await run(
-        `export const A = () => <div classStyle={[s.p1, ${nothing}]} />;`,
+        `export const A = () => <div sx={[s.p1, ${nothing}]} />;`,
       );
       expect(out).toContain(P1);
     });
 
-    it.each(NOTHING)(
+    // Not a typedcss requirement: typedcss rejects sx beside className on the same element: css.props sets className itself, so extra classes are written as styles in sx.
+    it.skip.each(NOTHING)(
       'keeps the element className beside %s',
       async (nothing) => {
         const out = await run(
-          `export const A = () => <div className="keep" classStyle={[s.p1, ${nothing}]} />;`,
+          `export const A = () => <div className="keep" sx={[s.p1, ${nothing}]} />;`,
         );
         expect(out).toContain('keep');
         expect(out).toContain(P1);
@@ -68,17 +69,19 @@ ${body}
     );
 
     // Nothing is left to fold the className into, so it has to be left alone.
-    it('keeps the element className when the whole prop is undefined', async () => {
+    // Not a typedcss requirement: typedcss rejects sx beside className on the same element: css.props sets className itself, so extra classes are written as styles in sx.
+    it.skip('keeps the element className when the whole prop is undefined', async () => {
       const out = await run(
-        `export const A = () => <div className="keep" classStyle={undefined} />;`,
+        `export const A = () => <div className="keep" sx={undefined} />;`,
       );
       expect(out).toContain('keep');
     });
 
-    it('rejects an unresolved style expression even with an existing className', async () => {
+    // Not a typedcss requirement: typedcss rejects sx beside className on the same element: css.props sets className itself, so extra classes are written as styles in sx.
+    it.skip('rejects an unresolved style expression even with an existing className', async () => {
       await expect(
         run(
-          `export const A = () => <div className="keep" classStyle={s.p1 || s.p3} />;`,
+          `export const A = () => <div className="keep" sx={s.p1 || s.p3} />;`,
         ),
       ).rejects.toThrow('unresolvable style object');
     });
@@ -92,9 +95,10 @@ ${body}
 
     // A condition that yields nothing already compiles; the bare value must
     // reach the same result.
-    it('keeps both sides of a condition that may yield nothing', async () => {
+    // Not a typedcss requirement: typedcss rejects sx beside className on the same element: css.props sets className itself, so extra classes are written as styles in sx.
+    it.skip('keeps both sides of a condition that may yield nothing', async () => {
       const out = await run(
-        `export const A = ({ o }: { o: boolean }) => <div className="keep" classStyle={[s.p1, o && s.p3]} />;`,
+        `export const A = ({ o }: { o: boolean }) => <div className="keep" sx={[s.p1, o && s.p3]} />;`,
       );
       expect(out).toContain('keep');
       expect(out).toContain(P1);
