@@ -6,208 +6,212 @@ const ruleTester = new RuleTester();
 ruleTester.run('no-combinator', noCombinator, {
   valid: [
     {
-      code: "import { variants as legacy } from '@plumeria/core'; legacy({ container: { '> div': {} } });",
+      code: "import { variants as legacy } from '@typedcss/css'; legacy({ container: { '> div': {} } });",
     },
 
     // Retired APIs are outside this rule; do not suggest using them differently.
     {
-      code: `import * as css from '@plumeria/core'; css.variants({ container: { '> div': {} } })`,
+      code: `import * as css from '@typedcss/css'; css.variants({ container: { '> div': {} } })`,
     },
 
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':has(> div)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':has(> div)': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':has(.foo + .bar)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':has(.foo + .bar)': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':has(a ~ b)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':has(a ~ b)': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':where(> div)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':where(> div)': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':is(> div)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':is(> div)': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':not(> div)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':not(> div)': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':nth-child(2n + 1)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':nth-child(2n + 1)': { color: 'red' } } })`,
     },
     {
       // Comma is not a combinator we are targeting, spaces around comma should be fine
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div, span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div, span': { color: 'red' } } })`,
     },
     {
       // Space in attribute selector
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '[title="a b"]': {} } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '[title="a b"]': {} } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '&.active': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '&.active': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '[data-val=">"]': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '[data-val=">"]': { color: 'red' } } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '[title="a + b"]': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '[title="a + b"]': { color: 'red' } } })`,
     },
     {
-      code: `import { create } from '@plumeria/core'; create({ container: { ':has(> div)': {} } })`,
+      code: `import { create } from '@typedcss/css'; create({ container: { ':has(> div)': {} } })`,
     },
     {
-      code: `import { create as c } from '@plumeria/core'; c({ container: { ':has(> div)': {} } })`,
+      code: `import { create as c } from '@typedcss/css'; c({ container: { ':has(> div)': {} } })`,
     },
     {
       // Trailing spaces should be ignored (multiple consecutive spaces)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div     ': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div     ': { color: 'red' } } })`,
     },
     {
       // Leading spaces should be ignored (multiple consecutive spaces)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '     div': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '     div': { color: 'red' } } })`,
     },
     {
       // Multiple consecutive spaces between selectors inside functional pseudo (allowed)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':where(div     span)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':where(div     span)': { color: 'red' } } })`,
     },
     {
       // Spaces around explicit combinators should be fine
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':where(div     >     span)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':where(div     >     span)': { color: 'red' } } })`,
     },
     {
       // Spaces after comma separator
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div,     span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div,     span': { color: 'red' } } })`,
     },
     {
       // Multiple spaces before explicit combinator (not a descendant combinator)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div     , span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div     , span': { color: 'red' } } })`,
     },
     {
       // Multiple spaces before combinator inside functional pseudo
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':where(div     > span)': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':where(div     > span)': { color: 'red' } } })`,
     },
     // Coverage tests for edge cases
     {
       // Top-level string with space (triggers check)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '"string selector"': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '"string selector"': { color: 'red' } } })`,
     },
     {
       // Nested attribute selector with spaces inside string (should be ignored)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '[data-foo="a b"]': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '[data-foo="a b"]': { color: 'red' } } })`,
     },
     {
       // Nested attribute selector with escaped quotes and spaces
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '[data-foo="a \\" b"]': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '[data-foo="a \\" b"]': { color: 'red' } } })`,
     },
     {
       // String with escaped backslash (covers s[i] === '\\' in skipString)
       // code string has 4 backslashes -> file has 4 -> source has 2 -> value has 1.
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '"escaped \\\\ string"': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '"escaped \\\\ string"': { color: 'red' } } })`,
     },
     {
       // Deeply nested pseudo classes with space
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':where(:has(:not(.foo) ))': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':where(:has(:not(.foo) ))': { color: 'red' } } })`,
     },
     {
       // Escaped characters in block with space
       // We need quadruple backslash in the code string to result in a double backslash in the source, which results in a single backslash in the string value.
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '[data-val=\\\\] ]': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '[data-val=\\\\] ]': { color: 'red' } } })`,
     },
     {
       // Unclosed string with space (should be robust and not crash)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '"unclosed string ': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '"unclosed string ': { color: 'red' } } })`,
     },
     // Coverage for other APIs and access patterns
     {
-      code: `import { "create" as c } from '@plumeria/core'; c({ container: { 'div': {} } })`,
+      code: `import { "create" as c } from '@typedcss/css'; c({ container: { 'div': {} } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css['create']({ container: { 'div': {} } })`,
+      code: `import * as css from '@typedcss/css'; css['create']({ container: { 'div': {} } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.createStatic({ container: { 'div': {} } })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ container: { 'div': {} } })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.variants({ container: { 'div': {} } })`,
+      code: `import * as css from '@typedcss/css'; css.variants({ container: { 'div': {} } })`,
     },
     {
-      code: `import { createStatic as c } from '@plumeria/core'; c({ container: { 'div': {} } })`,
+      code: `import { createStatic as c } from '@typedcss/css'; c({ container: { 'div': {} } })`,
     },
     {
-      code: `import { variants as v } from '@plumeria/core'; v({ container: { 'div': {} } })`,
+      code: `import { variants as v } from '@typedcss/css'; v({ container: { 'div': {} } })`,
     },
     {
       // createStatic simple
-      code: `import * as css from '@plumeria/core'; css.createStatic({ hover: ':hover' })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ hover: ':hover' })`,
     },
     {
       // createStatic complex
-      code: `import * as css from '@plumeria/core'; css.createStatic({ complex: ':where(div > span)' })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ complex: ':where(div > span)' })`,
+    },
+    {
+      // createStatic values that are not selectors may hold spaces and > + ~
+      code: `import * as css from '@typedcss/css'; css.createStatic({ shadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', sans: "ui-sans-serif, 'Noto Sans', sans-serif", label: 'C++ > C' })`,
     },
     {
       // Media queries should be allowed despite having spaces
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '@media (max-width: 768px)': { padding: '20px' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '@media (max-width: 768px)': { padding: '20px' } } })`,
     },
     {
       // Container queries should be allowed despite having spaces
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '@container (min-width: 700px)': { padding: '20px' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '@container (min-width: 700px)': { padding: '20px' } } })`,
     },
     {
       // Supports queries should be allowed
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '@supports (display: grid)': { display: 'grid' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '@supports (display: grid)': { display: 'grid' } } })`,
     },
     // Missing branch coverages
     {
       code: `import * as css from 'other'; css.create({ '> div': {} })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; foo.bar.create({ '> div': {} })`,
+      code: `import * as css from '@typedcss/css'; foo.bar.create({ '> div': {} })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.other({ '> div': {} })`,
+      code: `import * as css from '@typedcss/css'; css.other({ '> div': {} })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create(myVar)`,
+      code: `import * as css from '@typedcss/css'; css.create(myVar)`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.createStatic(myVar)`,
+      code: `import * as css from '@typedcss/css'; css.createStatic(myVar)`,
     },
     {
-      code: `import { use } from '@plumeria/core'; use({ '> div': {} })`,
+      code: `import { use } from '@typedcss/css'; use({ '> div': {} })`,
     },
     {
-      code: `import { create } from '@plumeria/core'; create(myVar)`,
+      code: `import { create } from '@typedcss/css'; create(myVar)`,
     },
     {
-      code: `import { createStatic } from '@plumeria/core'; createStatic(myVar)`,
+      code: `import { createStatic } from '@typedcss/css'; createStatic(myVar)`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ [myVar]: {} })`,
+      code: `import * as css from '@typedcss/css'; css.create({ [myVar]: {} })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ ['a' + 'b']: {} })`,
+      code: `import * as css from '@typedcss/css'; css.create({ ['a' + 'b']: {} })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ ...props, idKey: {}, 'literalKey': {} })`,
+      code: `import * as css from '@typedcss/css'; css.create({ ...props, idKey: {}, 'literalKey': {} })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.createStatic({ ...props, hover: ':hover' })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ ...props, hover: ':hover' })`,
     },
     {
       // Callee is not Identifier or MemberExpression
-      code: `import * as css from '@plumeria/core'; (function(){})()`,
+      code: `import * as css from '@typedcss/css'; (function(){})()`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create({ key: 'val' })`,
+      code: `import * as css from '@typedcss/css'; css.create({ key: 'val' })`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.createStatic({ key: myVar })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ key: myVar })`,
     },
   ],
   invalid: [
     {
       // Explicit combinator >
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '> div': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '> div': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -217,7 +221,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Explicit combinator +
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '+ div': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '+ div': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -227,7 +231,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Explicit combinator ~
-      code: `import * as css from '@plumeria/core'; css.create({ container: { '~ div': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { '~ div': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -237,7 +241,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Combinator in middle
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div > span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div > span': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -247,7 +251,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Combinator outside has
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':has(div) > span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':has(div) > span': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -257,7 +261,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Descendant combinator (space)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div span': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -267,7 +271,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Descendant combinator with pseudo
-      code: `import * as css from '@plumeria/core'; css.create({ container: { ':hover span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { ':hover span': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -277,7 +281,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Descendant combinator with pseudo (reversed)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div :hover': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div :hover': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -286,7 +290,7 @@ ruleTester.run('no-combinator', noCombinator, {
       ],
     },
     {
-      code: `import { create } from '@plumeria/core'; create({ container: { '> div': {} } })`,
+      code: `import { create } from '@typedcss/css'; create({ container: { '> div': {} } })`,
       errors: [
         {
           message:
@@ -296,7 +300,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Multiple consecutive spaces as descendant combinator
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div     span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div     span': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -306,7 +310,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Many consecutive spaces as descendant combinator (to trigger backward loop)
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div          span': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div          span': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -316,7 +320,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Tab character as separator
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div\tspan': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div\tspan': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -326,7 +330,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // Newline character as separator
-      code: `import * as css from '@plumeria/core'; css.create({ container: { 'div\\nspan': { color: 'red' } } })`,
+      code: `import * as css from '@typedcss/css'; css.create({ container: { 'div\\nspan': { color: 'red' } } })`,
       errors: [
         {
           message:
@@ -336,7 +340,7 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // createStatic invalid usage (value contains combinator)
-      code: `import * as css from '@plumeria/core'; css.createStatic({ direct: ':hover > div' })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ direct: ':hover > div' })`,
       errors: [
         {
           message:
@@ -346,7 +350,17 @@ ruleTester.run('no-combinator', noCombinator, {
     },
     {
       // createStatic invalid usage (value contains space combinator)
-      code: `import * as css from '@plumeria/core'; css.createStatic({ descend: ':hover div span' })`,
+      code: `import * as css from '@typedcss/css'; css.createStatic({ descend: ':hover div span' })`,
+      errors: [
+        {
+          message:
+            'Combinator "(space)" is not allowed unless inside functional pseudo-classes.',
+        },
+      ],
+    },
+    {
+      // createStatic attribute selector value with a descendant combinator
+      code: `import * as css from '@typedcss/css'; css.createStatic({ open: '[data-open] span' })`,
       errors: [
         {
           message:
