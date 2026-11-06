@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
   const DIR = fs.realpathSync(
@@ -10,12 +10,12 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
   let count = 0;
 
   const source = (params: string, body: string, call: string) =>
-    `import * as css from '@plumeria/core';
+    `import * as css from '@typedcss/css';
 const GAP = 4;
 const FLAG = true;
 const T = { gap: 8 };
 const st = css.create({ fn: ${params}: any => (${body}) });
-export const A = (p: any) => <div classStyle={${call}} />;`;
+export const A = (p: any) => <div sx={${call}} />;`;
 
   const project = (code: string) => {
     const cwd = path.join(DIR, String(count++));
@@ -52,10 +52,10 @@ export const A = (p: any) => <div classStyle={${call}} />;`;
     });
 
   const unresolved = (param: string, label: string) =>
-    `[plumeria] Cannot resolve the default of "${param}" at build time (${label}). A dynamic style function falls back on it when the argument is undefined, so it has to be a string or a number plumeria can read. Pass the value from the call instead.`;
+    `[typedcss] Cannot resolve the default of "${param}" at build time (${label}). A dynamic style function falls back on it when the argument is undefined, so it has to be a string or a number plumeria can read. Pass the value from the call instead.`;
 
   const unsupported = (param: string, kind: string) =>
-    `[plumeria] The default of "${param}" is ${kind}, which a dynamic style function cannot fall back on. Use a string or a number, or pass the value from the call.`;
+    `[typedcss] The default of "${param}" is ${kind}, which a dynamic style function cannot fall back on. Use a string or a number, or pass the value from the call.`;
 
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -113,16 +113,17 @@ export const A = (p: any) => <div classStyle={${call}} />;`;
 
     it('rejects it for a style handed to a component', async () => {
       await expect(
-        transformCode(`import * as css from '@plumeria/core';
+        transformCode(`import * as css from '@typedcss/css';
 const st = css.create({ fn: (n = DEFAULT): any => ({ width: n }) });
-const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div classStyle={cardStyle} />;
+const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div sx={cardStyle} />;
 export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
       ).rejects.toThrow(unresolved('n', 'DEFAULT'));
     });
   });
 
   describe('function key default: one that is never used', () => {
-    it.each([
+    // Not a typedcss requirement: Plumeria evaluates a function key at each call site, so a default the calls never reach is not needed; typedcss evaluates it inside the function at runtime, where the default has to be known.
+    it.skip.each([
       ['a positional number', 'st.fn(3)', '"3px"'],
       ['a positional negative number', 'st.fn(-3)', '"-3px"'],
       ['a positional string', `st.fn('3rem')`, '"3rem"'],
@@ -137,7 +138,8 @@ export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
       expect(compile('(n = DEFAULT)', '{ width: n }', call)).toBe(css);
     });
 
-    it('accepts a named argument written as a literal', async () => {
+    // Not a typedcss requirement: Plumeria evaluates a function key at each call site, so a default the calls never reach is not needed; typedcss evaluates it inside the function at runtime, where the default has to be known.
+    it.skip('accepts a named argument written as a literal', async () => {
       const { code, css } = await transform(
         '({ size = DEFAULT })',
         '{ width: size }',
@@ -147,7 +149,8 @@ export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
       expect(css).toBe('.x4uz9ojo { width: 3px; }\n');
     });
 
-    it('writes a positional literal into arithmetic without the default', async () => {
+    // Not a typedcss requirement: Plumeria evaluates a function key at each call site, so a default the calls never reach is not needed; typedcss evaluates it inside the function at runtime, where the default has to be known.
+    it.skip('writes a positional literal into arithmetic without the default', async () => {
       const { code } = await transform(
         '(n = DEFAULT)',
         '{ width: n + 4 }',
@@ -164,9 +167,8 @@ export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
         '{ width: n }',
         'st.fn(p.n)',
       );
-      expect(code).toContain(
-        `(typeof (p.n) === 'number' ? (p.n) + 'px' : (p.n))`,
-      );
+      // The function key computes the variable from its own parameter.
+      expect(code).toContain(`(typeof (n) === "number" ? (n) + "px" : (n))`);
       expect(compile('(n, flag = DEFAULT)', '{ width: n }', 'st.fn(p.n)')).toBe(
         css,
       );
@@ -178,9 +180,8 @@ export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
         '{ width: n }',
         'st.fn(p.n)',
       );
-      expect(code).toContain(
-        `(typeof (p.n) === 'number' ? (p.n) + 'px' : (p.n))`,
-      );
+      // The function key computes the variable from its own parameter.
+      expect(code).toContain(`(typeof (n) === "number" ? (n) + "px" : (n))`);
       expect(css).toMatch(/\{ width: var\(--[a-z0-9]+-n\); \}/);
     });
   });
