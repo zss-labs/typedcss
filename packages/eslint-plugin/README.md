@@ -1,58 +1,55 @@
-# @plumeria/eslint-plugin
+# @typedcss/eslint-plugin
 
-ESLint plugin for Plumeria.  
+ESLint plugin for typedcss.  
 Below are the available rules and the recommended configuration.
 
 ## Recommended configuration
 
-The `plugin:@plumeria/recommended` config enables the following:
+The `plugin:@typedcss/recommended` config enables the following:
 
-- `@plumeria/custom-props-require-import`: **error**
-- `@plumeria/expand-border-shorthands`: **warn**
-- `@plumeria/no-combinator`: **error**
-- `@plumeria/no-destructure`: **error**
-- `@plumeria/no-inline-object`: **error**
-- `@plumeria/no-inner-call`: **error**
-- `@plumeria/no-invalid-selector`: **error**
-- `@plumeria/no-mixed-styling-props`: **error**
-- `@plumeria/no-mutable-binding`: **warn**
-- `@plumeria/no-order-dependent-overlap`: **warn**
-- `@plumeria/no-style-prop-relay`: **error**
-- `@plumeria/no-unknown-css-properties`: **error**
-- `@plumeria/no-unresolved-composition`: **warn**
-- `@plumeria/no-unused-keys`: **warn**
-- `@plumeria/sort-properties`: **warn**
-- `@plumeria/format-properties`: **warn**
-- `@plumeria/validate-values`: **warn**
-- `@plumeria/validate-pseudos`: **warn**
-- `@plumeria/validate-at-rules`: **warn**
+- `@typedcss/expand-border-shorthands`: **warn**
+- `@typedcss/no-combinator`: **error**
+- `@typedcss/no-destructure`: **error**
+- `@typedcss/no-inline-object`: **error**
+- `@typedcss/no-inner-call`: **error**
+- `@typedcss/no-invalid-selector`: **error**
+- `@typedcss/no-mixed-styling-props`: **error**
+- `@typedcss/no-mutable-binding`: **warn**
+- `@typedcss/no-order-dependent-overlap`: **warn**
+- `@typedcss/no-unknown-css-properties`: **error**
+- `@typedcss/no-unresolved-composition`: **warn**
+- `@typedcss/no-unused-keys`: **warn**
+- `@typedcss/sort-properties`: **warn**
+- `@typedcss/format-properties`: **warn**
+- `@typedcss/validate-values`: **warn**
+- `@typedcss/validate-pseudos`: **warn**
+- `@typedcss/validate-at-rules`: **warn**
 
 ```js
-import plumeria from '@plumeria/eslint-plugin';
+import typedcss from '@typedcss/eslint-plugin';
 
-export default [plumeria.configs.recommended];
+export default [typedcss.configs.recommended];
 ```
 
 ## Configuring the styling prop
 
-`custom-props-require-import`, `no-inline-object`, `no-mixed-styling-props`,
-`no-style-prop-relay` and `no-unresolved-composition` need to know which JSX
-prop carries styles. It is `classStyle` unless you changed it, so most projects
-configure nothing.
+`no-inline-object`, `no-mixed-styling-props` and `no-unresolved-composition`
+need to know which JSX prop carries styles. It is `sx` unless you changed it, so
+most projects configure nothing.
 
-If you did rename it — via `styleProp` on `withPlumeria` or on the unplugin
+If you did rename it — via `styleProp` on `withTypedCSS` or on the unplugin
 options — tell the plugin the same name. The lint the bundler plugins run in the
 build is given that name already. ESLint cannot read it from your bundler
 config, so set it once in `settings` and every rule picks it up:
 
 ```js
-import plumeria from '@plumeria/eslint-plugin';
+import typedcss from '@typedcss/eslint-plugin';
 
 export default [
-  plumeria.configs.recommended,
+  typedcss.configs.recommended,
   {
     settings: {
-      plumeria: { styleProp: 'sx' },
+      typedcss: { styleProp: 'sx' },
     },
   },
 ];
@@ -63,7 +60,7 @@ A single rule can override that if you need it to:
 ```js
 {
   rules: {
-    '@plumeria/no-mixed-styling-props': ['error', { styleProp: 'sx' }],
+    '@typedcss/no-mixed-styling-props': ['error', { styleProp: 'sx' }],
   },
 }
 ```
@@ -73,18 +70,8 @@ the lint rules report against a prop the compiler never transforms.
 
 ## Recommended rules
 
-The following rules are enabled by `plumeria.configs.recommended` with the
+The following rules are enabled by `typedcss.configs.recommended` with the
 severity shown in [Recommended configuration](#recommended-configuration).
-
-### custom-props-require-import
-
-Require the `@plumeria/core` import in a file that passes a `css.create` style to a
-component through a prop other than the styling prop. The compiler cannot tell that
-such a prop carries a style, so it compiles the file only when the file imports
-`@plumeria/core`. A file that writes the styling prop itself is compiled without
-the import.
-
-Accepts `{ styleProp }`; see [Configuring the styling prop](#configuring-the-styling-prop).
 
 ### expand-border-shorthands
 
@@ -101,7 +88,7 @@ elsewhere outrank it.
 ```js
 borderTop: '1px solid red'
 // becomes
-borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'red'
+borderTopColor: 'red', borderTopStyle: 'solid', borderTopWidth: '1px'
 ```
 
 A shorthand resets what it omits, so `borderBlock: 'solid'` expands with
@@ -109,7 +96,7 @@ A shorthand resets what it omits, so `borderBlock: 'solid'` expands with
 
 ### no-combinator
 
-Disallow combinators `>`, `+`, `~` and descendant combinator (space) unless inside functional pseudo-classes.
+Disallow combinators `>`, `+`, `~` and descendant combinator (space) unless inside functional pseudo-classes. A `css.createStatic` value is checked only when it starts with `:` or `[`, the ones that become a selector when used as a key.
 
 ### no-destructure
 
@@ -117,7 +104,7 @@ Disallow destructuring APIs.
 
 ### no-inline-object
 
-Disallow passing inline object to `classStyle` and `css.use()`. Only compiled styles from `css.create()` are allowed.
+Disallow passing inline object to `sx` and `css.props()`. Only compiled styles from `css.create()` are allowed.
 
 ### no-inner-call
 
@@ -131,7 +118,7 @@ Also reports a functional pseudo-class nested inside one of the same name, such 
 
 ### no-mixed-styling-props
 
-Disallow mixing the styling prop with `className` or `style`. `classStyle` can handle both `className` and `style`.
+Disallow mixing the styling prop with `className` or `style`. `sx` can handle both `className` and `style`.
 
 Accepts `{ styleProp }`; see [Configuring the styling prop](#configuring-the-styling-prop).
 
@@ -154,12 +141,6 @@ properties in a vertical one, which is per element and cannot be read from the
 source. The rule reads them as one property; disable the line where an element
 is known to be vertical.
 
-### no-style-prop-relay
-
-Reports a style prop that a component receives but only passes on. Apply it to the styling prop or `css.use()` on an element the component renders.
-
-Accepts `{ styleProp }`; see [Configuring the styling prop](#configuring-the-styling-prop).
-
 ### no-unknown-css-properties
 
 Disallow unknown CSS properties in camelCase within `css.create`, `css.keyframes`, `css.viewTransitionClass`, and `css.positionTry`. Inside `css.positionTry`, it also reports properties that `@position-try` does not accept.
@@ -168,9 +149,7 @@ In `css.create`, a key that holds an object is reported with a hint that nested 
 
 ### no-unresolved-composition
 
-A safety net for `css.use()`. Warns when its result is combined with other class names or passed to another function, or when a function key is passed to it. Pass every style to one `css.use()` call, and apply function keys to the styling prop.
-
-Accepts `{ styleProp }`; see [Configuring the styling prop](#configuring-the-styling-prop).
+A safety net for `css.props()`. Warns when its result is turned into a string, combined with other class names or passed to another function. Pass every style to one `css.props()` call, and spread the result onto the element.
 
 ### no-unused-keys
 
@@ -178,7 +157,7 @@ Warns when object keys are defined but not used, mainly in component files.
 
 ### sort-properties
 
-Automatically sorts CSS properties in the recommended order for consistency and maintainability.
+Automatically sorts CSS properties in the recommended order for consistency and maintainability. A computed key from `css.createStatic` is read as the at-rule it holds and sorted with the other at-rules, after the pseudo-classes.
 
 ### format-properties
 
@@ -201,15 +180,15 @@ Validates at-rules inside `css.create()`. It accepts `@media`, `@container`, and
 
 ## Optional rules
 
-These rules are not enabled by `plumeria.configs.recommended`. Enable the
-spelling policy that fits the project:
+These rules are not enabled by `typedcss.configs.recommended`. Enable the
+ones that fit the project:
 
 ```js
 export default [
-  plumeria.configs.recommended,
+  typedcss.configs.recommended,
   {
     rules: {
-      '@plumeria/no-logical-properties': 'warn',
+      '@typedcss/no-logical-properties': 'warn',
     },
   },
 ];
@@ -235,10 +214,10 @@ The bundler plugins turn the matching rule on in the build lint as well:
 `withoutPhysicalProperties` runs `no-physical-properties`, and
 `withoutLogicalProperties` runs `no-logical-properties`, `{ sizes }` included.
 
-## CLI (plumeria-lint)
+## CLI (typedcss-lint)
 
-This package provides a CLI command, `plumeria-lint`, as a convenient way
-to run Plumeria's custom ESLint rules.
+This package provides a CLI command, `typedcss-lint`, as a convenient way
+to run typedcss's custom ESLint rules.
 
 It runs `oxlint`, which this package depends on, for fast linting with code
 snippets in output, so oxlint needs no separate install.
@@ -246,15 +225,15 @@ snippets in output, so oxlint needs no separate install.
 ### Installation
 
 ```bash
-npm install -D @plumeria/eslint-plugin
+npm install -D @typedcss/eslint-plugin
 # or
-pnpm add -D @plumeria/eslint-plugin
+pnpm add -D @typedcss/eslint-plugin
 ```
 
 ### Usage
 
 ```bash
-plumeria-lint
+typedcss-lint
 ```
 
 The process exits with a non-zero status code if any errors or warnings are found,
@@ -263,25 +242,25 @@ making it suitable for use in CI and build pipelines.
 ### Styling prop
 
 If the styling prop is renamed, pass the name with `--style-prop`. Without the
-flag, `plumeria-lint` asks ESLint for `settings.plumeria.styleProp` when ESLint
-and a flat config are installed, and uses `classStyle` otherwise:
+flag, `typedcss-lint` asks ESLint for `settings.typedcss.styleProp` when ESLint
+and a flat config are installed, and uses `sx` otherwise:
 
 ```bash
-plumeria-lint --style-prop sx
+typedcss-lint --style-prop sx
 ```
 
 ### Aborting Builds on Lint Errors (Parallel Pipeline)
 
-You can run `plumeria-lint` in parallel with your build command (e.g. `next build` or `vite build`) using the `--` separator:
+You can run `typedcss-lint` in parallel with your build command (e.g. `next build` or `vite build`) using the `--` separator:
 
 ```json
 {
   "scripts": {
-    "build": "plumeria-lint -- next build"
+    "build": "typedcss-lint -- next build"
   }
 }
 ```
 
-If `plumeria-lint` detects any styling errors or warnings, it will print the diagnostics, kill the build process immediately, and exit with a non-zero code. This avoids compiling when styling validation fails.
+If `typedcss-lint` detects any styling errors or warnings, it will print the diagnostics, kill the build process immediately, and exit with a non-zero code. This avoids compiling when styling validation fails.
 
-With `@plumeria/next-plugin` and `@plumeria/unplugin` (except on esbuild and Bun), this lint is integrated into the build by default, so it needs no setup. Pass `lint: false` to the plugin to build without it.
+With `@typedcss/next-plugin` and `@typedcss/unplugin` (except on esbuild and Bun), this lint is integrated into the build by default, so it needs no setup. Pass `lint: false` to the plugin to build without it.
