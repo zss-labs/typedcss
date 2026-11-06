@@ -84,7 +84,6 @@ it('permits a compiler no-op', async () => {
   jest.doMock('@typedcss/oxide', () => ({
     ...jest.requireActual('@typedcss/oxide'),
     sourcePackages: () => [],
-    resolveSourcePackage: () => null,
     needsCompile: () => true,
     transform: () => null,
   }));
