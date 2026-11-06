@@ -1,7 +1,7 @@
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 await Bun.build({
   entrypoints: ['./src/index.tsx'],
   outdir: './dist',
-  plugins: [plumeria.bun()],
+  plugins: [typedcss.bun()],
 });
