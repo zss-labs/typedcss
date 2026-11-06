@@ -2,7 +2,7 @@ import * as path from 'path';
 import {
   type LintOverrides,
   startLintGuard,
-} from '@plumeria/eslint-plugin/guard';
+} from '@typedcss/eslint-plugin/guard';
 
 export function startNextLintGuard(
   overrides: LintOverrides = {},
