@@ -3,6 +3,7 @@ import { createFilter } from '@rollup/pluginutils';
 import * as path from 'path';
 import * as oxide from '@typedcss/oxide';
 import type { PropertyPolicyOptions, SourcePackage } from '@typedcss/oxide';
+import { inSourcePackage, resolveSourcePackage } from 'zss-engine';
 import { lintOverrides, startLintGuard } from '@typedcss/eslint-plugin/guard';
 import {
   DEFAULT_STYLE_PROP,
@@ -71,7 +72,7 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
       pkg.sourceDirs.filter((dir) => dir.startsWith(pkg.dir + path.sep)),
     );
   const inSource = (file: string) =>
-    oxide.inSourcePackage(packagesOf(), path.resolve(file));
+    inSourcePackage(packagesOf(), path.resolve(file));
   const cssFilename = () => path.join(viteRoot, CSS_FILENAME);
   const cssId = () => `/${CSS_FILENAME}`;
 
@@ -151,7 +152,7 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
       },
       sourcePackages: packagesOf,
       resolveSource(id: string) {
-        return oxide.resolveSourcePackage(packagesOf(), id);
+        return resolveSourcePackage(packagesOf(), id);
       },
       inSource,
     },
@@ -168,7 +169,7 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
         }
         return query ? `${pathId}?${query}` : pathId;
       }
-      return oxide.resolveSourcePackage(packagesOf(), id);
+      return resolveSourcePackage(packagesOf(), id);
     },
 
     loadInclude(id) {
