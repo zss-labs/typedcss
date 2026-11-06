@@ -7,7 +7,7 @@ const DIR = fs.mkdtempSync(path.join(__dirname, 'fixture-'));
 afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 fs.writeFileSync(
   path.join(DIR, 'breakpoints.ts'),
-  `import * as css from '@plumeria/core';
+  `import * as css from '@typedcss/css';
 export const bp = css.createStatic({
   medium: '@media (min-width: 600px) and (max-width: 900px)',
   wide: '@media (min-width: 700px) and (max-width: 1000px)',
@@ -26,7 +26,7 @@ const ruleTester = new RuleTester({
 ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
   valid: [
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
       css.create({
         main: {
           '@media (max-width: 600px)': { color: 'red' },
@@ -35,7 +35,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
       });
     `,
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
       css.create({
         main: {
           '@media (min-width: 600px) and (max-width: 900px)': { color: 'red' },
@@ -44,7 +44,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
       });
     `,
     `
-      import * as css from '@plumeria/core';
+      import * as css from '@typedcss/css';
       css.create({
         main: {
           '@media (min-width: 600px) and (max-width: 900px)': { color: 'red' },
@@ -55,7 +55,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     {
       filename: APP,
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         import { bp } from './breakpoints';
         css.create({
           main: {
@@ -75,7 +75,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         const dynamic = 'paddingTop';
         css.unknown({ main: { paddingTop: 4, paddingBlockStart: 10 } });
         css['create']({ main: { paddingTop: 4, paddingBlockStart: 10 } });
@@ -96,7 +96,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             padding: 4,
@@ -108,7 +108,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             borderWidth: 5,
@@ -119,7 +119,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingTop: 4,
@@ -132,7 +132,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             marginBlock: 8,
@@ -143,7 +143,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             cornerShape: 'round',
@@ -154,7 +154,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import { create, keyframes as frames, viewTransitionClass } from '@plumeria/core';
+        import { create, keyframes as frames, viewTransitionClass } from '@typedcss/css';
         create({ main: { marginBlock: 8, marginInline: 16 } });
         frames({ from: { padding: 4, paddingTop: 8 } });
         viewTransitionClass({ old: { borderWidth: 2, borderTop: 'solid' } });
@@ -162,7 +162,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             0: 'ignored',
@@ -174,7 +174,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 600px)': {
@@ -191,7 +191,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 900px)': { color: 'blue' },
@@ -202,7 +202,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@container card (min-width: 800px)': { color: 'blue' },
@@ -215,7 +215,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { color: 'blue' },
@@ -227,7 +227,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':link': { color: 'blue' },
@@ -242,7 +242,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { background: 'blue', fontSize: 12 },
@@ -253,7 +253,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         let dynamic = 'color';
         css.create({
           main: {
@@ -265,7 +265,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':host(.active)': { color: 'red' },
@@ -276,7 +276,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { color: 'red' },
@@ -287,7 +287,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover::part(icon)': { color: 'red' },
@@ -298,7 +298,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '[data-state="checked"]': { color: 'red' },
@@ -309,7 +309,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':user-valid': { color: 'red' },
@@ -320,7 +320,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':dir(ltr)': { color: 'red' },
@@ -331,7 +331,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':nth-child(odd)': { color: 'red' },
@@ -342,7 +342,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':playing': { color: 'red' },
@@ -353,7 +353,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':not([data-state])': { color: 'red' },
@@ -366,7 +366,17 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
+        css.create({ main: {
+          '@media (min-width: 600px)': { color: 'red' },
+          '@media (min-height: 600px)': { color: 'blue' }
+        } });
+      `,
+      errors: [{ messageId: 'crossingCondition', suggestions: [] }],
+    },
+    {
+      code: `
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '[type="checkbox"]': { color: 'red' },
@@ -378,7 +388,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '[viewBox="0 0 24 24"]': { color: 'red' },
@@ -390,7 +400,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 600px) and (max-width: 900px)': { color: 'red' },
@@ -402,7 +412,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@container (min-width: 300px) and (max-width: 500px)': { color: 'red' },
@@ -414,7 +424,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const bp = css.createStatic({
           medium: '@media (min-width: 600px) and (max-width: 900px)',
           wide: '@media (min-width: 700px) and (max-width: 1000px)',
@@ -431,7 +441,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     {
       filename: APP,
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         import { bp } from './breakpoints';
         css.create({
           main: {
@@ -444,7 +454,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import { create as make } from '@plumeria/core';
+        import { create as make } from '@typedcss/css';
         make({ main: { 'paddingTop': 4, ['paddingBlockStart']: 10 } });
       `,
       errors: [
@@ -457,28 +467,28 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import { 'create' as make } from '@plumeria/core';
+        import { 'create' as make } from '@typedcss/css';
         make({ main: { inlineSize: 10, width: 20 } });
       `,
       errors: [{ messageId: 'alias', suggestions: 2 }],
     },
     {
       code: `
-        import { keyframes } from '@plumeria/core';
+        import { keyframes } from '@typedcss/css';
         keyframes({ from: { overflowBlock: 'clip', overflowY: 'hidden', } });
       `,
       errors: [{ messageId: 'alias', suggestions: 2 }],
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.positionTry({ minInlineSize: 10, minWidth: 20 });
       `,
       errors: [{ messageId: 'alias', suggestions: 2 }],
     },
     {
       code: `
-        import css from '@plumeria/core';
+        import css from '@typedcss/css';
         css.viewTransitionClass({
           old: { minInlineSize: 10, minWidth: 20 },
           new: { overscrollBehaviorInline: 'auto', overscrollBehaviorX: 'none' }
@@ -491,7 +501,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingTop: 4,
@@ -508,7 +518,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
               messageId: 'keep',
               data: { keep: 'paddingBlockStart' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingBlockStart: 10
@@ -520,7 +530,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
               messageId: 'keep',
               data: { keep: 'paddingTop' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             paddingTop: 4
@@ -534,7 +544,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             borderTop: '1px solid red',
@@ -546,7 +556,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             blockSize: 100,
@@ -562,7 +572,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
               messageId: 'keep',
               data: { keep: 'height' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             height: 200
@@ -574,7 +584,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
               messageId: 'keep',
               data: { keep: 'blockSize' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             blockSize: 100
@@ -588,7 +598,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             '@media (min-width: 600px)': {
@@ -606,7 +616,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
               messageId: 'keep',
               data: { keep: 'top' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             '@media (min-width: 600px)': {
@@ -620,7 +630,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
               messageId: 'keep',
               data: { keep: 'insetBlockStart' },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             '@media (min-width: 600px)': {
@@ -636,7 +646,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const styles = css.create({
           main: {
             borderBlockColor: 'red',
@@ -648,7 +658,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 900px)': { color: 'blue' },
@@ -672,7 +682,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
                 broad: '@media (min-width: 600px)',
               },
               output: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 600px)': { color: 'red' },
@@ -687,7 +697,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@container card (min-width: 800px)': { color: 'blue' },
@@ -709,7 +719,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 700px) and (max-width: 900px)': { color: 'blue' },
@@ -721,7 +731,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { color: 'blue' },
@@ -744,7 +754,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { color: 'blue', background: 'navy', fontSize: 12 },
@@ -756,7 +766,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover::before': { color: 'blue' },
@@ -779,7 +789,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             '@media (min-width: 700px)': {
@@ -793,7 +803,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { borderTop: '1px solid red' },
@@ -805,7 +815,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { color: 'blue' },
@@ -818,7 +828,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover': { '--color': 'red' },
@@ -841,7 +851,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':checked': { color: 'red' },
@@ -853,7 +863,7 @@ ruleTester.run('no-order-dependent-overlap', noOrderDependentOverlap, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           main: {
             ':hover::part(icon)': { color: 'red' },
