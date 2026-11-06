@@ -44,7 +44,7 @@ const rgb = (hex: string) => {
 
 const source = (slug: string, color: string) => `'use client';
 
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 import { hmrClientWide } from 'component/hmr-client-wide.styles';
 import { hmrClientModule } from 'component/hmr-client-${slug}.styles';
 
@@ -60,16 +60,16 @@ const styles = css.create({
 export function HmrClientBox({ children }: { children: React.ReactNode }) {
   return (
     <section>
-      <div data-testid="hmr-client-box" classStyle={styles.box}>
+      <div data-testid="hmr-client-box" sx={styles.box}>
         the client module and the stylesheet update separately
       </div>
       <div
         data-testid="hmr-client-ordered"
-        classStyle={[styles.text, hmrClientWide.text]}
+        sx={[styles.text, hmrClientWide.text]}
       >
         a media rule from another file stays on top
       </div>
-      <div data-testid="hmr-client-module" classStyle={hmrClientModule.box}>
+      <div data-testid="hmr-client-module" sx={hmrClientModule.box}>
         the class names of a style module are baked into this component
       </div>
       {children}
@@ -80,7 +80,7 @@ export function HmrClientBox({ children }: { children: React.ReactNode }) {
 
 const styleModuleSource = (
   color: string,
-) => `import * as css from '@plumeria/core';
+) => `import * as css from '@typedcss/css';
 
 export const hmrClientModule = css.create({
   box: {
@@ -130,7 +130,7 @@ const takeSamples = (page: Page) =>
 
 const bridgeRemoved = (page: Page) =>
   expect
-    .poll(() => page.locator('#plumeria-dev-bridge').count(), {
+    .poll(() => page.locator('#typedcss-dev-bridge').count(), {
       timeout: 30000,
     })
     .toBe(0);
