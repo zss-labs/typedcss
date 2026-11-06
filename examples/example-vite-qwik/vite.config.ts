@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite';
 import { qwikVite } from '@builder.io/qwik/optimizer';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    plumeria.vite(),
+    typedcss.vite(),
     qwikVite({
       csr: true,
     }),
