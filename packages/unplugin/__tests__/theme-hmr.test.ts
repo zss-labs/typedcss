@@ -1,45 +1,34 @@
-jest.mock('@rust-gear/glob', () => ({ globSync: jest.fn(() => []) }));
-
 import * as fs from 'fs';
-import type { unpluginFactory as Factory } from '../src/core';
+import * as os from 'os';
+import * as path from 'path';
+import { CSS_FILENAME, unpluginFactory } from '../src/core';
 
-type Plugin = {
-  transform: {
-    handler: (this: unknown, code: string, id: string) => Promise<unknown>;
-  };
-  __plumeriaInternal: {
-    cssLookup: Map<string, string>;
-    setDev: (value: boolean) => void;
-    setRoot: (root: string) => void;
-  };
-};
+// Each edit recompiles the whole stylesheet, so it must describe the current
+// source only: nothing from the theme the edit replaced may remain.
 
-const ID = `${__dirname}/theme-hmr-fixture.tsx`;
-const CSS_ID = ID.replace(/\.tsx$/, '.zero.css');
-
-beforeEach(() => {
-  jest.resetModules();
-});
+const dirs: string[] = [];
 
 afterAll(() => {
-  fs.rmSync(ID, { force: true });
+  for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true });
 });
 
 const devSession = () => {
-  const { unpluginFactory } = require('../src/core') as {
-    unpluginFactory: typeof Factory;
-  };
-
-  const plugin = unpluginFactory(undefined, {
+  const dir = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-unplugin-theme-')),
+  );
+  dirs.push(dir);
+  const file = path.join(dir, 'box.tsx');
+  const plugin = unpluginFactory({ lint: false }, {
     framework: 'vite',
-  } as never) as unknown as Plugin;
-  plugin.__plumeriaInternal.setDev(true);
-  plugin.__plumeriaInternal.setRoot(__dirname);
+  } as never) as any;
+  plugin.__typedcssInternal.setRoot(dir);
 
   return async (source: string): Promise<string> => {
-    fs.writeFileSync(ID, source);
-    await plugin.transform.handler.call({ addWatchFile: () => {} }, source, ID);
-    return plugin.__plumeriaInternal.cssLookup.get(CSS_ID) ?? '';
+    fs.writeFileSync(file, source);
+    await plugin.transform.handler.call({ addWatchFile() {} }, source, file);
+    return plugin.__typedcssInternal.cssLookup.get(
+      path.join(dir, CSS_FILENAME),
+    );
   };
 };
 
@@ -57,12 +46,12 @@ const moduleWith = (args: ThemeArgs = {}): string => {
     default: def = 'black',
     theme = 'white',
   } = args;
-  return `import * as css from '@plumeria/core';
+  return `import * as css from '@typedcss/css';
 const theme = css.createTheme('${selector}', {
   ${key}: { default: '${def}', theme: '${theme}' },
 });
 const styles = css.create({ box: { color: theme.${key} } });
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `;
 };
 
@@ -78,83 +67,42 @@ const referencedIn = (css: string): string[] => [
   ),
 ];
 
-const declarersOf = (css: string, varName: string): string[] => {
-  const found: string[] = [];
-  for (const chunk of css.split(/(?<=\})/)) {
-    const head = chunk.match(/([^{}]+)\{/);
-    if (head && new RegExp(`${varName}\\s*:`).test(chunk)) {
-      found.push(head[1].trim());
-    }
-  }
-  return found;
-};
-
-const themeSelectorsOf = (css: string, varName: string): string[] =>
-  declarersOf(css, varName).filter((selector) => selector !== ':where(:root)');
-
-const expectOneSelectorPerVariable = (css: string): void => {
-  for (const varName of varsIn(css)) {
-    expect(themeSelectorsOf(css, varName)).toHaveLength(1);
-  }
-};
-
 const expectNoDanglingReference = (css: string): void => {
-  for (const varName of referencedIn(css)) {
-    expect(declarersOf(css, varName).length).toBeGreaterThan(0);
+  for (const name of referencedIn(css)) {
+    expect(css).toMatch(new RegExp(`${name}\\s*:`));
   }
 };
 
 describe('createTheme edits in dev', () => {
-  it('gives the new selector a variable of its own', async () => {
+  it('replaces the selector with the new one', async () => {
     const compile = devSession();
 
     const first = await compile(moduleWith({ selector: '.dark' }));
-    const [oldVar] = varsIn(first);
-
     const second = await compile(moduleWith({ selector: '.night' }));
-    const newVar = varsIn(second).find((name) => name !== oldVar) as string;
 
-    expect(themeSelectorsOf(second, newVar)).toEqual(['.night']);
-    expect(themeSelectorsOf(second, oldVar)).toEqual(['.dark']);
-    expect(referencedIn(second)).toContain(newVar);
-    expectOneSelectorPerVariable(second);
+    expect(first).toContain('.dark {');
+    expect(second).toContain('.night {');
+    expect(second).not.toContain('.dark');
+    expect(varsIn(second)).toHaveLength(1);
     expectNoDanglingReference(second);
   });
 
-  it('separates a class selector from the at-rule that replaced it', async () => {
+  it('moves between a class selector and an at-rule', async () => {
     const compile = devSession();
+    const media = '@media (prefers-color-scheme: dark)';
 
-    const first = await compile(moduleWith({ selector: '.dark' }));
-    const [oldVar] = varsIn(first);
+    await compile(moduleWith({ selector: '.dark' }));
+    const toMedia = await compile(moduleWith({ selector: media }));
+    expect(toMedia).toContain(media);
+    expect(toMedia).not.toContain('.dark');
 
-    const second = await compile(
-      moduleWith({ selector: '@media (prefers-color-scheme: dark)' }),
-    );
-    const newVar = varsIn(second).find((name) => name !== oldVar) as string;
-
-    expect(themeSelectorsOf(second, newVar)).toEqual([
-      '@media (prefers-color-scheme: dark)',
-    ]);
-    expect(themeSelectorsOf(second, oldVar)).toEqual(['.dark']);
-    expectOneSelectorPerVariable(second);
+    const back = await compile(moduleWith({ selector: '.dark' }));
+    expect(back).toContain('.dark {');
+    expect(back).not.toContain(media);
+    expectNoDanglingReference(back);
   });
 
-  it('separates an at-rule from the class selector that replaced it', async () => {
-    const compile = devSession();
-
-    const first = await compile(
-      moduleWith({ selector: '@media (prefers-color-scheme: dark)' }),
-    );
-    const [oldVar] = varsIn(first);
-
-    const second = await compile(moduleWith({ selector: '.dark' }));
-    const newVar = varsIn(second).find((name) => name !== oldVar) as string;
-
-    expect(themeSelectorsOf(second, newVar)).toEqual(['.dark']);
-    expectOneSelectorPerVariable(second);
-  });
-
-  it('keeps one selector per variable across repeated selector edits', async () => {
+  it('keeps one variable across repeated selector edits', async () => {
     const compile = devSession();
 
     await compile(moduleWith({ selector: '.dark' }));
@@ -162,81 +110,59 @@ describe('createTheme edits in dev', () => {
     await compile(moduleWith({ selector: '[data-theme="dark"]' }));
     const last = await compile(moduleWith({ selector: '.dusk' }));
 
-    expect(varsIn(last)).toHaveLength(4);
-    expectOneSelectorPerVariable(last);
+    expect(varsIn(last)).toHaveLength(1);
+    expect(last).toContain('.dusk {');
     expectNoDanglingReference(last);
-
-    const current = referencedIn(last).filter(
-      (name) => themeSelectorsOf(last, name)[0] === '.dusk',
-    );
-    expect(current).toHaveLength(1);
   });
 
-  it('renames the variable when the theme value changes', async () => {
+  it.each([
+    ['theme value', { theme: 'ivory' }, 'ivory'],
+    ['default value', { default: 'navy' }, 'navy'],
+  ])('serves the new %s', async (_, args, value) => {
     const compile = devSession();
 
-    const first = await compile(moduleWith({ theme: 'white' }));
-    const [oldVar] = varsIn(first);
+    const first = await compile(moduleWith());
+    const second = await compile(moduleWith(args));
 
-    const second = await compile(moduleWith({ theme: 'ivory' }));
-    const newVar = varsIn(second).find((name) => name !== oldVar) as string;
-
-    expect(second).toContain('ivory');
-    expect(themeSelectorsOf(second, newVar)).toEqual(['.dark']);
-    expectOneSelectorPerVariable(second);
-  });
-
-  it('renames the variable when the default value changes', async () => {
-    const compile = devSession();
-
-    const first = await compile(moduleWith({ default: 'black' }));
-    const [oldVar] = varsIn(first);
-
-    const second = await compile(moduleWith({ default: 'navy' }));
-    const newVar = varsIn(second).find((name) => name !== oldVar) as string;
-
-    expect(declarersOf(second, newVar)).toEqual([':where(:root)', '.dark']);
-    expectOneSelectorPerVariable(second);
+    expect(second).toContain(value);
+    expect(varsIn(second)).toHaveLength(1);
+    expect(varsIn(second)).not.toEqual(varsIn(first));
+    expectNoDanglingReference(second);
   });
 
   it('renames the variable when a key is renamed', async () => {
     const compile = devSession();
 
-    const first = await compile(moduleWith({ key: 'textColor' }));
-    expect(first).toContain('-text-color');
-
+    expect(await compile(moduleWith({ key: 'textColor' }))).toContain(
+      '-text-color',
+    );
     const second = await compile(moduleWith({ key: 'fgColor' }));
-    const renamed = varsIn(second).find((name) =>
-      name.endsWith('-fg-color'),
-    ) as string;
 
-    expect(themeSelectorsOf(second, renamed)).toEqual(['.dark']);
-    expectOneSelectorPerVariable(second);
+    expect(second).toContain('-fg-color');
+    expect(second).not.toContain('-text-color');
+    expectNoDanglingReference(second);
   });
 
-  it('keeps serving a theme the module no longer declares', async () => {
+  it('drops a theme the module no longer declares', async () => {
     const compile = devSession();
 
-    const first = await compile(moduleWith());
-    const [varName] = varsIn(first);
-
+    await compile(moduleWith());
     const second = await compile(
-      `import * as css from '@plumeria/core';
+      `import * as css from '@typedcss/css';
 const styles = css.create({ box: { color: 'red' } });
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `,
     );
 
     expect(second).toContain('red');
-    expect(declarersOf(second, varName)).toEqual([':where(:root)', '.dark']);
-    expectNoDanglingReference(second);
+    expect(varsIn(second)).toHaveLength(0);
   });
 
   it('gives two selectors with one value object a variable each', async () => {
     const compile = devSession();
 
     const css = await compile(
-      `import * as css from '@plumeria/core';
+      `import * as css from '@typedcss/css';
 const dark = css.createTheme('.dark', {
   textColor: { default: 'black', theme: 'white' },
 });
@@ -247,48 +173,33 @@ const styles = css.create({
   a: { color: dark.textColor },
   b: { backgroundColor: sepia.textColor },
 });
-export const Box = () => <div classStyle={[styles.a, styles.b]} />;
+export const Box = () => <div sx={[styles.a, styles.b]} />;
 `,
     );
 
     expect(varsIn(css)).toHaveLength(2);
-    expect(
-      varsIn(css)
-        .map((name) => themeSelectorsOf(css, name)[0])
-        .sort(),
-    ).toEqual(['.dark', '.sepia']);
-    expectOneSelectorPerVariable(css);
+    expect(css).toContain('.dark {');
+    expect(css).toContain('.sepia {');
+    expectNoDanglingReference(css);
   });
 
   it('leaves a hand-written custom property alone', async () => {
     const compile = devSession();
 
-    const source = (selector: string) => `import * as css from '@plumeria/core';
+    const source = (selector: string) => `import * as css from '@typedcss/css';
 const theme = css.createTheme('${selector}', {
   textColor: { default: 'black', theme: 'white' },
 });
 const styles = css.create({
   box: { '--gap': '4px', color: theme.textColor, margin: 'var(--gap)' },
 });
-export const Box = () => <div classStyle={styles.box} />;
+export const Box = () => <div sx={styles.box} />;
 `;
 
     await compile(source('.dark'));
     const second = await compile(source('.night'));
 
-    expect(second).toContain('--gap: 4px');
-    expectOneSelectorPerVariable(second);
-  });
-
-  it('keeps class rules emitted by an earlier compile', async () => {
-    const compile = devSession();
-
-    const first = await compile(moduleWith({ default: 'black' }));
-    const boxClass = first.match(/\.(x[0-9a-z]+)/)?.[1];
-    expect(boxClass).toBeDefined();
-
-    const second = await compile(moduleWith({ default: 'navy' }));
-    expect(second).toContain(boxClass as string);
+    expect(second).toMatch(/--gap:\s*4px/);
     expectNoDanglingReference(second);
   });
 });
