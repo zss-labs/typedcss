@@ -30,10 +30,6 @@ impl Value {
         }
     }
 
-    pub fn is_obj(&self) -> bool {
-        matches!(self, Value::Obj(_))
-    }
-
     pub fn is_primitive_text(&self) -> bool {
         matches!(self, Value::Str(_) | Value::Num(_))
     }
@@ -178,9 +174,6 @@ impl Object {
         }
     }
 
-    pub fn values(&self) -> impl Iterator<Item = &Value> {
-        self.iter().map(|(_, value)| value)
-    }
 }
 
 pub enum ObjectIter<'a> {
@@ -221,37 +214,5 @@ impl FromIterator<(String, Value)> for Object {
             object.insert(key, value);
         }
         object
-    }
-}
-
-pub fn deep_merge(target: &Object, source: &Object) -> Object {
-    let mut result = target.clone();
-    for (key, value) in source.iter() {
-        if let Value::Obj(inner) = value
-            && let Some(Value::Obj(existing)) = result.get(key)
-        {
-            let merged = deep_merge(existing, inner);
-            result.insert(key, Value::obj(merged));
-            continue;
-        }
-        result.insert(key, value.clone());
-    }
-    result
-}
-
-pub fn entries_object(value: &Value) -> Object {
-    match value {
-        Value::Obj(object) => (**object).clone(),
-        Value::Str(text) => text
-            .encode_utf16()
-            .enumerate()
-            .map(|(index, unit)| {
-                (
-                    index.to_string(),
-                    Value::Str(String::from_utf16_lossy(&[unit])),
-                )
-            })
-            .collect(),
-        _ => Object::new(),
     }
 }
