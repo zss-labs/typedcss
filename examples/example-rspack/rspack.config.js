@@ -1,6 +1,6 @@
 import { rspack } from '@rspack/core';
 import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
-import plumeria from '@plumeria/unplugin';
+import typedcss from '@typedcss/unplugin';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -36,7 +36,7 @@ export default {
     ],
   },
   plugins: [
-    plumeria.rspack(),
+    typedcss.rspack(),
     new rspack.HtmlRspackPlugin({ template: './src/index.html' }),
     isDev && new ReactRefreshRspackPlugin(),
   ].filter(Boolean),
