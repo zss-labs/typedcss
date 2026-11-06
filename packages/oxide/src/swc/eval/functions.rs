@@ -1,17 +1,16 @@
 use indexmap::IndexMap;
-use oxc_ast::ast::*;
 use rustc_hash::{FxBuildHasher, FxHashSet};
+use swc_core::ecma::ast::{
+    ArrowFunctionBody, BinaryOp, Expr, ObjectLit, ObjectPatProp, Pat, Prop as AstProp, PropName,
+    PropOrSpread, Stmt, UnaryOp,
+};
 
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
-
-use super::{Env, EvalResult, Evaluator, Layer, Lookup, Replacements};
+use super::{Env, EvalResult, Evaluator, Layer, Lookup, Replacements, span_key};
 use crate::engine::hash::hash_object;
-use crate::js::json::quote;
-use crate::js::number::number_to_string;
 use crate::js::{Object, Value};
 use crate::style::units::{VarGroup, VarUnit, apply_var_fallback, split_var_by_unit};
-use crate::syntax::expr::{BinOp, E, K, expression_label, unwrap};
-use crate::syntax::visit::{reads_names_expr, reads_names_property};
+use crate::swc::syntax::expr::{E, K, expression_label, unwrap};
+use crate::swc::syntax::visit::{reads_names_expr, reads_names_property};
 
 #[derive(Clone, Debug)]
 pub struct NamedParam {
@@ -20,45 +19,45 @@ pub struct NamedParam {
 }
 
 #[derive(Clone)]
-pub struct StyleFunction<'b, 'a> {
+pub struct StyleFunction<'b> {
     pub params: Vec<String>,
     pub unsupported_params: bool,
     pub named: Option<Vec<NamedParam>>,
-    pub defaults: IndexMap<String, &'b Expression<'a>, FxBuildHasher>,
-    pub body: &'b ObjectExpression<'a>,
+    pub defaults: IndexMap<String, &'b Expr, FxBuildHasher>,
+    pub body: &'b ObjectLit,
 }
 
-pub type StyleFunctions<'b, 'a> = IndexMap<String, StyleFunction<'b, 'a>, FxBuildHasher>;
+pub type StyleFunctions<'b> = IndexMap<String, StyleFunction<'b>, FxBuildHasher>;
 
-pub struct ParamView<'b, 'a> {
-    pub pattern: Option<&'b BindingPattern<'a>>,
-    pub initializer: Option<&'b Expression<'a>>,
+pub struct ParamView<'b> {
+    pub pattern: &'b Pat,
+    pub initializer: Option<&'b Expr>,
     pub rest: bool,
 }
 
-pub fn param_views<'b, 'a>(params: &'b FormalParameters<'a>) -> Vec<ParamView<'b, 'a>> {
-    let mut views: Vec<ParamView> = params
-        .items
-        .iter()
-        .map(|item| ParamView {
-            pattern: Some(&item.pattern),
-            initializer: item.initializer.as_deref(),
+pub fn param_view(pattern: &Pat) -> ParamView<'_> {
+    match pattern {
+        Pat::Assign(assign) => ParamView {
+            pattern: &assign.left,
+            initializer: Some(&assign.right),
             rest: false,
-        })
-        .collect();
-    if let Some(rest) = &params.rest {
-        views.push(ParamView {
-            pattern: Some(&rest.rest.argument),
+        },
+        Pat::Rest(rest) => ParamView {
+            pattern: &rest.arg,
             initializer: None,
             rest: true,
-        });
+        },
+        other => ParamView {
+            pattern: other,
+            initializer: None,
+            rest: false,
+        },
     }
-    views
 }
 
-fn named_params_of<'b, 'a>(
-    params: &[ParamView<'b, 'a>],
-    defaults: &mut IndexMap<String, &'b Expression<'a>, FxBuildHasher>,
+fn named_params_of<'b>(
+    params: &[ParamView<'b>],
+    defaults: &mut IndexMap<String, &'b Expr, FxBuildHasher>,
 ) -> Option<Vec<NamedParam>> {
     if params.len() != 1 {
         return None;
@@ -67,56 +66,42 @@ fn named_params_of<'b, 'a>(
     if first.rest || first.initializer.is_some() {
         return None;
     }
-    let BindingPattern::ObjectPattern(pattern) = first.pattern? else {
+    let Pat::Object(pattern) = first.pattern else {
         return None;
     };
-    if pattern.rest.is_some() {
-        return None;
-    }
     let mut named = Vec::new();
-    for prop in &pattern.properties {
-        if prop.computed {
-            return None;
-        }
-        let PropertyKey::StaticIdentifier(key) = &prop.key else {
-            return None;
-        };
-        let key = key.name.as_str();
-        if prop.shorthand {
-            match &prop.value {
-                BindingPattern::BindingIdentifier(_) => {
-                    named.push(NamedParam {
-                        key: key.to_string(),
-                        local: key.to_string(),
-                    });
-                }
-                BindingPattern::AssignmentPattern(assign) => {
-                    named.push(NamedParam {
-                        key: key.to_string(),
-                        local: key.to_string(),
-                    });
-                    defaults.insert(key.to_string(), &assign.right);
-                }
-                _ => return None,
-            }
-            continue;
-        }
-        match &prop.value {
-            BindingPattern::BindingIdentifier(local) => {
+    for prop in &pattern.props {
+        match prop {
+            ObjectPatProp::Assign(assign) => {
+                let key = assign.key.id.sym.to_string();
                 named.push(NamedParam {
-                    key: key.to_string(),
-                    local: local.name.to_string(),
+                    key: key.clone(),
+                    local: key.clone(),
                 });
+                if let Some(value) = &assign.value {
+                    defaults.insert(key, value);
+                }
             }
-            BindingPattern::AssignmentPattern(assign) => {
-                let BindingPattern::BindingIdentifier(local) = &assign.left else {
+            ObjectPatProp::KeyValue(pair) => {
+                let PropName::Ident(key) = &pair.key else {
                     return None;
                 };
-                named.push(NamedParam {
-                    key: key.to_string(),
-                    local: local.name.to_string(),
-                });
-                defaults.insert(local.name.to_string(), &assign.right);
+                let key = key.sym.to_string();
+                match &*pair.value {
+                    Pat::Ident(local) => named.push(NamedParam {
+                        key,
+                        local: local.id.sym.to_string(),
+                    }),
+                    Pat::Assign(assign) => {
+                        let Pat::Ident(local) = &*assign.left else {
+                            return None;
+                        };
+                        let local = local.id.sym.to_string();
+                        defaults.insert(local.clone(), &assign.right);
+                        named.push(NamedParam { key, local });
+                    }
+                    _ => return None,
+                }
             }
             _ => return None,
         }
@@ -125,75 +110,73 @@ fn named_params_of<'b, 'a>(
 }
 
 #[derive(Clone, Copy)]
-pub enum Body<'b, 'a> {
-    Block(&'b FunctionBody<'a>),
-    Expr(&'b Expression<'a>),
+pub enum Body<'b> {
+    Block(&'b [Stmt]),
+    Expr(&'b Expr),
 }
 
-pub fn function_parts<'b, 'a>(
-    value: &'b Expression<'a>,
-) -> Option<(&'b FormalParameters<'a>, Body<'b, 'a>)> {
+pub fn function_parts(value: &Expr) -> Option<(Vec<&Pat>, Body<'_>)> {
     match value {
-        Expression::ArrowFunctionExpression(arrow) => Some((&arrow.params, arrow_body(arrow))),
-        Expression::FunctionExpression(function) => function
-            .body
-            .as_deref()
-            .map(|body| (&*function.params, Body::Block(body))),
+        Expr::Arrow(arrow) => Some((
+            arrow.params.iter().collect(),
+            match &*arrow.body {
+                ArrowFunctionBody::FunctionBody(block) => Body::Block(&block.stmts),
+                ArrowFunctionBody::Expr(expr) => Body::Expr(expr),
+            },
+        )),
+        Expr::Fn(function) => function.function.body.as_ref().map(|body| {
+            (
+                function.function.params.iter().map(|param| &param.pat).collect(),
+                Body::Block(&body.stmts),
+            )
+        }),
         _ => None,
     }
 }
 
-pub fn arrow_body<'b, 'a>(arrow: &'b ArrowFunctionExpression<'a>) -> Body<'b, 'a> {
-    match &arrow.body {
-        ArrowFunctionBody::FunctionBody(body) => Body::Block(body),
-        other => Body::Expr(other.to_expression()),
-    }
-}
-
-pub fn returned_expression<'b, 'a>(body: Body<'b, 'a>) -> Option<&'b Expression<'a>> {
+pub fn returned_expression(body: Body<'_>) -> Option<&Expr> {
     match body {
         Body::Expr(expr) => Some(expr),
-        Body::Block(block) => match block.statements.first()? {
-            Statement::ReturnStatement(statement) => statement.argument.as_ref(),
+        Body::Block(stmts) => match stmts.first()? {
+            Stmt::Return(statement) => statement.arg.as_deref(),
             _ => None,
         },
     }
 }
 
-fn strip_one_paren<'b, 'a>(expr: &'b Expression<'a>) -> &'b Expression<'a> {
+fn strip_one_paren(expr: &Expr) -> &Expr {
     match expr {
-        Expression::ParenthesizedExpression(paren) => &paren.expression,
+        Expr::Paren(paren) => &paren.expr,
         other => other,
     }
 }
 
-pub fn style_function_body<'b, 'a>(value: &'b Expression<'a>) -> Option<&'b ObjectExpression<'a>> {
+pub fn style_function_body(value: &Expr) -> Option<&ObjectLit> {
     let (_, body) = function_parts(value)?;
-    let returned = strip_one_paren(returned_expression(body)?);
-    match returned {
-        Expression::ObjectExpression(object) => Some(object),
+    match strip_one_paren(returned_expression(body)?) {
+        Expr::Object(object) => Some(object),
         _ => None,
     }
 }
 
-pub fn style_functions_of<'b, 'a>(object: &'b ObjectExpression<'a>) -> StyleFunctions<'b, 'a> {
+pub fn style_functions_of(object: &ObjectLit) -> StyleFunctions<'_> {
     let mut functions = StyleFunctions::default();
-    for prop in &object.properties {
-        let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+    for prop in &object.props {
+        let PropOrSpread::Prop(prop) = prop else {
             continue;
         };
-        if prop.computed || prop.shorthand || prop.method || prop.kind != PropertyKind::Init {
+        let AstProp::KeyValue(prop) = &**prop else {
             continue;
-        }
-        let PropertyKey::StaticIdentifier(key) = &prop.key else {
+        };
+        let PropName::Ident(key) = &prop.key else {
             continue;
         };
         let Some((params, _)) = function_parts(&prop.value) else {
             continue;
         };
-        let views = param_views(params);
+        let views: Vec<ParamView> = params.into_iter().map(param_view).collect();
 
-        let mut defaults: IndexMap<String, &'b Expression<'a>, FxBuildHasher> = IndexMap::default();
+        let mut defaults: IndexMap<String, &Expr, FxBuildHasher> = IndexMap::default();
         let names: Vec<String> = views
             .iter()
             .map(|view| {
@@ -201,12 +184,10 @@ pub fn style_functions_of<'b, 'a>(object: &'b ObjectExpression<'a>) -> StyleFunc
                     return "arg".to_string();
                 }
                 match (view.pattern, view.initializer) {
-                    (Some(BindingPattern::BindingIdentifier(ident)), None) => {
-                        ident.name.to_string()
-                    }
-                    (Some(BindingPattern::BindingIdentifier(ident)), Some(right)) => {
-                        defaults.insert(ident.name.to_string(), right);
-                        ident.name.to_string()
+                    (Pat::Ident(ident), None) => ident.id.sym.to_string(),
+                    (Pat::Ident(ident), Some(right)) => {
+                        defaults.insert(ident.id.sym.to_string(), right);
+                        ident.id.sym.to_string()
                     }
                     _ => "arg".to_string(),
                 }
@@ -225,8 +206,8 @@ pub fn style_functions_of<'b, 'a>(object: &'b ObjectExpression<'a>) -> StyleFunc
                 return false;
             }
             match view.pattern {
-                Some(BindingPattern::ArrayPattern(_)) => true,
-                Some(BindingPattern::ObjectPattern(_)) => {
+                Pat::Array(_) => true,
+                Pat::Object(_) => {
                     let mut scratch = IndexMap::default();
                     named_params_of(&views, &mut scratch).is_none()
                 }
@@ -236,7 +217,7 @@ pub fn style_functions_of<'b, 'a>(object: &'b ObjectExpression<'a>) -> StyleFunc
         let named = named_params_of(&views, &mut defaults);
 
         functions.insert(
-            key.name.to_string(),
+            key.sym.to_string(),
             StyleFunction {
                 params: names,
                 unsupported_params: unsupported,
@@ -250,31 +231,39 @@ pub fn style_functions_of<'b, 'a>(object: &'b ObjectExpression<'a>) -> StyleFunc
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum DerivedPiece {
-    Text(String),
-    Param(String, Option<String>),
+pub enum Literal {
+    Str(String),
+    Num(f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Derived {
+    Param(String, Option<Literal>),
+    Literal(Literal),
+    Binary(Box<Derived>, BinaryOp, Box<Derived>),
+    Unary(UnaryOp, Box<Derived>),
+}
+
+impl Derived {
+    pub fn first_param(&self) -> Option<&str> {
+        match self {
+            Derived::Param(name, _) => Some(name),
+            Derived::Literal(_) => None,
+            Derived::Binary(left, _, right) => left.first_param().or_else(|| right.first_param()),
+            Derived::Unary(_, argument) => argument.first_param(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct DerivedVar {
     pub name: String,
-    pub pieces: Vec<DerivedPiece>,
+    pub expr: Derived,
 }
 
 enum Replacement {
     Constant(f64),
     Derived(String),
-}
-
-pub fn is_defined_argument(node: E) -> bool {
-    let node = unwrap(node);
-    match node.kind() {
-        K::Str(_) | K::Num(_) | K::Bool(_) | K::Null | K::Template(_) => true,
-        K::Unary(unary) => {
-            is_sign(unary.operator) && matches!(unwrap(E::new(&unary.argument)).kind(), K::Num(_))
-        }
-        _ => false,
-    }
 }
 
 fn default_error(param: &str, node: E, literal: Option<&Value>) -> String {
@@ -286,26 +275,19 @@ fn default_error(param: &str, node: E, literal: Option<&Value>) -> String {
     };
     match kind {
         Some(kind) => format!(
-            "[plumeria] The default of \"{param}\" is {kind}, which a dynamic style function cannot fall back on. Use a string or a number, or pass the value from the call."
+            "[typedcss] The default of \"{param}\" is {kind}, which a dynamic style function cannot fall back on. Use a string or a number, or pass the value from the call."
         ),
         None => format!(
-            "[plumeria] Cannot resolve the default of \"{param}\" at build time ({}). A dynamic style function falls back on it when the argument is undefined, so it has to be a string or a number plumeria can read. Pass the value from the call instead.",
+            "[typedcss] Cannot resolve the default of \"{param}\" at build time ({}). A dynamic style function falls back on it when the argument is undefined, so it has to be a string or a number plumeria can read. Pass the value from the call instead.",
             expression_label(node)
         ),
     }
 }
 
-fn literal_source(value: &Value) -> Option<String> {
+pub fn literal_value(value: &Value) -> Option<Literal> {
     match value {
-        Value::Str(text) => Some(quote(text)),
-        Value::Num(number) => {
-            let text = number_to_string(*number);
-            Some(if text.starts_with('-') {
-                format!("({text})")
-            } else {
-                text
-            })
-        }
+        Value::Str(text) => Some(Literal::Str(text.to_string())),
+        Value::Num(number) => Some(Literal::Num(*number)),
         _ => None,
     }
 }
@@ -319,23 +301,15 @@ struct Deriver<'d> {
     replacements: Vec<((u32, u32), Replacement)>,
 }
 
-fn is_arithmetic(operator: BinaryOperator) -> bool {
+fn is_arithmetic(operator: BinaryOp) -> bool {
     matches!(
         operator,
-        BinaryOperator::Addition
-            | BinaryOperator::Subtraction
-            | BinaryOperator::Multiplication
-            | BinaryOperator::Division
-            | BinaryOperator::Remainder
-            | BinaryOperator::Exponential
+        BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod | BinaryOp::Exp
     )
 }
 
-fn is_sign(operator: UnaryOperator) -> bool {
-    matches!(
-        operator,
-        UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus
-    )
+fn is_sign(operator: UnaryOp) -> bool {
+    matches!(operator, UnaryOp::Minus | UnaryOp::Plus)
 }
 
 fn reads(node: E, names: &[String]) -> bool {
@@ -344,40 +318,22 @@ fn reads(node: E, names: &[String]) -> bool {
 }
 
 impl Deriver<'_> {
-    fn render(&self, expression: E) -> Option<Vec<DerivedPiece>> {
+    fn render(&self, expression: E) -> Option<Derived> {
         let node = unwrap(expression);
         match node.kind() {
-            K::Ident(ident)
-                if self
-                    .runtime
-                    .iter()
-                    .any(|param| param == ident.name.as_str()) =>
-            {
-                let name = ident.name.as_str();
-                let fallback = self.defaults.get(name).and_then(literal_source);
-                return Some(vec![DerivedPiece::Param(name.to_string(), fallback)]);
+            K::Ident(ident) if self.runtime.iter().any(|param| param == ident.sym.as_str()) => {
+                let name = ident.sym.as_str();
+                let fallback = self.defaults.get(name).and_then(literal_value);
+                return Some(Derived::Param(name.to_string(), fallback));
             }
-            K::Binary(left, BinOp::Binary(operator), right) if is_arithmetic(operator) => {
+            K::Binary(left, op, right) if is_arithmetic(op.0) => {
                 let left = self.render(left)?;
                 let right = self.render(right)?;
-                let mut pieces = vec![DerivedPiece::Text("(".to_string())];
-                pieces.extend(left);
-                pieces.push(DerivedPiece::Text(format!(" {} ", operator.as_str())));
-                pieces.extend(right);
-                pieces.push(DerivedPiece::Text(")".to_string()));
-                return Some(pieces);
+                return Some(Derived::Binary(Box::new(left), op.0, Box::new(right)));
             }
-            K::Unary(unary) if is_sign(unary.operator) => {
-                let argument = self.render(E::new(&unary.argument))?;
-                let mut pieces = vec![
-                    DerivedPiece::Text("(".to_string()),
-                    DerivedPiece::Text(unary.operator.as_str().to_string()),
-                    DerivedPiece::Text("(".to_string()),
-                ];
-                pieces.extend(argument);
-                pieces.push(DerivedPiece::Text(")".to_string()));
-                pieces.push(DerivedPiece::Text(")".to_string()));
-                return Some(pieces);
+            K::Unary(unary) if is_sign(unary.op) => {
+                let argument = self.render(E::new(&unary.arg))?;
+                return Some(Derived::Unary(unary.op, Box::new(argument)));
             }
             _ => {}
         }
@@ -385,33 +341,26 @@ impl Deriver<'_> {
             return None;
         }
         match (self.evaluate)(node) {
-            Some(value @ Value::Num(_)) => {
-                literal_source(&value).map(|text| vec![DerivedPiece::Text(text)])
-            }
+            Some(value @ Value::Num(_)) => literal_value(&value).map(Derived::Literal),
             _ => None,
         }
     }
 
-    fn register(&mut self, node: E, pieces: Vec<DerivedPiece>) {
-        let span = node.span();
-        let key = (span.start, span.end);
-        let first = pieces.iter().find_map(|piece| match piece {
-            DerivedPiece::Param(param, _) => Some(param.clone()),
-            DerivedPiece::Text(_) => None,
-        });
-        let Some(first) = first else {
+    fn register(&mut self, node: E, derived: Derived) {
+        let key = span_key(node);
+        let Some(first) = derived.first_param().map(str::to_string) else {
             if let Some(Value::Num(number)) = (self.evaluate)(node) {
                 self.replacements.push((key, Replacement::Constant(number)));
             }
             return;
         };
-        let name = match self.derived.iter().find(|entry| entry.pieces == pieces) {
+        let name = match self.derived.iter().find(|entry| entry.expr == derived) {
             Some(entry) => entry.name.clone(),
             None => {
                 let name = format!("{first}-{}", self.derived.len() + 1);
                 self.derived.push(DerivedVar {
                     name: name.clone(),
-                    pieces,
+                    expr: derived,
                 });
                 name
             }
@@ -419,14 +368,14 @@ impl Deriver<'_> {
         self.replacements.push((key, Replacement::Derived(name)));
     }
 
-    fn visit_object(&mut self, object: &ObjectExpression) {
-        for prop in &object.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+    fn visit_object(&mut self, object: &ObjectLit) {
+        for prop in &object.props {
+            let PropOrSpread::Prop(prop) = prop else {
                 continue;
             };
-            if prop.shorthand || prop.method || prop.kind != PropertyKind::Init {
+            let AstProp::KeyValue(prop) = &**prop else {
                 continue;
-            }
+            };
             self.visit(E::new(&prop.value));
         }
     }
@@ -439,24 +388,22 @@ impl Deriver<'_> {
                 return;
             }
             K::Template(template) => {
-                for expr in &template.expressions {
+                for expr in &template.exprs {
                     self.visit(E::new(expr));
                 }
                 return;
             }
-            K::Binary(left, BinOp::Binary(operator), right) if is_arithmetic(operator) => {
-                (operator == BinaryOperator::Addition).then_some((left, right))
+            K::Binary(left, op, right) if is_arithmetic(op.0) => {
+                (op.0 == BinaryOp::Add).then_some((left, right))
             }
-            K::Unary(unary) if is_sign(unary.operator) => None,
+            K::Unary(unary) if is_sign(unary.op) => None,
             _ => return,
         };
         if !reads(node, self.vars) {
             return;
         }
-        if let Some(mut pieces) = self.render(node) {
-            pieces.pop();
-            pieces.remove(0);
-            self.register(node, pieces);
+        if let Some(derived) = self.render(node) {
+            self.register(node, derived);
             return;
         }
         if let Some((left, right)) = operands {
@@ -472,6 +419,16 @@ pub struct DynamicStyle {
     pub derived: Vec<DerivedVar>,
 }
 
+fn attach_imports<'e, 'r>(
+    evaluator: Evaluator<'e, 'r>,
+    imports: Option<&'r dyn crate::swc::eval::Imports>,
+) -> Evaluator<'e, 'r> {
+    match imports {
+        Some(imports) => evaluator.importing(imports),
+        None => evaluator,
+    }
+}
+
 pub fn resolve_dynamic_style(
     func: &StyleFunction,
     runtime_params: &[String],
@@ -479,16 +436,17 @@ pub fn resolve_dynamic_style(
     tables: Env,
     provided: Option<&FxHashSet<String>>,
     definite: &[String],
+    imports: Option<&dyn crate::swc::eval::Imports>,
 ) -> EvalResult<DynamicStyle> {
     if func.unsupported_params {
         return Err(
-            "[plumeria] Dynamic styles require named parameters or object destructuring; array and rest parameters are not supported."
+            "[typedcss] Dynamic styles require named parameters or object destructuring; array and rest parameters are not supported."
                 .to_string(),
         );
     }
     let mut temp: Layer<Value> = Layer::over(statics);
 
-    let with_default: Vec<(String, &Expression)> = func
+    let with_default: Vec<(String, &Expr)> = func
         .defaults
         .iter()
         .filter(|(param, _)| match provided {
@@ -507,11 +465,11 @@ pub fn resolve_dynamic_style(
         let is_definite = definite.contains(param)
             || !func
                 .body
-                .properties
+                .props
                 .iter()
                 .any(|prop| reads_names_property(prop, &|name| name == param.as_str()));
         let literal =
-            match Evaluator::new(tables.with_statics(statics)).property_value(E::new(expr)) {
+            match attach_imports(Evaluator::new(tables.with_statics(statics)), imports).property_value(E::new(expr)) {
                 Ok(literal) => literal,
                 Err(_) if is_definite => continue,
                 Err(error) => return Err(error),
@@ -547,7 +505,7 @@ pub fn resolve_dynamic_style(
         }
     }
     let evaluate = |node: E| {
-        Evaluator::new(tables.with_statics(&constants))
+        attach_imports(Evaluator::new(tables.with_statics(&constants)), imports)
             .property_value(node)
             .ok()
             .flatten()
@@ -587,7 +545,7 @@ pub fn resolve_dynamic_style(
         for param in &var_params {
             temp.set(param.clone(), Value::str(param.as_str()));
         }
-        let probe = Evaluator::with_replacements(tables.with_statics(&temp), &replacements)
+        let probe = attach_imports(Evaluator::with_replacements(tables.with_statics(&temp), &replacements), imports)
             .object(func.body)?;
         let hash = hash_object(&probe);
         for name in &var_names {
@@ -606,7 +564,7 @@ pub fn resolve_dynamic_style(
         }
     }
 
-    let mut style = Evaluator::with_replacements(tables.with_statics(&temp), &replacements)
+    let mut style = attach_imports(Evaluator::with_replacements(tables.with_statics(&temp), &replacements), imports)
         .object(func.body)?;
 
     let mut var_groups: IndexMap<String, Vec<VarGroup>, FxBuildHasher> = IndexMap::default();
