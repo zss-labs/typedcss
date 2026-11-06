@@ -1,34 +1,34 @@
 {
-  "name": "@plumeria/core",
+  "name": "@typedcss/css",
   "version": "21.1.2",
   "description": "Zero-cost abstraction layer for styling React components.",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://plumeria.dev",
+  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zss-in-js/plumeria.git",
-    "directory": "packages/core"
+    "url": "git+https://github.com/zss-labs/typedcss.git",
+    "directory": "packages/css"
   },
   "bugs": {
-    "url": "https://github.com/zss-in-js/plumeria/issues"
+    "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "keywords": [
     "css",
     "css-in-js",
     "react",
-    "plumeria",
-    "type",
+    "typedcss",
     "typed",
-    "types",
-    "stylex"
+    "typescript",
+    "styles"
   ],
   "exports": {
     ".": {
-      "types": "./lib/css.d.ts"
+      "types": "./lib/css.d.ts",
+      "default": "./lib/props.mjs"
     },
-    "./class-style": {
-      "types": "./lib/class-style.d.ts"
+    "./sx": {
+      "types": "./lib/sx.d.ts"
     }
   },
   "types": "./lib/css.d.ts",
