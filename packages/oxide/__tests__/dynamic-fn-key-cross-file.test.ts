@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
 
   const write = (name: string, body: string) =>
     fs.writeFileSync(path.join(FIXTURE_DIR, name), body, 'utf-8');
@@ -26,14 +26,14 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
     it('emits the rule for every component in a file that shares a prop name', () => {
       write(
         'twins.tsx',
-        `import * as css from '@plumeria/core';
-export const TwinA = ({ deco }: any) => <div classStyle={deco} />;
-export const TwinB = ({ deco }: any) => <span classStyle={deco} />;
+        `import * as css from '@typedcss/css';
+export const TwinA = ({ deco }: any) => <div sx={deco} />;
+export const TwinB = ({ deco }: any) => <span sx={deco} />;
 `,
       );
       write(
         'parent.tsx',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 import { TwinA, TwinB } from './twins';
 const twin = css.create({ red: { color: 'red' }, blue: { color: 'blue' } });
 export const P = () => (
@@ -55,15 +55,15 @@ export const P = () => (
       // function keys is the one the scanner leaves behind.
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 export const importedStyles = css.create({ tone: (color: string) => ({ color }) });
 `,
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
+export const A = (p: any) => <div sx={importedStyles.tone(p.c)} />;
 `,
       );
 
@@ -77,7 +77,7 @@ export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
       // called, so the consumer's own bindings cannot stand in for it.
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 const weight = 700;
 export const importedStyles = css.create({
   tone: (color: string) => ({ color, fontWeight: weight }),
@@ -86,9 +86,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
+export const A = (p: any) => <div sx={importedStyles.tone(p.c)} />;
 `,
       );
 
@@ -100,7 +100,7 @@ export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
     it('resolves a spread of a const declared in the defining file', () => {
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 const base = { fontWeight: 700 };
 export const importedStyles = css.create({
   tone: (color: string) => ({ color, ...base }),
@@ -109,9 +109,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
+export const A = (p: any) => <div sx={importedStyles.tone(p.c)} />;
 `,
       );
 
@@ -123,7 +123,7 @@ export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
       // the parameter next to it with it.
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 const weight = 700;
 export const importedStyles = css.create({
   tone: (color: string) => ({ ':hover': { color, fontWeight: weight } }),
@@ -132,9 +132,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
+export const A = (p: any) => <div sx={importedStyles.tone(p.c)} />;
 `,
       );
 
@@ -148,7 +148,7 @@ export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
       // whole properties, and the const half still belongs to the declaring file.
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 const gap = '4px';
 export const importedStyles = css.create({
   tone: (value: string) => ({ padding: \`\${value} \${gap}\` }),
@@ -157,9 +157,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone(p.v)} />;
+export const A = (p: any) => <div sx={importedStyles.tone(p.v)} />;
 `,
       );
 
@@ -169,14 +169,14 @@ export const A = (p: any) => <div classStyle={importedStyles.tone(p.v)} />;
     it('resolves createStatic and createTheme the defining file imports', () => {
       write(
         'tokens.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 export const theme = css.createTheme(':root', { brand: 'rebeccapurple' });
 export const sizes = css.createStatic({ gap: '2px' });
 `,
       );
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 import { theme, sizes } from './tokens';
 export const importedStyles = css.create({
   tone: (color: string) => ({ color, background: theme.brand, padding: sizes.gap }),
@@ -185,9 +185,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
+export const A = (p: any) => <div sx={importedStyles.tone(p.c)} />;
 `,
       );
 
@@ -199,7 +199,7 @@ export const A = (p: any) => <div classStyle={importedStyles.tone(p.c)} />;
     it('resolves a defining-file const behind a named parameter', () => {
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 const weight = 700;
 export const importedStyles = css.create({
   tone: ({ color }: { color: string }) => ({ color, fontWeight: weight }),
@@ -208,9 +208,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = (p: any) => <div classStyle={importedStyles.tone({ color: p.c })} />;
+export const A = (p: any) => <div sx={importedStyles.tone({ color: p.c })} />;
 `,
       );
 
@@ -224,7 +224,7 @@ export const A = (p: any) => <div classStyle={importedStyles.tone({ color: p.c }
       // scope a function body does.
       write(
         'imported.styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 const weight = 700;
 export const importedStyles = css.create({
   plain: { color: 'red', fontWeight: weight },
@@ -233,9 +233,9 @@ export const importedStyles = css.create({
       );
       write(
         'consumer.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { importedStyles } from './imported.styles';
-export const A = () => <div classStyle={importedStyles.plain} />;
+export const A = () => <div sx={importedStyles.plain} />;
 `,
       );
 
@@ -249,7 +249,7 @@ export const A = () => <div classStyle={importedStyles.plain} />;
     it('emits both sides of a dynamic key handed over a component prop', () => {
       write(
         'styles.ts',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 export const styles = css.create({
   base: { backgroundColor: 'green', padding: 24 },
   tone: (c: string) => ({ backgroundColor: c }),
@@ -258,16 +258,16 @@ export const styles = css.create({
       );
       write(
         'Merged.tsx',
-        `import * as css from '@plumeria/core';
+        `import * as css from '@typedcss/css';
 import { styles } from './styles';
 export const Merged = ({ deco }: any) => (
-  <div classStyle={[styles.base, deco]} />
+  <div sx={[styles.base, deco]} />
 );
 `,
       );
       write(
         'parent.tsx',
-        `import '@plumeria/core';
+        `import '@typedcss/css';
 import { styles } from './styles';
 import { Merged } from './Merged';
 export const P = (p: any) => <Merged deco={styles.tone(p.c)} />;
