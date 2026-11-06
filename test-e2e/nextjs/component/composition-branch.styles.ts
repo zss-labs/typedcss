@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 export const branch = css.create({
   neutral: {
