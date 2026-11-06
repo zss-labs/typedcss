@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
   const DIR = fs.realpathSync(
@@ -13,7 +13,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
   const compile = (style: string) => {
     fs.writeFileSync(
       path.join(DIR, 'app.tsx'),
-      `import * as css from '@plumeria/core';\nconst s = css.create({ a: { ${style} } });\nexport const x = css.use(s.a);\n`,
+      `import * as css from '@typedcss/css';\nconst s = css.create({ a: { ${style} } });\nexport const x = css.use(s.a);\n`,
     );
     return compileCSS({ include: ['app.tsx'], exclude: [], cwd: DIR });
   };
