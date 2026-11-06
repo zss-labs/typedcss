@@ -174,26 +174,10 @@ fn process_selector_style(
     }
 }
 
-pub fn class_string(records: &[StyleRecord]) -> String {
-    records
-        .iter()
-        .map(|r| r.hash.as_str())
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
 pub fn atom_map(style: &Object) -> Object {
     let mut map = Object::new();
     for record in style_records(style, None) {
         map.insert(record.key, Value::Str(record.hash));
     }
     map
-}
-
-pub fn atom_class_string(atoms: &Object) -> String {
-    atoms
-        .values()
-        .map(|value| value.to_js_string())
-        .collect::<Vec<_>>()
-        .join(" ")
 }
