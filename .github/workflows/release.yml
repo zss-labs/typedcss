@@ -22,8 +22,8 @@ jobs:
         shell: bash
         run: |
           pending=$(find .changeset -name '*.md' ! -name 'README.md' | wc -l)
-          name=$(node -p "require('./packages/compiler/package.json').name")
-          version=$(node -p "require('./packages/compiler/package.json').version")
+          name=$(node -p "require('./packages/oxide/package.json').name")
+          version=$(node -p "require('./packages/oxide/package.json').version")
           if npm view "$name-darwin-arm64" version >/dev/null 2>&1; then
             echo "first=false" >> "$GITHUB_OUTPUT"
           else
@@ -83,7 +83,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: packages/compiler -> target
+          workspaces: packages/oxide -> target
           key: ${{ matrix.target }}
 
       - name: Install Zig
@@ -98,19 +98,19 @@ jobs:
 
       - name: Build the binary
         shell: bash
-        working-directory: packages/compiler
+        working-directory: packages/oxide
         run: pnpm build --target ${{ matrix.target }} ${{ matrix.flags }}
 
       - uses: actions/upload-artifact@v7
         with:
-          name: compiler-${{ matrix.target }}
+          name: oxide-${{ matrix.target }}
           path: |
-            packages/compiler/compiler.*.node
-            packages/compiler/compiler.wasm32-wasi.wasm
-            packages/compiler/compiler.wasi.cjs
-            packages/compiler/compiler.wasi-browser.js
-            packages/compiler/wasi-worker.mjs
-            packages/compiler/wasi-worker-browser.mjs
+            packages/oxide/oxide.*.node
+            packages/oxide/oxide.wasm32-wasi.wasm
+            packages/oxide/oxide.wasi.cjs
+            packages/oxide/oxide.wasi-browser.js
+            packages/oxide/wasi-worker.mjs
+            packages/oxide/wasi-worker-browser.mjs
           retention-days: 1
 
   first-release-packages:
@@ -124,27 +124,27 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          pattern: compiler-*
+          pattern: oxide-*
           path: artifacts/
           merge-multiple: true
 
       - name: Lay out the platform packages
         shell: bash
         run: |
-          for file in artifacts/compiler.*.node; do
-            platform=$(basename "$file" | sed -E 's/^compiler\.(.+)\.node$/\1/')
-            mkdir -p "packages/compiler/npm/$platform"
-            cp "$file" "packages/compiler/npm/$platform/"
+          for file in artifacts/oxide.*.node; do
+            platform=$(basename "$file" | sed -E 's/^oxide\.(.+)\.node$/\1/')
+            mkdir -p "packages/oxide/npm/$platform"
+            cp "$file" "packages/oxide/npm/$platform/"
           done
-          mkdir -p packages/compiler/npm/wasm32-wasi
-          cp artifacts/compiler.wasm32-wasi.wasm artifacts/compiler.wasi.cjs artifacts/compiler.wasi-browser.js artifacts/wasi-worker.mjs artifacts/wasi-worker-browser.mjs packages/compiler/npm/wasm32-wasi/
-          (cd packages/compiler && pnpm packages && pnpm readme)
-          ls -R packages/compiler/npm
+          mkdir -p packages/oxide/npm/wasm32-wasi
+          cp artifacts/oxide.wasm32-wasi.wasm artifacts/oxide.wasi.cjs artifacts/oxide.wasi-browser.js artifacts/wasi-worker.mjs artifacts/wasi-worker-browser.mjs packages/oxide/npm/wasm32-wasi/
+          (cd packages/oxide && pnpm packages && pnpm readme)
+          ls -R packages/oxide/npm
 
       - uses: actions/upload-artifact@v7
         with:
-          name: compiler-npm-packages
-          path: packages/compiler/npm/
+          name: oxide-npm-packages
+          path: packages/oxide/npm/
           retention-days: 7
 
   release:
@@ -164,7 +164,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: packages/compiler -> target
+          workspaces: packages/oxide -> target
 
       - name: Build Packages
         run: pnpm build --env-mode=loose
@@ -177,7 +177,7 @@ jobs:
         if: needs.check.outputs.publishing == 'true'
         uses: actions/download-artifact@v8
         with:
-          pattern: compiler-*
+          pattern: oxide-*
           path: artifacts/
           merge-multiple: true
 
@@ -185,15 +185,15 @@ jobs:
         if: needs.check.outputs.publishing == 'true'
         shell: bash
         run: |
-          for file in artifacts/compiler.*.node; do
-            platform=$(basename "$file" | sed -E 's/^compiler\.(.+)\.node$/\1/')
-            mkdir -p "packages/compiler/npm/$platform"
-            cp "$file" "packages/compiler/npm/$platform/"
+          for file in artifacts/oxide.*.node; do
+            platform=$(basename "$file" | sed -E 's/^oxide\.(.+)\.node$/\1/')
+            mkdir -p "packages/oxide/npm/$platform"
+            cp "$file" "packages/oxide/npm/$platform/"
           done
-          mkdir -p packages/compiler/npm/wasm32-wasi
-          cp artifacts/compiler.wasm32-wasi.wasm artifacts/compiler.wasi.cjs artifacts/compiler.wasi-browser.js artifacts/wasi-worker.mjs artifacts/wasi-worker-browser.mjs packages/compiler/npm/wasm32-wasi/
-          (cd packages/compiler && pnpm packages && pnpm readme && pnpm update:main)
-          bash packages/compiler/scripts/publish.sh compiler
+          mkdir -p packages/oxide/npm/wasm32-wasi
+          cp artifacts/oxide.wasm32-wasi.wasm artifacts/oxide.wasi.cjs artifacts/oxide.wasi-browser.js artifacts/wasi-worker.mjs artifacts/wasi-worker-browser.mjs packages/oxide/npm/wasm32-wasi/
+          (cd packages/oxide && pnpm packages && pnpm readme && pnpm update:main)
+          bash packages/oxide/scripts/publish.sh oxide
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
