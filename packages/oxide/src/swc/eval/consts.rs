@@ -1,41 +1,38 @@
 use std::cell::RefCell;
 
 use indexmap::IndexMap;
-use oxc_ast::ast::*;
 use rustc_hash::{FxBuildHasher, FxHashSet};
+use swc_core::ecma::ast::*;
 
-use super::{Env, Evaluator, Lookup};
+use super::{Env, Evaluator, Imports, Lookup};
 use crate::js::{Object, Value};
-use crate::syntax::expr::{E, K, unwrap};
+use crate::swc::syntax::expr::{E, K, str_value, unwrap};
 
-pub type ConstNodes<'b, 'a> = IndexMap<&'b str, &'b Expression<'a>, FxBuildHasher>;
+pub type ConstNodes<'b> = IndexMap<&'b str, &'b Expr, FxBuildHasher>;
 
-pub fn top_level_variable_declarations<'b, 'a>(
-    program: &'b Program<'a>,
-) -> impl Iterator<Item = &'b VariableDeclaration<'a>> {
-    program.body.iter().filter_map(|statement| match statement {
-        Statement::VariableDeclaration(declaration) => Some(&**declaration),
-        Statement::ExportNamedDeclaration(_) => None,
-        Statement::ExportDeclaration(export) => match &export.declaration {
-            Declaration::VariableDeclaration(declaration) => Some(&**declaration),
+pub fn top_level_variable_declarations(module: &Module) -> impl Iterator<Item = &VarDecl> {
+    module.body.iter().filter_map(|item| match item {
+        ModuleItem::Stmt(Stmt::Decl(Decl::Var(declaration))) => Some(&**declaration),
+        ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => match &export.decl {
+            Decl::Var(declaration) => Some(&**declaration),
             _ => None,
         },
         _ => None,
     })
 }
 
-pub fn binding_name<'b>(pattern: &'b BindingPattern) -> Option<&'b str> {
+pub fn binding_name(pattern: &Pat) -> Option<&str> {
     match pattern {
-        BindingPattern::BindingIdentifier(ident) => Some(ident.name.as_str()),
+        Pat::Ident(ident) => Some(ident.id.sym.as_str()),
         _ => None,
     }
 }
 
-pub fn collect_local_const_nodes<'b, 'a>(program: &'b Program<'a>) -> ConstNodes<'b, 'a> {
+pub fn collect_local_const_nodes(module: &Module) -> ConstNodes<'_> {
     let mut nodes = ConstNodes::default();
-    for declaration in top_level_variable_declarations(program) {
-        for declarator in &declaration.declarations {
-            if let (Some(name), Some(init)) = (binding_name(&declarator.id), &declarator.init) {
+    for declaration in top_level_variable_declarations(module) {
+        for declarator in &declaration.decls {
+            if let (Some(name), Some(init)) = (binding_name(&declarator.name), &declarator.init) {
                 nodes.insert(name, init);
             }
         }
@@ -43,10 +40,11 @@ pub fn collect_local_const_nodes<'b, 'a>(program: &'b Program<'a>) -> ConstNodes
     nodes
 }
 
-struct Consts<'b, 'a> {
-    decls: ConstNodes<'b, 'a>,
+struct Consts<'b, 'i> {
+    decls: ConstNodes<'b>,
     values: RefCell<Object>,
     visiting: RefCell<FxHashSet<String>>,
+    imports: Option<&'i dyn Imports>,
 }
 
 struct Live<'c>(&'c RefCell<Object>);
@@ -57,7 +55,7 @@ impl Lookup<Value> for Live<'_> {
     }
 }
 
-impl<'b, 'a> Consts<'b, 'a> {
+impl Consts<'_, '_> {
     fn resolve(&self, name: &str) -> Option<Value> {
         if let Some(value) = self.values.borrow().get(name) {
             return Some(value.clone());
@@ -71,19 +69,29 @@ impl<'b, 'a> Consts<'b, 'a> {
         let live = Live(&self.values);
         let env = Env::statics_only(&live);
         let result = match init.kind() {
-            K::Str(value) => Some(Value::str(value.value.as_str())),
+            K::Str(value) => Some(Value::Str(str_value(value))),
             K::Num(value) => Some(Value::Num(value.value)),
             K::Bool(value) => Some(Value::Bool(value)),
-            K::Ident(ident) => self.resolve(ident.name.as_str()),
+            K::Ident(ident) => self.resolve(ident.sym.as_str()),
             K::Object(object) => {
                 let resolver = |key: &str| self.resolve(key);
-                Evaluator::with_resolver(env, &resolver)
+                let evaluator = Evaluator::with_resolver(env, &resolver);
+                let evaluator = match self.imports {
+                    Some(imports) => evaluator.importing(imports),
+                    None => evaluator,
+                };
+                evaluator
                     .object(object)
                     .ok()
                     .map(Value::obj)
             }
             K::Binary(..) | K::Template(_) | K::Unary(_) => {
-                Evaluator::new(env).expression(init).ok()
+                let evaluator = Evaluator::new(env);
+                let evaluator = match self.imports {
+                    Some(imports) => evaluator.importing(imports),
+                    None => evaluator,
+                };
+                evaluator.expression(init).ok()
             }
             _ => None,
         };
@@ -95,11 +103,12 @@ impl<'b, 'a> Consts<'b, 'a> {
     }
 }
 
-pub fn collect_local_consts(program: &Program) -> Object {
+pub fn collect_local_consts(module: &Module, imports: Option<&dyn Imports>) -> Object {
     let consts = Consts {
-        decls: collect_local_const_nodes(program),
+        decls: collect_local_const_nodes(module),
         values: RefCell::new(Object::new()),
         visiting: RefCell::new(FxHashSet::default()),
+        imports,
     };
     let names: Vec<&str> = consts.decls.keys().copied().collect();
     for name in names {
