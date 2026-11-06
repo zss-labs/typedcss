@@ -1,11 +1,11 @@
-import '@plumeria/core';
+import '@typedcss/css';
 import { hmrValue } from 'component/hmr-value-chromium.styles';
 
 export default function HmrValuePage() {
   return (
     <main>
       <h1>HMR value edit</h1>
-      <div data-testid="hmr-value-box" classStyle={hmrValue.box}>
+      <div data-testid="hmr-value-box" sx={hmrValue.box}>
         the style module and the page update separately
       </div>
     </main>
