@@ -1,6 +1,6 @@
 import type { Rule } from 'eslint';
 
-export const DEFAULT_STYLE_PROP = 'classStyle';
+export const DEFAULT_STYLE_PROP = 'sx';
 
 export const stylePropSchema = [
   {
@@ -22,8 +22,8 @@ export function resolveStyleProp(context: Rule.RuleContext): string {
   if (fromRule) return fromRule;
 
   const fromSettings = (
-    context.settings as { plumeria?: StylePropOption } | undefined
-  )?.plumeria?.styleProp;
+    context.settings as { typedcss?: StylePropOption } | undefined
+  )?.typedcss?.styleProp;
 
   return fromSettings ?? DEFAULT_STYLE_PROP;
 }
