@@ -14,11 +14,12 @@
     "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "main": "index.js",
+  "browser": "browser.js",
   "types": "index.d.ts",
   "files": [
     "index.js",
     "index.d.ts",
-    "binding.js"
+    "browser.js"
   ],
   "napi": {
     "binaryName": "oxide",
@@ -38,8 +39,8 @@
     ]
   },
   "scripts": {
-    "build": "napi build --platform --release --features napi --js binding.js --dts binding.d.ts",
-    "build:debug": "napi build --platform --features napi --js binding.js --dts binding.d.ts",
+    "build": "napi build --platform --release --features napi --js index.js --dts index.d.ts",
+    "build:debug": "napi build --platform --features napi --js index.js --dts index.d.ts",
     "packages": "node scripts/generate-platform-packages.ts",
     "readme": "node scripts/generate-platform-readme.ts",
     "update:main": "node scripts/update-main-package.ts"
