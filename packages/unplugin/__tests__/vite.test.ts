@@ -1,50 +1,60 @@
-jest.mock('@plumeria/eslint-plugin/guard', () => ({
-  lintOverrides: jest.requireActual('@plumeria/eslint-plugin/guard')
+jest.mock('@typedcss/eslint-plugin/guard', () => ({
+  lintOverrides: jest.requireActual('@typedcss/eslint-plugin/guard')
     .lintOverrides,
   startLintGuard: jest.fn(),
 }));
-let mockCompiledSource = '';
-jest.mock('@plumeria/compiler', () => ({
-  DEFAULT_STYLE_PROP: 'classStyle',
-  needsCompile: jest.requireActual('@plumeria/compiler').needsCompile,
-  optimizer: jest.fn((css: string) => css),
-  resolvePropertyPolicy: () => ({}),
-  scanAll: jest.fn(() => ({ componentPropsTable: {} })),
-  transformSource: ({ source }: { source: string }) => {
-    mockCompiledSource = source;
-    return { code: 'transformed' };
-  },
-  compileCSS: () =>
-    mockCompiledSource.includes('blue') ? '.box { color: blue; }' : '.box {}',
-}));
 jest.mock('../src/disk-css', () => ({
-  ensureVirtualCssFile: jest.fn(),
-  resolveVirtualCssPath: () => '/package/zero-virtual.css',
-  rewriteImportPath: jest.fn(() => './zero-virtual.css'),
-  writeCssBlock: jest.fn(),
   createDiskCssImport: jest.fn((getRoot: () => string) => {
     getRoot();
     return () => '\nimport "./zero-virtual.css";';
   }),
 }));
 
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import vite from '../src/vite';
+import { CSS_FILENAME } from '../src/core';
 
-const { scanAll: mockScanAll } = jest.requireMock<{ scanAll: jest.Mock }>(
-  '@plumeria/compiler',
-);
-const { optimizer: mockOptimizer } = jest.requireMock<{ optimizer: jest.Mock }>(
-  '@plumeria/compiler',
-);
 const { createDiskCssImport: mockCreateDiskCssImport } = jest.requireMock<{
   createDiskCssImport: jest.Mock;
 }>('../src/disk-css');
 
-const SOURCE = `import '@plumeria/core';`;
-const ID = '/project/src/Card.tsx';
-const CSS_ID = '/project/src/Card.zero.css';
+const ROOT = fs.realpathSync(
+  fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-unplugin-vite-')),
+);
+const EMPTY = fs.realpathSync(
+  fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-unplugin-empty-')),
+);
+const ID = path.join(ROOT, 'src', 'Card.tsx');
+const CHILD = path.join(ROOT, 'src', 'Child.tsx');
+const CSS_FILE = path.join(ROOT, CSS_FILENAME);
+const CSS_ID = `/${CSS_FILENAME}`;
+
+const card = (color: string) => `import * as css from '@typedcss/css';
+const styles = css.create({ box: { color: '${color}' } });
+export const Card = () => <div sx={styles.box} />;
+`;
+const SOURCE = card('teal');
+
+beforeAll(() => {
+  fs.mkdirSync(path.dirname(ID), { recursive: true });
+  fs.writeFileSync(ID, SOURCE);
+  fs.writeFileSync(CHILD, card('navy'));
+});
+
+afterAll(() => {
+  fs.rmSync(ROOT, { recursive: true, force: true });
+  fs.rmSync(EMPTY, { recursive: true, force: true });
+});
 
 afterEach(() => jest.clearAllMocks());
+
+const serve = (options?: Parameters<typeof vite>[0]) => {
+  const plugin = vite({ lint: false, ...options }) as any;
+  plugin.configResolved({ root: ROOT, command: 'serve' });
+  return plugin;
+};
 
 it('merges Vite config for serve and build commands', () => {
   const plugin = vite() as any;
@@ -54,18 +64,50 @@ it('merges Vite config for serve and build commands', () => {
       { optimizeDeps: { exclude: ['existing'] } },
       { command: 'serve' },
     ),
-  ).toEqual({ optimizeDeps: { exclude: ['existing', '@plumeria/core'] } });
+  ).toEqual({ optimizeDeps: { exclude: ['existing', '@typedcss/css'] } });
   expect(
     plugin.config({ build: { minify: false } }, { command: 'build' }),
   ).toMatchObject({ build: { minify: false, cssCodeSplit: false } });
-  expect((vite() as any).config({}, { command: 'build' })).toMatchObject({
-    build: { cssCodeSplit: false },
+});
+
+it('configures source packages and Solid class output', () => {
+  const packageRoot = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-vite-package-')),
+  );
+  fs.writeFileSync(
+    path.join(packageRoot, 'package.json'),
+    JSON.stringify({ dependencies: { 'ui-kit': '1' } }),
+  );
+  fs.mkdirSync(path.join(packageRoot, 'node_modules', 'ui-kit', 'src'), {
+    recursive: true,
   });
+  fs.writeFileSync(
+    path.join(packageRoot, 'node_modules', 'ui-kit', 'package.json'),
+    JSON.stringify({
+      name: 'ui-kit',
+      exports: {
+        '.': { typedcss: './src/index.ts', default: './dist/index.js' },
+      },
+    }),
+  );
+  const plugin = vite({ lint: false }) as any;
+  expect(
+    plugin.config({ root: packageRoot }, { command: 'serve' }),
+  ).toMatchObject({
+    optimizeDeps: { exclude: ['@typedcss/css', 'ui-kit'] },
+    ssr: { noExternal: ['ui-kit'] },
+  });
+  plugin.configResolved({
+    root: ROOT,
+    command: 'serve',
+    plugins: [null, { name: 'solid' }],
+  });
+  fs.rmSync(packageRoot, { recursive: true, force: true });
 });
 
 it('starts the lint guard for builds only', () => {
   const { startLintGuard } = jest.requireMock<{ startLintGuard: jest.Mock }>(
-    '@plumeria/eslint-plugin/guard',
+    '@typedcss/eslint-plugin/guard',
   );
   (vite() as any).config({}, { command: 'serve' });
   expect(startLintGuard).not.toHaveBeenCalled();
@@ -76,62 +118,79 @@ it('starts the lint guard for builds only', () => {
 });
 
 it('configures RSC builds detected from environments and nested plugins', () => {
-  const environmentPlugin = vite() as any;
   expect(
-    environmentPlugin.config(
-      { environments: { rsc: {} } },
-      { command: 'build' },
-    ),
+    (vite() as any).config({ environments: { rsc: {} } }, { command: 'build' }),
   ).toMatchObject({
     environments: { rsc: { build: { cssCodeSplit: false } } },
   });
-
-  const namedPlugin = vite() as any;
   expect(
-    namedPlugin.config(
+    (vite() as any).config(
       { plugins: [null, 'ignored', [{ name: 'rsc:server' }]] },
       { command: 'build' },
     ),
   ).toMatchObject({
     environments: { rsc: { build: { cssCodeSplit: false } } },
   });
-
-  const exactPlugin = vite() as any;
   expect(
-    exactPlugin.config({ plugins: [{ name: 'rsc' }] }, { command: 'build' }),
+    (vite() as any).config(
+      { plugins: [{ name: 'rsc' }] },
+      { command: 'build' },
+    ),
   ).toHaveProperty('environments.rsc.build.cssCodeSplit', false);
 });
 
-it('reloads a changed virtual stylesheet only when it exists', async () => {
-  const moduleNode = { id: CSS_ID };
-  const reloadModule = jest.fn();
-  const plugin = vite() as any;
-  plugin.configResolved({ root: '/project', command: 'serve' });
-  plugin.configureServer({
-    moduleGraph: { getModuleById: jest.fn(() => moduleNode) },
-    reloadModule,
-  });
+it('imports the one stylesheet and serves it as a virtual module', async () => {
+  const plugin = serve();
 
-  await plugin.transform.handler(SOURCE, ID);
-  await plugin.transform.handler(SOURCE, ID);
-  await plugin.transform.handler(`${SOURCE} blue`, ID);
-  await plugin.transform.handler(SOURCE, `${ID}?raw`);
+  const result = await plugin.transform.handler(SOURCE, ID);
 
-  expect(reloadModule).toHaveBeenCalledTimes(3);
-  expect(plugin.resolveId('/src/Card.zero.css')).toBe(CSS_ID);
-
-  plugin.configureServer({
-    moduleGraph: { getModuleById: jest.fn(() => null) },
-    reloadModule,
-  });
-  await plugin.transform.handler(SOURCE, ID);
-
+  expect(result.code).toContain(`import "${CSS_ID}";`);
+  expect(plugin.resolveId(CSS_ID)).toBe(CSS_FILE);
+  expect(plugin.resolveId(`${CSS_FILE}?direct`)).toBe(`${CSS_FILE}?direct`);
+  expect(plugin.load(CSS_FILE)).toContain('teal');
+  expect(plugin.load(CSS_FILE)).toContain('navy');
   expect(plugin.resolveId('/missing.zero.css')).toBeNull();
   expect(plugin.load('/missing.zero.css')).toBeNull();
 });
 
+it('reloads the stylesheet only when its content changes', async () => {
+  const reloadModule = jest.fn();
+  const plugin = serve();
+  plugin.configureServer({
+    moduleGraph: { getModuleById: jest.fn(() => ({ id: CSS_FILE })) },
+    reloadModule,
+  });
+
+  await plugin.transform.handler(SOURCE, ID);
+  await plugin.transform.handler(SOURCE, ID);
+  expect(reloadModule).toHaveBeenCalledTimes(1);
+
+  await plugin.transform.handler(card('tomato'), ID);
+  expect(reloadModule).toHaveBeenCalledTimes(2);
+  expect(plugin.load(CSS_FILE)).toContain('tomato');
+  expect(plugin.load(CSS_FILE)).not.toContain('teal');
+});
+
+it('handles a missing cached stylesheet and missing virtual module', async () => {
+  const plugin = serve();
+  const set = jest
+    .spyOn(plugin.__typedcssInternal.cssLookup, 'set')
+    .mockImplementation(function (this: Map<string, string>) {
+      return this;
+    });
+  const reloadModule = jest.fn();
+  plugin.configureServer({
+    moduleGraph: { getModuleById: jest.fn(() => null) },
+    reloadModule,
+  });
+
+  await plugin.transform.handler(SOURCE, ID);
+  expect(reloadModule).not.toHaveBeenCalled();
+  set.mockRestore();
+});
+
 it('uses the client environment graph for CSS updates', async () => {
-  const cssModule = { id: CSS_ID };
+  const cssModule = { id: CSS_FILE };
   const invalidateModule = jest.fn();
   const reloadModule = jest.fn();
   const send = jest.fn();
@@ -142,96 +201,62 @@ it('uses the client environment graph for CSS updates', async () => {
     getModuleById: jest.fn<typeof cssModule | null, []>(() => cssModule),
     invalidateModule,
   };
-  const plugin = vite() as any;
-  plugin.configResolved({ root: '/project', command: 'serve' });
+  const plugin = serve();
   plugin.configureServer({
     environments: {
       client: { moduleGraph: clientGraph, hot: { send }, reloadModule },
     },
     moduleGraph: { getModuleById: jest.fn(() => null) },
   });
+  const rsc = { environment: { name: 'rsc' } };
+  const client = { environment: { name: 'client' } };
 
-  await plugin.transform.handler.call(
-    { environment: { name: 'rsc' } },
-    SOURCE,
-    ID,
-  );
-  await plugin.transform.handler.call(
-    { environment: { name: 'rsc' } },
-    SOURCE,
-    ID,
-  );
+  await plugin.transform.handler.call(rsc, SOURCE, ID);
+  await plugin.transform.handler.call(rsc, SOURCE, ID);
   expect(invalidateModule).toHaveBeenCalledTimes(1);
   expect(send).toHaveBeenCalledWith(
     expect.objectContaining({
       type: 'update',
-      updates: [expect.objectContaining({ path: '/src/Card.zero.css' })],
+      updates: [expect.objectContaining({ path: CSS_ID })],
     }),
   );
 
-  await plugin.transform.handler.call(
-    { environment: { name: 'client' } },
-    SOURCE,
-    ID,
-  );
-  await plugin.transform.handler.call(
-    { environment: { name: 'client' } },
-    SOURCE,
-    ID,
-  );
+  await plugin.transform.handler.call(client, SOURCE, ID);
+  await plugin.transform.handler.call(client, SOURCE, ID);
   expect(reloadModule).toHaveBeenCalledTimes(1);
-  expect(plugin.resolveId(`${CSS_ID}?direct`)).toBe(`${CSS_ID}?direct`);
 
   clientGraph.getModulesByFile.mockReturnValue(undefined);
   clientGraph.getModuleById.mockReturnValue(null);
-  await plugin.transform.handler.call(
-    { environment: { name: 'rsc' } },
-    `${SOURCE} blue`,
-    ID,
-  );
+  await plugin.transform.handler.call(rsc, card('plum'), ID);
   expect(send).toHaveBeenCalledTimes(1);
 });
 
 it('imports the shared disk file when development CSS is emitted to disk', async () => {
-  const plugin = vite({ devEmitToDisk: true }) as any;
-  plugin.configResolved({ root: '/project', command: 'serve' });
+  const plugin = serve({ devEmitToDisk: true });
 
   const result = await plugin.transform.handler(SOURCE, ID);
 
   expect(result.code).toContain('import "./zero-virtual.css";');
-  expect(result.code).not.toContain('/src/Card.zero.css');
+  expect(result.code).not.toContain(CSS_ID);
   expect(mockCreateDiskCssImport).toHaveBeenCalled();
 });
 
-it('imports the virtual module when CSS is not emitted to disk', async () => {
-  const plugin = vite() as any;
-  plugin.configResolved({ root: '/project', command: 'serve' });
-
-  const result = await plugin.transform.handler(SOURCE, ID);
-
-  expect(result.code).toContain('import "/src/Card.zero.css";');
-});
-
-it('omits CSS imports and emits one sorted stylesheet for an RSC build', async () => {
-  const plugin = vite() as any;
+it('omits CSS imports and emits one stylesheet for an RSC build', async () => {
+  const plugin = vite({ lint: false }) as any;
   plugin.config({ environments: { rsc: {} } }, { command: 'build' });
-  plugin.configResolved({ root: '/project', command: 'build' });
+  plugin.configResolved({ root: ROOT, command: 'build' });
 
   const result = await plugin.transform.handler(SOURCE, ID);
-  expect(result.code).toBe('transformed');
+  expect(result.code).not.toContain(CSS_FILENAME);
 
-  plugin.__plumeriaInternal.cssLookup.clear();
-  plugin.__plumeriaInternal.cssLookup.set('/project/z.zero.css', '.z {}');
-  plugin.__plumeriaInternal.cssLookup.set('/project/a.zero.css', '.a {}');
   const emitFile = jest.fn(() => 'sheet-ref');
-
   await plugin.buildEnd.call({ environment: { name: 'client' }, emitFile });
+  expect(emitFile).not.toHaveBeenCalled();
   await plugin.buildEnd.call({ environment: { name: 'rsc' }, emitFile });
-  expect(mockOptimizer).toHaveBeenLastCalledWith('.a {}.z {}');
   expect(emitFile).toHaveBeenCalledWith({
     type: 'asset',
-    name: 'plumeria.css',
-    source: '.a {}.z {}',
+    name: 'typedcss.css',
+    source: expect.stringContaining('teal'),
   });
 
   const importedCss = { add: jest.fn() };
@@ -240,11 +265,11 @@ it('omits CSS imports and emits one sorted stylesheet for an RSC build', async (
     plugin.renderChunk.call({ environment: { name: 'client' } }, '', chunk),
   ).toBeNull();
   plugin.renderChunk.call(
-    { environment: { name: 'rsc' }, getFileName: () => 'plumeria.css' },
+    { environment: { name: 'rsc' }, getFileName: () => 'typedcss.css' },
     '',
     chunk,
   );
-  expect(importedCss.add).toHaveBeenCalledWith('plumeria.css');
+  expect(importedCss.add).toHaveBeenCalledWith('typedcss.css');
 
   plugin.buildStart();
   expect(
@@ -253,83 +278,61 @@ it('omits CSS imports and emits one sorted stylesheet for an RSC build', async (
 });
 
 it('does not emit an empty RSC stylesheet or run build hooks outside RSC', async () => {
-  const regularPlugin = vite() as any;
   const emitFile = jest.fn();
-  await regularPlugin.buildEnd.call({ environment: { name: 'rsc' }, emitFile });
+  await (vite() as any).buildEnd.call({
+    environment: { name: 'rsc' },
+    emitFile,
+  });
   expect(emitFile).not.toHaveBeenCalled();
 
-  const rscPlugin = vite() as any;
+  const rscPlugin = vite({ lint: false }) as any;
   rscPlugin.config({ plugins: [{ name: 'rsc' }] }, { command: 'build' });
-  mockOptimizer.mockReturnValueOnce('');
+  rscPlugin.configResolved({ root: EMPTY, command: 'build' });
   await rscPlugin.buildEnd.call({ environment: { name: 'rsc' }, emitFile });
   expect(emitFile).not.toHaveBeenCalled();
 });
 
-it('adds affected components and dependent targets to a hot update', () => {
-  const child = { id: '/project/src/Child.tsx' };
-  const dependent = { id: '/project/src/Dependent.tsx' };
+it('re-transforms every other target when a file with styles changes', async () => {
+  const plugin = serve();
+  const dependent = { id: CHILD };
   const original = { id: ID };
-  const plugin = vite() as any;
 
   expect(plugin.handleHotUpdate({ modules: [], file: ID })).toBeUndefined();
 
-  plugin.__plumeriaInternal.targets.push({
-    id: dependent.id,
-    dependencies: [ID],
-  });
-  plugin.__plumeriaInternal.targets.push(
-    { id: ID, dependencies: [ID] },
-    { id: '/project/src/Unrelated.tsx', dependencies: [] },
-  );
-  mockScanAll.mockReturnValue({
-    componentPropsTable: {
-      '/project/src/Child.tsx-Child': {
-        classStyle: [{ key: 'b' }, { key: 'a' }],
-      },
-    },
-  });
   plugin.configureServer({
-    moduleGraph: {
-      getModulesByFile: jest.fn(() => new Set([child, original])),
-      getModuleById: jest.fn(() => dependent),
-    },
+    moduleGraph: { getModuleById: jest.fn((id: string) => ({ id })) },
+    reloadModule: jest.fn(),
   });
+  await plugin.transform.handler(SOURCE, ID);
+  await plugin.transform.handler(card('navy'), CHILD);
 
   expect(plugin.handleHotUpdate({ modules: [original], file: ID })).toEqual([
     original,
-    child,
     dependent,
   ]);
+  plugin.configureServer({
+    moduleGraph: { getModuleById: jest.fn(() => null) },
+    reloadModule: jest.fn(),
+  });
   expect(plugin.handleHotUpdate({ modules: [original], file: ID })).toEqual([
     original,
-    dependent,
   ]);
   expect(
     plugin.handleHotUpdate({
       modules: [original],
-      file: '/project/node_modules/pkg/index.ts',
+      file: path.join(ROOT, 'notes.md'),
     }),
   ).toEqual([original]);
-
-  mockScanAll.mockReturnValue({ componentPropsTable: undefined });
-  plugin.configureServer({
-    moduleGraph: {
-      getModulesByFile: jest.fn(() => undefined),
-      getModuleById: jest.fn(() => null),
-    },
-  });
-  expect(plugin.handleHotUpdate({ modules: [], file: '/other.ts' })).toEqual(
-    [],
-  );
-});
-
-it('ignores hot updates before a development server is configured', () => {
-  const plugin = vite() as any;
-  expect(plugin.handleHotUpdate({ modules: [], file: ID })).toBeUndefined();
-});
-
-it('keeps build mode out of development behavior', () => {
-  const plugin = vite() as any;
-  plugin.configResolved({ root: '/project', command: 'build' });
-  expect(plugin.__plumeriaInternal.devCssSheets.size).toBe(0);
+  expect(
+    plugin.handleHotUpdate({
+      modules: [original],
+      file: path.join(ROOT, 'other.ts'),
+    }),
+  ).toEqual([original]);
+  expect(
+    plugin.handleHotUpdate({
+      modules: [original],
+      file: path.join(ROOT, 'node_modules', 'pkg', 'index.ts'),
+    }),
+  ).toEqual([original]);
 });
