@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -42,7 +42,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       ]) {
         await expect(
           run(
-            `import * as css from '@plumeria/core'; const styles = css.${method}(${argument}); ${nested}`,
+            `import * as css from '@typedcss/css'; const styles = css.${method}(${argument}); ${nested}`,
           ),
         ).rejects.toThrow(
           `css.${method} must be assigned to a top-level variable`,
@@ -54,7 +54,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   it('recognizes a renamed API import in a nested declaration', async () => {
     await expect(
       run(
-        `import { create as defineStyles } from '@plumeria/core'; export function Component() { const styles = defineStyles({ box: { color: 'red' } }); return null; }`,
+        `import { create as defineStyles } from '@typedcss/css'; export function Component() { const styles = defineStyles({ box: { color: 'red' } }); return null; }`,
       ),
     ).rejects.toThrow('css.create must be assigned to a top-level variable');
   });
@@ -65,7 +65,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       for (const exported of ['', 'export ']) {
         await expect(
           run(
-            `import * as css from '@plumeria/core'; ${exported}const styles = css.${method}(${argument});`,
+            `import * as css from '@typedcss/css'; ${exported}const styles = css.${method}(${argument});`,
           ),
         ).resolves.toHaveProperty('code');
       }
