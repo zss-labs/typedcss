@@ -9,7 +9,7 @@ import { MultiArgTest } from 'component/MultiArgTest';
 import { VariableTest } from 'component/VariableTest';
 import { VariantTest } from 'component/VariantTest';
 import Link from 'next/link';
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   page: {
@@ -20,8 +20,8 @@ const styles = css.create({
 export default function Home() {
   return (
     <main>
-      <h1>@plumeria/core E2E Test</h1>
-      <h2 classStyle={styles.page}>server component</h2>
+      <h1>typedcss E2E Test</h1>
+      <h2 sx={styles.page}>server component</h2>
       <Link href="/server">Server Page</Link>
       <CascadeTest />
       <CompositionOrderTest />
