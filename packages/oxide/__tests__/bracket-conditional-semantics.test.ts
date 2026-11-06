@@ -1,3 +1,4 @@
+import { renderClass } from './implementations';
 // The branches of one argument are mutually exclusive, so they compile to a
 // single lookup rather than one dimension each. Whatever shape that takes, it
 // must produce -- for every runtime input -- exactly the class list the
@@ -5,12 +6,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DEFAULT_STYLE_PROP } from '@plumeria/utils';
-import { implementations } from '../compiler-implementations';
+import { DEFAULT_STYLE_PROP } from './implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
   );
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
@@ -27,7 +28,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
   });
 
   const HEAD = `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({
   p1: { color: 'green' },
   p2: { color: 'olive' },
@@ -49,25 +50,20 @@ const sparse = css.create({
       env(HEAD + body, `${DIR}/fixture.tsx`),
     );
     const code = typeof result === 'string' ? result : (result?.code ?? '');
-    const found = code.match(/className=\{([\s\S]*?)\} \/>/);
-    if (!found) throw new Error(`no className in:\n${code}`);
-    return found[1];
+    // typedcss merges at runtime, so the module itself is what gets evaluated.
+    return code;
   };
 
   const classExpr = (styleExpr: string) =>
     compile(
-      `export const A = ({ a, b, c, k, j, m }: any) => <div classStyle={${styleExpr}} />;`,
+      `export const A = ({ a, b, c, k, j, m }: any) => <div sx={${styleExpr}} />;`,
     );
 
   const norm = (value: string) =>
     value.trim().split(/\s+/).filter(Boolean).sort().join(' ');
 
-  const evaluate = (expr: string, vars: Record<string, unknown>) => {
-    const names = Object.keys(vars);
-
-    const fn = new Function(...names, `return (${expr});`);
-    return norm(fn(...names.map((n) => vars[n])));
-  };
+  const evaluate = (code: string, vars: Record<string, unknown>) =>
+    norm(renderClass(code, vars));
 
   // Substituting the bracket for a literal key gives a form the compiler already
   // handled before groups could sit under a condition -- the reference output.
