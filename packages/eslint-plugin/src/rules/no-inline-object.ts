@@ -1,5 +1,5 @@
 /**
- * @fileoverview Disallow inline objects in the styling prop and css.use
+ * @fileoverview Disallow inline objects in the styling prop and css.props
  */
 
 import type { Rule } from 'eslint';
@@ -7,12 +7,12 @@ import type { ImportSpecifier, CallExpression } from 'estree';
 import { JSXAttribute } from 'estree-jsx';
 import { resolveStyleProp, stylePropSchema } from '../util/style-prop';
 
-type PlumeriaMethod = 'use';
+type CoreMethod = 'props';
 
-function isPlumeriaMemberCall(
+function isCoreMemberCall(
   node: CallExpression,
   aliases: Record<string, string>,
-  method: PlumeriaMethod,
+  method: CoreMethod,
 ): boolean {
   const callee = node.callee;
 
@@ -36,36 +36,36 @@ export const noInlineObject: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'Disallow inline objects in the styling prop and css.use',
+      description: 'Disallow inline objects in the styling prop and css.props',
     },
     messages: {
       noInlineObjectInStyleProp:
         'Do not pass inline objects to "{{prop}}". It only accepts compiled styles from css.create().',
       noInlineObjectInCssUse:
-        'Do not pass inline objects to css.use(). It only accepts compiled styles from css.create().',
+        'Do not pass inline objects to css.props(). It only accepts compiled styles from css.create().',
     },
     schema: stylePropSchema,
   },
 
   create(context) {
     const styleProp = resolveStyleProp(context);
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (specifier.type === 'ImportNamespaceSpecifier') {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else if (specifier.type === 'ImportDefaultSpecifier') {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const spec = specifier as ImportSpecifier;
               const importedName =
                 spec.imported.type === 'Identifier'
                   ? spec.imported.name
                   : String(spec.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -103,7 +103,7 @@ export const noInlineObject: Rule.RuleModule = {
       CallExpression(node: Rule.Node) {
         const callNode = node as CallExpression & Rule.Node;
 
-        if (isPlumeriaMemberCall(callNode, plumeriaAliases, 'use')) {
+        if (isCoreMemberCall(callNode, coreAliases, 'props')) {
           callNode.arguments.forEach((arg) => {
             if (arg.type === 'ObjectExpression') {
               context.report({
