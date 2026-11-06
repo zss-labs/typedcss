@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ resolveExportValue }) => {
   const DIR = fs.mkdtempSync(path.join(__dirname, 'fixture-const-value-'));
@@ -14,7 +14,7 @@ describe.each(implementations)('$name', ({ resolveExportValue }) => {
 
   const tokens = write(
     'tokens.ts',
-    `import * as css from '@plumeria/core';
+    `import * as css from '@typedcss/css';
 export const query = '@media (width >= 640px)' as const;
 export const pseudo: string = ':hover';
 export const bp = css.createStatic({ md: '@media (width >= 768px)' });
@@ -26,7 +26,7 @@ export default ':focus';`,
   );
   const named = write(
     'named.ts',
-    `import { createStatic as cs } from '@plumeria/core';
+    `import { createStatic as cs } from '@typedcss/css';
 export const bp = cs({ lg: '@media (width >= 1024px)' } as const);`,
   );
   const defaultName = write(
@@ -54,14 +54,14 @@ export { loop };`,
   const broken = write('broken.ts', `export const = ;`);
   const viaDefault = write(
     'via-default.ts',
-    `import css, { create } from '@plumeria/core';
+    `import css, { create } from '@typedcss/css';
 export const bp = css.createStatic({ xl: '@media (width >= 1280px)' });
 export const made = create({ a: { color: 'red' } });
 export default String(':hover');`,
   );
   const unreadable = write(
     'unreadable.ts',
-    `import * as css from '@plumeria/core';
+    `import * as css from '@typedcss/css';
 export const bad = css.createStatic({ [missing]: 'x', ...other, nested: missing.deep });
 export const empty = css.createStatic();
 export const good = css.createStatic({ sm: '@media (width >= 480px)' });`,
