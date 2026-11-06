@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
   const DIRECTORY = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-parity-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-parity-')),
   );
   let fixturePath = '';
 
@@ -59,22 +59,22 @@ describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
 
   const CASES: Array<[string, string]> = [
     [
-      'a conditional entry in a classStyle array',
+      'a conditional entry in a sx array',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const s = css.create({
       base: { color: 'green' },
       on: { color: 'purple', fontSize: '20px' },
     });
     export const A = ({ on }: { on: boolean }) => (
-      <div classStyle={[s.base, on && s.on]} />
+      <div sx={[s.base, on && s.on]} />
     );
     `,
     ],
     [
       'two bracket groups colliding over one property',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const size = css.create({
       small: { fontSize: '12px', padding: '4px' },
       large: { fontSize: '20px', padding: '8px' },
@@ -84,14 +84,14 @@ describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
       loud: { color: 'crimson' },
     });
     export const A = ({ s, t }: { s: 'small' | 'large'; t: 'calm' | 'loud' }) => (
-      <div classStyle={[size[s], tone[t]]} />
+      <div sx={[size[s], tone[t]]} />
     );
     `,
     ],
     [
       'a bracket group whose option sets none of the colliding properties',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const a = css.create({
       one: { color: 'green' },
       two: { color: 'purple' },
@@ -101,14 +101,14 @@ describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
       some: { color: 'teal' },
     });
     export const A = ({ x, y }: { x: 'one' | 'two'; y: 'none' | 'some' }) => (
-      <div classStyle={[a[x], b[y]]} />
+      <div sx={[a[x], b[y]]} />
     );
     `,
     ],
     [
       'two bracket groups that collide over nothing',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const a = css.create({
       one: { color: 'green' },
       two: { color: 'purple' },
@@ -118,50 +118,50 @@ describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
       thick: { borderWidth: '4px' },
     });
     export const A = ({ x, y }: { x: 'one' | 'two'; y: 'thin' | 'thick' }) => (
-      <div classStyle={[a[x], b[y]]} />
+      <div sx={[a[x], b[y]]} />
     );
     `,
     ],
     [
       'a conditional over a pseudo state',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const s = css.create({
       base: { color: 'green', ':hover': { color: 'purple' } },
       on: { color: 'teal', ':hover': { color: 'crimson' } },
     });
     export const A = ({ on }: { on: boolean }) => (
-      <div classStyle={[s.base, on && s.on]} />
+      <div sx={[s.base, on && s.on]} />
     );
     `,
     ],
     [
       'a conditional inside a media query',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const s = css.create({
       base: { color: 'green', '@media (width >= 600px)': { color: 'purple' } },
       on: { color: 'teal', '@media (width >= 600px)': { color: 'crimson' } },
     });
     export const A = ({ on }: { on: boolean }) => (
-      <div classStyle={[s.base, on && s.on]} />
+      <div sx={[s.base, on && s.on]} />
     );
     `,
     ],
     [
       'a dynamic style function',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const s = css.create({
       box: (w: number) => ({ width: w, color: 'green' }),
     });
-    export const A = ({ w }: { w: number }) => <div classStyle={s.box(w)} />;
+    export const A = ({ w }: { w: number }) => <div sx={s.box(w)} />;
     `,
     ],
     [
       'a bracket group relayed through css.use',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const s = css.create({
       one: { color: 'green', padding: '4px' },
       two: { color: 'purple', padding: '8px' },
@@ -172,26 +172,26 @@ describe.each(implementations)('$name', ({ compileCSS, transformSource }) => {
     [
       'a style prop relayed into a child component',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const s = css.create({
       base: { color: 'green' },
       loud: { color: 'crimson', fontWeight: 700 },
     });
-    const Card = ({ classStyle }: { classStyle?: css.Style }) => (
-      <div classStyle={[s.base, classStyle]} />
+    const Card = ({ sx }: { sx?: css.Style }) => (
+      <div sx={[s.base, sx]} />
     );
-    export const A = ({ on }: { on: boolean }) => <Card classStyle={on && s.loud} />;
+    export const A = ({ on }: { on: boolean }) => <Card sx={on && s.loud} />;
     `,
     ],
     [
       'three groups colliding in a chain',
       `
-    import * as css from '@plumeria/core';
+    import * as css from '@typedcss/css';
     const a = css.create({ p: { color: 'green' }, q: { color: 'purple' } });
     const b = css.create({ p: { color: 'teal', margin: '2px' }, q: { margin: '4px' } });
     const c = css.create({ p: { margin: '6px' }, q: { margin: '8px' } });
     export const A = ({ x, y, z }: { x: 'p' | 'q'; y: 'p' | 'q'; z: 'p' | 'q' }) => (
-      <div classStyle={[a[x], b[y], c[z]]} />
+      <div sx={[a[x], b[y], c[z]]} />
     );
     `,
     ],
