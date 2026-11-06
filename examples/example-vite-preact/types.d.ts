@@ -1,13 +1,13 @@
 import 'preact';
-import type { Style } from '@plumeria/core';
+import type { Style } from '@typedcss/css';
 
 declare module 'preact' {
   namespace JSX {
     interface HTMLAttributes {
-      classStyle?: Style;
+      sx?: Style;
     }
     interface SVGAttributes {
-      classStyle?: Style;
+      sx?: Style;
     }
   }
 }
