@@ -9,6 +9,6 @@ node_modules
 *.md
 .*/
 
-packages/compiler/index.js
-packages/compiler/index.d.ts
-packages/compiler/browser.js
+packages/oxide/binding.js
+packages/oxide/binding.d.ts
+packages/oxide/browser.js
