@@ -19,23 +19,23 @@ export const noInnerCall: Rule.RuleModule = {
   },
   create(context) {
     let functionDepth = 0;
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value === '@plumeria/core') {
+        if (node.source.value === '@typedcss/css') {
           node.specifiers.forEach((specifier) => {
             if (specifier.type === 'ImportNamespaceSpecifier') {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else if (specifier.type === 'ImportDefaultSpecifier') {
-              plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+              coreAliases[specifier.local.name] = 'NAMESPACE';
             } else {
               const spec = specifier as ImportSpecifier;
               const importedName =
                 spec.imported.type === 'Identifier'
                   ? spec.imported.name
                   : String(spec.imported.value);
-              plumeriaAliases[specifier.local.name] = importedName;
+              coreAliases[specifier.local.name] = importedName;
             }
           });
         }
@@ -70,14 +70,14 @@ export const noInnerCall: Rule.RuleModule = {
             callee.property.type === 'Identifier'
           ) {
             const objectName = callee.object.name;
-            const alias = plumeriaAliases[objectName];
+            const alias = coreAliases[objectName];
             if (alias === 'NAMESPACE') {
               propertyName = callee.property.name;
               fullName = `${objectName}.${propertyName}`;
             }
           } else if (callee.type === 'Identifier') {
             const name = callee.name;
-            const alias = plumeriaAliases[name];
+            const alias = coreAliases[name];
             if (alias && alias !== 'NAMESPACE') {
               propertyName = alias;
               fullName = name;
