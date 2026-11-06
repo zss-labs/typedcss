@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   text: {
@@ -92,17 +92,23 @@ export const extended: '@container style(--badge-hover: 1)' = css.extended(
   ':hover',
 );
 
-export const merged: string = css.use(styles.text, false, null, undefined, [
-  styles.hover,
-]);
+export const merged: ReturnType<typeof css.props> = css.props(
+  styles.text,
+  false,
+  null,
+  undefined,
+  [styles.hover],
+);
 
-export const dynamic: string = css.use(styles.variant(8)); // eslint-disable-line @plumeria/no-unresolved-composition
+export const dynamic: ReturnType<typeof css.props> = css.props(
+  styles.variant(8),
+); // eslint-disable-line @typedcss/no-unresolved-composition
 
 // @ts-expect-error a style list takes created styles, not an inline object
-css.use({ color: 'red' }); // eslint-disable-line @plumeria/no-inline-object
+css.props({ color: 'red' }); // eslint-disable-line @typedcss/no-inline-object
 
 // @ts-expect-error a nested inline object is not a created style either
-css.use([styles.text, { ':hover': { color: 'blue' } }]);
+css.props([styles.text, { ':hover': { color: 'blue' } }]);
 
 export const entering = css.create({
   popover: {
@@ -120,7 +126,7 @@ export const above: `--${string}` = css.positionTry({
 
 css.positionTry({
   // @ts-expect-error @position-try only takes position, margin, size and alignment properties
-  color: 'red', // eslint-disable-line @plumeria/no-unknown-css-properties
+  color: 'red', // eslint-disable-line @typedcss/no-unknown-css-properties
 });
 
 export const anchored = css.create({
