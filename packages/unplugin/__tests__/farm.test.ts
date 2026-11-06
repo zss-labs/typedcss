@@ -26,7 +26,7 @@ const setup = (coreConfig?: jest.Mock) => {
   const diskImport = jest.fn(() => 'disk import');
   createDiskCssImport.mockReturnValue(diskImport);
   const corePlugin = {
-    __plumeriaInternal: internal,
+    __typedcssInternal: internal,
     farm: coreConfig ? { config: coreConfig } : undefined,
   };
   unpluginFactory.mockReturnValue(corePlugin);
@@ -44,7 +44,7 @@ it('forwards options and adapts the plugin name', () => {
   const { plugin } = setup();
 
   expect(unpluginFactory).toHaveBeenCalledWith({}, undefined);
-  expect(plugin.name).toBe('@plumeria/unplugin:farm');
+  expect(plugin.name).toBe('@typedcss/unplugin:farm');
 });
 
 it('uses disk CSS imports in development with the configured root', () => {
@@ -101,7 +101,7 @@ it('adds affected targets once and skips dependencies and unrelated files', () =
 
 it('handles missing core hooks and internal state', () => {
   const { plugin, corePlugin } = setup();
-  delete (corePlugin as { __plumeriaInternal?: unknown }).__plumeriaInternal;
+  delete (corePlugin as { __typedcssInternal?: unknown }).__typedcssInternal;
 
   expect(plugin.farm.config(undefined)).toBeUndefined();
   expect(() => plugin.farm.configureCompiler({})).not.toThrow();
