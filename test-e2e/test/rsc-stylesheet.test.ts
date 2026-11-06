@@ -5,17 +5,17 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-const PLUMERIA_SHEET = /zero\.css|plumeria-[^/]*\.css/;
+const TYPEDCSS_SHEET = /zero\.css|typedcss-[^/]*\.css/;
 
 type SheetReport = { href: string; rules: number };
 
-const plumeriaSheets = (page: Page) =>
+const typedcssSheets = (page: Page) =>
   page.evaluate<SheetReport[]>(() =>
     [...document.styleSheets]
       .filter((sheet): sheet is CSSStyleSheet & { href: string } =>
         Boolean(sheet.href),
       )
-      .filter((sheet) => /zero\.css|plumeria-[^/]*\.css/.test(sheet.href))
+      .filter((sheet) => /zero\.css|typedcss-[^/]*\.css/.test(sheet.href))
       .map((sheet) => ({ href: sheet.href, rules: sheet.cssRules.length })),
   );
 
@@ -26,7 +26,7 @@ const plumeriaSheets = (page: Page) =>
 test('the browser is answered with a CSS content type', async ({ page }) => {
   const served: string[] = [];
   page.on('response', (response) => {
-    if (!PLUMERIA_SHEET.test(response.url())) return;
+    if (!TYPEDCSS_SHEET.test(response.url())) return;
     if (response.request().resourceType() !== 'stylesheet') return;
     if (response.status() !== 200) return;
     served.push(response.headers()['content-type'] ?? '');
@@ -45,8 +45,8 @@ test.describe('a loaded page', () => {
     await page.goto('/');
   });
 
-  test('parses every Plumeria stylesheet it links as CSS', async ({ page }) => {
-    const sheets = await plumeriaSheets(page);
+  test('parses every typedcss stylesheet it links as CSS', async ({ page }) => {
+    const sheets = await typedcssSheets(page);
 
     expect(sheets.length).toBeGreaterThan(0);
     for (const sheet of sheets) {
@@ -62,6 +62,6 @@ test.describe('a loaded page', () => {
       'the dev server serves a sheet per module',
     );
 
-    expect(await plumeriaSheets(page)).toHaveLength(1);
+    expect(await typedcssSheets(page)).toHaveLength(1);
   });
 });
