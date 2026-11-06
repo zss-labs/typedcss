@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
 
   let n = 0;
   const compile = (body: string) => {
@@ -20,14 +20,14 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
   afterAll(() => fs.rmSync(FIXTURE_DIR, { recursive: true, force: true }));
 
   const theme = (selector: string) => `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const DARK = '.dark';
 export const tokens = css.createStatic({ dark: '.dark' });
 export const theme = css.createTheme(${selector}, {
   fg: { default: 'black', theme: 'white' },
 });
 export const s = css.create({ a: { color: theme.fg } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `;
 
   describe('compiler: the createTheme selector', () => {
@@ -55,14 +55,14 @@ export const A = () => <div classStyle={s.a} />;
     // unread selector collapsed both to ''.
     it('keeps two themes apart when only their selectors differ', () => {
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const ONE = '.one';
 const TWO = '.two';
 export const t1 = css.createTheme(ONE, { fg: { default: 'black', theme: 'white' } });
 export const t2 = css.createTheme(TWO, { fg: { default: 'black', theme: 'white' } });
 export const s = css.create({ a: { color: t1.fg }, b: { color: t2.fg } });
-export const A = () => <div classStyle={s.a} />;
-export const B = () => <div classStyle={s.b} />;
+export const A = () => <div sx={s.a} />;
+export const B = () => <div sx={s.b} />;
 `);
       expect(css).toContain('.one {');
       expect(css).toContain('.two {');
@@ -71,12 +71,12 @@ export const B = () => <div classStyle={s.b} />;
     it('reports a selector it cannot read instead of dropping the theme', () => {
       expect(() =>
         compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 export const theme = css.createTheme(readSelector(), {
   fg: { default: 'black', theme: 'white' },
 });
 export const s = css.create({ a: { color: theme.fg } });
-export const A = () => <div classStyle={s.a} />;
+export const A = () => <div sx={s.a} />;
 `),
       ).toThrow(/needs a selector it can read at build time/);
     });
