@@ -1,5 +1,5 @@
-jest.mock('@plumeria/eslint-plugin/guard', () => ({
-  lintOverrides: jest.requireActual('@plumeria/eslint-plugin/guard')
+jest.mock('@typedcss/eslint-plugin/guard', () => ({
+  lintOverrides: jest.requireActual('@typedcss/eslint-plugin/guard')
     .lintOverrides,
   startLintGuard: jest.fn(),
 }));
@@ -16,28 +16,24 @@ import * as os from 'os';
 import * as path from 'path';
 
 const DIR = fs.realpathSync(
-  fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-')),
+  fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-')),
 );
 const CARD = path.join(DIR, 'Card.tsx');
-const CARD_CSS = `${path.join(DIR, 'Card')}.zero.css`;
-
-jest.mock('@rust-gear/glob', () => ({ globSync: jest.fn(() => []) }));
-const mockedGlob = jest.requireMock<{ globSync: jest.Mock }>('@rust-gear/glob');
+const CARD_CSS = path.join(DIR, CSS_FILENAME);
 
 import vite from '../src/vite';
 import { attachWebpackHooks } from '../src/webpack';
 import farm from '../src/farm';
-import { unpluginFactory } from '../src/core';
+import { CSS_FILENAME, unpluginFactory } from '../src/core';
 
 const SOURCE = `
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const styles = css.create({ box: { color: 'teal' } });
-export const Card = () => <div classStyle={styles.box} />;
+export const Card = () => <div sx={styles.box} />;
 `;
 
 beforeAll(() => {
   fs.writeFileSync(CARD, SOURCE);
-  mockedGlob.globSync.mockReturnValue([CARD]);
 });
 
 afterAll(() => {
@@ -52,7 +48,7 @@ describe('the vite adapter', () => {
     const plugin = vite() as any;
     plugin.configResolved({ root: DIR, command: 'serve' });
 
-    expect(plugin.__plumeriaInternal).toBeDefined();
+    expect(plugin.__typedcssInternal).toBeDefined();
     expect(plugin.load(CARD_CSS)).toBe(null);
   });
 
@@ -64,7 +60,7 @@ describe('the vite adapter', () => {
     const core = unpluginFactory(undefined, {
       framework: 'vite',
     } as never) as any;
-    core.__plumeriaInternal.setRoot(DIR);
+    core.__typedcssInternal.setRoot(DIR);
     const raw = await transform(core);
 
     expect(adapted.code).toBe(raw.code);
@@ -84,7 +80,7 @@ describe('the vite adapter', () => {
     const plugin = vite() as any;
     const config = plugin.config({}, { command: 'build' });
 
-    expect(config.optimizeDeps.exclude).toContain('@plumeria/core');
+    expect(config.optimizeDeps.exclude).toContain('@typedcss/css');
     expect(config.build.cssCodeSplit).toBe(false);
   });
 });
@@ -116,7 +112,7 @@ describe('the webpack adapter', () => {
     await transform(plugin);
 
     expect(plugin.resolveId(CARD_CSS)).toBe(CARD_CSS);
-    expect(plugin.resolveId('./Card.zero.css', CARD)).toBe(CARD_CSS);
+    expect(plugin.resolveId(`./${CSS_FILENAME}`, CARD)).toBe(CARD_CSS);
     expect(plugin.resolveId('./Nothing.zero.css', CARD)).toBe(null);
   });
 
@@ -173,22 +169,24 @@ describe('the core plugin', () => {
     const plugin = unpluginFactory(undefined, {
       framework: 'vite',
     } as never) as any;
-    plugin.__plumeriaInternal.setRoot(DIR);
+    plugin.__typedcssInternal.setRoot(DIR);
     return plugin;
   };
 
   it('keeps a rooted virtual stylesheet as written', () => {
     const plugin = core();
 
-    expect(plugin.resolveId('/Card.zero.css')).toBe('/Card.zero.css');
-    expect(plugin.resolveId('/Card.zero.css?t=1')).toBe('/Card.zero.css?t=1');
+    expect(plugin.resolveId(`/${CSS_FILENAME}`)).toBe(`/${CSS_FILENAME}`);
+    expect(plugin.resolveId(`/${CSS_FILENAME}?t=1`)).toBe(
+      `/${CSS_FILENAME}?t=1`,
+    );
   });
 
   it('resolves a relative virtual stylesheet against its importer', () => {
     const plugin = core();
 
-    expect(plugin.resolveId('./Card.zero.css', CARD)).toBe(CARD_CSS);
-    expect(plugin.resolveId('./Card.zero.css?t=1', CARD)).toBe(
+    expect(plugin.resolveId(`./${CSS_FILENAME}`, CARD)).toBe(CARD_CSS);
+    expect(plugin.resolveId(`./${CSS_FILENAME}?t=1`, CARD)).toBe(
       `${CARD_CSS}?t=1`,
     );
   });
@@ -219,7 +217,7 @@ describe('the core plugin', () => {
 
 describe('the lint guard through the adapters', () => {
   const { startLintGuard } = jest.requireMock<{ startLintGuard: jest.Mock }>(
-    '@plumeria/eslint-plugin/guard',
+    '@typedcss/eslint-plugin/guard',
   );
   beforeEach(() => startLintGuard.mockClear());
 
