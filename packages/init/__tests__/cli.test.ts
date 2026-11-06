@@ -39,18 +39,24 @@ describe('parseArgs', () => {
   it('asks nothing and writes nothing on --help', () => {
     expect(parseArgs(['--help'])).toBeNull();
     expect(log).toHaveBeenCalledWith(
-      expect.stringContaining('npx @plumeria/init'),
+      expect.stringContaining('npx @typedcss/init'),
     );
   });
 
   it('reads the flags that answer a question', () => {
     expect(
-      parseArgs(['--physical', '--sizes', '--style-prop', 'sx', '--no-eslint']),
+      parseArgs([
+        '--physical',
+        '--sizes',
+        '--style-prop',
+        'classStyle',
+        '--no-eslint',
+      ]),
     ).toMatchObject({
       preset: {
         spelling: 'physical',
         sizes: true,
-        styleProp: 'sx',
+        styleProp: 'classStyle',
         eslint: false,
       },
     });
@@ -103,7 +109,9 @@ describe('parseArgs', () => {
 
 describe('--style-prop', () => {
   it('takes an identifier', () => {
-    expect(parseArgs(['--style-prop', 'sx'])?.preset.styleProp).toBe('sx');
+    expect(parseArgs(['--style-prop', 'classStyle'])?.preset.styleProp).toBe(
+      'classStyle',
+    );
   });
 
   it('refuses a name TypeScript cannot declare', () => {
@@ -168,7 +176,7 @@ describe('main', () => {
 
   it('shows a dry run without writing', async () => {
     await expect(main(['--cwd', dir, '--yes', '--dry-run'])).resolves.toBe(0);
-    expect(fs.existsSync(path.join(dir, 'plumeria.d.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'typedcss.d.ts'))).toBe(false);
   });
 
   it('writes safe actions and prints manual work', async () => {
@@ -180,7 +188,7 @@ describe('main', () => {
     await expect(
       main(['--cwd', dir, '--yes', '--no-eslint', '--no-install']),
     ).resolves.toBe(1);
-    expect(fs.existsSync(path.join(dir, 'plumeria.d.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'typedcss.d.ts'))).toBe(true);
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Left to you'));
   });
 
