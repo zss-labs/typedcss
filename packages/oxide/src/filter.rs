@@ -1,4 +1,4 @@
-const CORE: &str = "@plumeria/core";
+const CORE: &str = "@typedcss/css";
 
 fn is_identifier_start(c: u8) -> bool {
     c.is_ascii_alphabetic() || c == b'_' || c == b'$'
@@ -10,6 +10,46 @@ fn is_name_char(c: u8) -> bool {
 
 fn is_space(c: u8) -> bool {
     c == b' ' || (9..=13).contains(&c)
+}
+
+// ECMAScript white space and line terminators beyond ASCII: U+FEFF and the Zs
+// category, plus U+2028 and U+2029. `char::is_whitespace` differs from both,
+// taking U+0085 and leaving out U+FEFF.
+fn is_unicode_space(c: char) -> bool {
+    ('\u{2000}'..='\u{200A}').contains(&c)
+        || matches!(
+            c,
+            '\u{00A0}'
+                | '\u{1680}'
+                | '\u{2028}'
+                | '\u{2029}'
+                | '\u{202F}'
+                | '\u{205F}'
+                | '\u{3000}'
+                | '\u{FEFF}'
+        )
+}
+
+// The byte length of the white space starting at `index`, or 0 if none does.
+fn space_len(source: &[u8], index: usize) -> usize {
+    let c = at(source, index);
+    if is_space(c) {
+        return 1;
+    }
+    let len = match c {
+        0xC2..=0xDF => 2,
+        0xE0..=0xEF => 3,
+        0xF0..=0xF4 => 4,
+        _ => return 0,
+    };
+    match source
+        .get(index..index + len)
+        .and_then(|bytes| std::str::from_utf8(bytes).ok())
+        .and_then(|text| text.chars().next())
+    {
+        Some(c) if is_unicode_space(c) => len,
+        _ => 0,
+    }
 }
 
 const EXPRESSION_BEFORE: &[u8] = b"(,=:[!&|?{};+-*%<>~^/";
@@ -37,8 +77,9 @@ fn skip_trivia(source: &[u8], start: usize) -> usize {
     let mut i = start;
     while i < source.len() {
         let c = source[i];
-        if is_space(c) {
-            i += 1;
+        let space = space_len(source, i);
+        if space > 0 {
+            i += space;
         } else if c == b'/' && at(source, i + 1) == b'*' {
             match find(source, b"*/", i + 2) {
                 Some(end) => i = end + 2,
@@ -218,8 +259,9 @@ fn writes_attribute(source: &[u8], name: &[u8]) -> bool {
             continue;
         }
 
-        if is_space(c) {
-            i += 1;
+        let space = space_len(source, i);
+        if space > 0 {
+            i += space;
             continue;
         }
 
