@@ -1,3 +1,4 @@
+use napi::bindgen_prelude::{Either, Undefined};
 use napi::{Error, Result};
 use napi_derive::napi;
 use serde_json::Value;
@@ -14,13 +15,80 @@ fn transform_options(options: &Value) -> std::result::Result<TransformOptions, S
     })
 }
 
-#[napi]
+// Only declares the type the generated index.d.ts gives this argument.
+#[allow(dead_code)]
+#[napi(object, object_from_js = false, object_to_js = false)]
+pub struct SizesOption {
+    pub sizes: Option<bool>,
+}
+
+// Only declares the type the generated index.d.ts gives this argument.
+#[allow(dead_code)]
+#[napi(object, object_from_js = false, object_to_js = false)]
+pub struct PropertyPolicyOptions {
+    #[napi(ts_type = "boolean | SizesOption")]
+    pub without_logical_properties: Option<Value>,
+    #[napi(ts_type = "boolean | SizesOption")]
+    pub without_physical_properties: Option<Value>,
+}
+
+// Only declares the type the generated index.d.ts gives this argument.
+#[allow(dead_code)]
+#[napi(object, object_from_js = false, object_to_js = false)]
+pub struct OxideOptions {
+    #[napi(ts_type = "boolean | SizesOption")]
+    pub without_logical_properties: Option<Value>,
+    #[napi(ts_type = "boolean | SizesOption")]
+    pub without_physical_properties: Option<Value>,
+    pub root: Option<String>,
+    pub style_prop: Option<String>,
+    #[napi(ts_type = "'className' | 'class'")]
+    pub class_prop: Option<String>,
+}
+
+// Only declares the type the generated index.d.ts gives this argument.
+#[allow(dead_code)]
+#[napi(object, object_from_js = false, object_to_js = false)]
+pub struct StyleFile {
+    pub path: String,
+    pub source: Option<String>,
+}
+
+// Only declares the type the generated index.d.ts gives this argument.
+#[allow(dead_code)]
+#[napi(object, object_from_js = false, object_to_js = false)]
+pub struct CompileRequest {
+    #[napi(ts_type = "boolean | SizesOption")]
+    pub without_logical_properties: Option<Value>,
+    #[napi(ts_type = "boolean | SizesOption")]
+    pub without_physical_properties: Option<Value>,
+    pub root: Option<String>,
+    pub files: Vec<StyleFile>,
+}
+
+#[napi(object)]
+pub struct SourcePackage {
+    pub name: String,
+    pub dir: String,
+    #[napi(ts_type = "unknown")]
+    pub exports: Value,
+    pub source_dirs: Vec<String>,
+}
+
+#[napi(object)]
+pub struct PropertyPolicy {
+    #[napi(ts_type = "'logical' | 'physical'")]
+    pub reject: String,
+    pub include_axes: bool,
+}
+
+#[napi(ts_args_type = "source: string, filename: string, options?: OxideOptions")]
 pub fn transform(source: String, filename: String, options: Option<Value>) -> Result<Option<String>> {
     let options = transform_options(&options.unwrap_or(Value::Null)).map_err(Error::from_reason)?;
     transform_if_needed(&source, &filename, &options).map_err(Error::from_reason)
 }
 
-#[napi]
+#[napi(ts_args_type = "request: CompileRequest")]
 pub fn compile_css(request: Value) -> Result<String> {
     compile(&request).map_err(Error::from_reason)
 }
@@ -38,21 +106,19 @@ fn to_json(value: &crate::js::Value) -> Value {
 }
 
 #[napi(js_name = "sourcePackages")]
-pub fn source_packages(root: String) -> Vec<Value> {
+pub fn source_packages(root: String) -> Vec<SourcePackage> {
     let root = crate::fs::path::resolve(&std::env::current_dir().unwrap_or_default(), &root);
     crate::fs::resolver::source_packages(&root)
         .into_iter()
-        .map(|package| {
-            serde_json::json!({
-                "name": package.name,
-                "dir": package.dir.to_string_lossy(),
-                "exports": package.exports,
-                "sourceDirs": package
-                    .source_dirs
-                    .iter()
-                    .map(|dir| dir.to_string_lossy().into_owned())
-                    .collect::<Vec<_>>(),
-            })
+        .map(|package| SourcePackage {
+            name: package.name,
+            dir: package.dir.to_string_lossy().into_owned(),
+            exports: package.exports,
+            source_dirs: package
+                .source_dirs
+                .iter()
+                .map(|dir| dir.to_string_lossy().into_owned())
+                .collect(),
         })
         .collect()
 }
@@ -62,9 +128,11 @@ pub fn resolve_import_path(import_path: String, importer: String) -> Option<Stri
     crate::swc::values::resolve_import_path(&import_path, &importer)
 }
 
-#[napi(js_name = "resolveExportValue")]
-pub fn resolve_export_value(file_path: String, export_name: String) -> Option<Value> {
-    crate::swc::values::resolve_export_value(&file_path, &export_name).map(|value| to_json(&value))
+#[napi(js_name = "resolveExportValue", ts_return_type = "unknown")]
+pub fn resolve_export_value(file_path: String, export_name: String) -> Either<Value, Undefined> {
+    crate::swc::values::resolve_export_value(&file_path, &export_name)
+        .map(|value| to_json(&value))
+        .into()
 }
 
 fn from_json(value: &Value) -> crate::js::Value {
@@ -92,26 +160,41 @@ fn object_arg(value: &Value) -> crate::js::Object {
     }
 }
 
-#[napi(js_name = "getStyleRecords")]
-pub fn get_style_records(style: Value) -> Vec<Value> {
+#[napi(object)]
+pub struct StyleRecord {
+    pub key: String,
+    pub hash: String,
+    pub sheet: String,
+}
+
+#[napi(js_name = "getStyleRecords", ts_args_type = "style: object")]
+pub fn get_style_records(style: Value) -> Vec<StyleRecord> {
     crate::style::records::style_records(&object_arg(&style), None)
         .into_iter()
-        .map(|record| serde_json::json!({ "key": record.key, "hash": record.hash, "sheet": record.sheet }))
+        .map(|record| StyleRecord {
+            key: record.key,
+            hash: record.hash,
+            sheet: record.sheet,
+        })
         .collect()
 }
 
-#[napi(js_name = "themeHashOf")]
+#[napi(js_name = "themeHashOf", ts_args_type = "selector: string, rule: object")]
 pub fn theme_hash_of(selector: String, rule: Value) -> String {
     crate::style::theme::theme_hash_of(&selector, &object_arg(&rule))
 }
 
-#[napi(js_name = "createTheme")]
+#[napi(
+    js_name = "createTheme",
+    ts_args_type = "selector: string, rule: object, themeHash: string",
+    ts_return_type = "Record<string, any>"
+)]
 pub fn create_theme(selector: String, rule: Value, theme_hash: String) -> Value {
     let object = crate::style::theme::create_theme(&selector, &object_arg(&rule), &theme_hash);
     to_json(&crate::js::Value::Obj(std::sync::Arc::new(object)))
 }
 
-#[napi]
+#[napi(ts_args_type = "css: string")]
 pub fn optimizer(css_code: String) -> Result<String> {
     let minify = std::env::var("NODE_ENV").is_ok_and(|mode| mode == "production");
     crate::optimize::optimize(&css_code, minify).map_err(Error::from_reason)
@@ -122,16 +205,23 @@ pub fn needs_compile(source: String, style_prop: String, file_path: String) -> b
     crate::filter::needs_compile(&source, &style_prop, &file_path)
 }
 
-#[napi(js_name = "resolvePropertyPolicy")]
-pub fn resolve_property_policy(options: Option<Value>) -> Result<Option<Value>> {
+#[napi(
+    js_name = "resolvePropertyPolicy",
+    ts_args_type = "options?: PropertyPolicyOptions",
+    ts_return_type = "PropertyPolicy | undefined"
+)]
+pub fn resolve_property_policy(options: Option<Value>) -> Result<Either<PropertyPolicy, Undefined>> {
     let policy = crate::policy::property_policy_of(&options.unwrap_or(Value::Null)).map_err(Error::from_reason)?;
-    Ok(policy.map(|policy| {
-        let reject = match policy.reject {
-            crate::engine::logical_physical::Spelling::Logical => "logical",
-            crate::engine::logical_physical::Spelling::Physical => "physical",
-        };
-        serde_json::json!({ "reject": reject, "includeAxes": policy.include_axes })
-    }))
+    Ok(policy
+        .map(|policy| PropertyPolicy {
+            reject: match policy.reject {
+                crate::engine::logical_physical::Spelling::Logical => "logical",
+                crate::engine::logical_physical::Spelling::Physical => "physical",
+            }
+            .to_string(),
+            include_axes: policy.include_axes,
+        })
+        .into())
 }
 
 #[napi(js_name = "globFiles")]
