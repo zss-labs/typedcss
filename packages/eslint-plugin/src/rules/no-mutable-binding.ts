@@ -1,5 +1,5 @@
 /**
- * @fileoverview Disallow let and var bindings in Plumeria style definitions
+ * @fileoverview Disallow let and var bindings in typedcss style definitions
  */
 
 import type { Rule, Scope } from 'eslint';
@@ -15,8 +15,7 @@ const STYLE_APIS = new Set([
   'varType',
 ]);
 
-const isReference = (node: Node, parent: Node | undefined): boolean => {
-  if (!parent) return true;
+const isReference = (node: Node, parent: Node): boolean => {
   if (parent.type === 'Property' && parent.key === node && !parent.computed)
     return false;
   if (
@@ -44,7 +43,7 @@ export const noMutableBinding: Rule.RuleModule = {
     type: 'problem',
     docs: {
       description:
-        'Disallow let and var bindings in Plumeria style definitions',
+        'Disallow let and var bindings in typedcss style definitions',
     },
     messages: {
       mutable:
@@ -54,25 +53,25 @@ export const noMutableBinding: Rule.RuleModule = {
   },
 
   create(context) {
-    const plumeriaAliases: Record<string, string> = {};
+    const coreAliases: Record<string, string> = {};
     const sourceCode = context.sourceCode;
 
     const isStyleCall = (node: CallExpression): boolean => {
       const callee = node.callee;
       if (callee.type === 'Identifier') {
-        return STYLE_APIS.has(plumeriaAliases[callee.name] ?? '');
+        return STYLE_APIS.has(coreAliases[callee.name] ?? '');
       }
       return (
         callee.type === 'MemberExpression' &&
         !callee.computed &&
         callee.object.type === 'Identifier' &&
-        plumeriaAliases[callee.object.name] === 'NAMESPACE' &&
+        coreAliases[callee.object.name] === 'NAMESPACE' &&
         callee.property.type === 'Identifier' &&
         STYLE_APIS.has(callee.property.name)
       );
     };
 
-    const check = (node: Node, parent: Node | undefined): void => {
+    const check = (node: Node, parent: Node): void => {
       if (node.type === 'Identifier' && isReference(node, parent)) {
         const variable = findVariable(
           sourceCode.getScope(node as Rule.Node),
@@ -104,16 +103,16 @@ export const noMutableBinding: Rule.RuleModule = {
 
     return {
       ImportDeclaration(node) {
-        if (node.source.value !== '@plumeria/core') return;
+        if (node.source.value !== '@typedcss/css') return;
         node.specifiers.forEach((specifier) => {
           if (
             specifier.type === 'ImportNamespaceSpecifier' ||
             specifier.type === 'ImportDefaultSpecifier'
           ) {
-            plumeriaAliases[specifier.local.name] = 'NAMESPACE';
+            coreAliases[specifier.local.name] = 'NAMESPACE';
           } else {
             const spec = specifier as ImportSpecifier;
-            plumeriaAliases[specifier.local.name] =
+            coreAliases[specifier.local.name] =
               spec.imported.type === 'Identifier'
                 ? spec.imported.name
                 : String(spec.imported.value);
