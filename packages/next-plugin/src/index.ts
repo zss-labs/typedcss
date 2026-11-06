@@ -1,177 +1,132 @@
 import type { NextConfig } from 'next';
-import type { LoaderOptions } from '@plumeria/turbopack-loader';
-import type { TurbopackLoaderItem } from 'next/dist/server/config-shared';
-import type { Configuration } from 'webpack';
-import type { WebpackConfigContext } from 'next/dist/server/config-shared';
-import * as fs from 'fs';
 import * as path from 'path';
-import { devGenerationsPath } from '@plumeria/turbopack-loader';
-import { lintOverrides } from '@plumeria/eslint-plugin/guard';
+import type { SourcePackage } from '@typedcss/oxide';
+import { oxide } from './oxide';
+import { lintOverrides } from '@typedcss/eslint-plugin/guard';
 import { startNextLintGuard } from './lint';
+import { DEFAULT_STYLE_PROP, PACKAGE } from './shared';
+import type { TypedCSSOptions } from './shared';
 
-type TurbopackConfig = NonNullable<NextConfig['turbopack']>;
-type TurbopackRules = NonNullable<TurbopackConfig['rules']>;
-type TurbopackRuleValue = TurbopackRules[string];
+export type { TypedCSSOptions } from './shared';
 
-const isRuleConfigItem = (
-  rule: TurbopackRuleValue,
-): rule is Extract<TurbopackRuleValue, { loaders?: TurbopackLoaderItem[] }> =>
-  !Array.isArray(rule) && typeof rule === 'object' && rule !== null;
+export type WithTypedCSSOptions = TypedCSSOptions & { lint?: boolean };
 
-type PlumeriaTurbopackRules = Record<
-  string,
-  { loaders: TurbopackLoaderItem[]; condition?: unknown; as?: string }
->;
+type Rules = NonNullable<NonNullable<NextConfig['turbopack']>['rules']>;
 
-export type PlumeriaOptions = LoaderOptions & { lint?: boolean };
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const loaderVersion = (): string =>
-  JSON.parse(
-    fs.readFileSync(
-      path.join(
-        path.dirname(require.resolve('@plumeria/turbopack-loader')),
-        '..',
-        'package.json',
-      ),
-      'utf8',
-    ),
-  ).version;
-
-export function withPlumeria(
-  nextConfig: NextConfig = {},
-  { lint = true, ...options }: PlumeriaOptions = {},
-): NextConfig {
-  if (lint) startNextLintGuard(lintOverrides(options));
-
-  const globalRef = global as typeof global & {
-    __PLUMERIA_DEV_CSS_RESET__?: boolean;
-  };
-  if (
-    process.env.NODE_ENV === 'development' &&
-    !globalRef.__PLUMERIA_DEV_CSS_RESET__
-  ) {
-    globalRef.__PLUMERIA_DEV_CSS_RESET__ = true;
-    fs.rmSync(devGenerationsPath(process.cwd()), { force: true });
-  }
-
-  const originalWebpack = nextConfig.webpack;
-  const turbopackOptions: Record<string, unknown> = {
-    ...options,
-    version: loaderVersion(),
-  };
-
-  const turbopackLoaders: TurbopackLoaderItem[] = [
-    {
-      loader: '@plumeria/turbopack-loader',
-      options: turbopackOptions as Record<string, never>,
-    },
-  ];
-
-  const styleProp = options.styleProp ?? 'classStyle';
-  const escapedStyleProp = styleProp.replaceAll('$', '\\$');
+function contentPattern(styleProp: string): RegExp {
   const start = /^\w/.test(styleProp) ? '(?:^|[^\\w.])' : '';
   const end = /\w$/.test(styleProp) ? '\\b' : '';
-  const content = new RegExp(
-    `@plumeria/core|${start}${escapedStyleProp}${end}`,
-  );
+  return new RegExp(`${escape(PACKAGE)}|${start}${escape(styleProp)}${end}`);
+}
 
-  const ruleItem = {
-    loaders: turbopackLoaders,
+// Each subpath a source package points the typedcss condition at, aliased to
+// that file, since Turbopack resolves only the conditions it knows.
+function sourceAliases(
+  packages: SourcePackage[],
+  cwd: string,
+): Record<string, string> {
+  return Object.fromEntries(
+    packages.flatMap((pkg) => {
+      const exports = pkg.exports as Record<string, any>;
+      const map = Object.keys(exports).some((key) => key.startsWith('.'))
+        ? exports
+        : { '.': exports };
+      return Object.entries(map).flatMap(([subpath, entry]) =>
+        typeof entry?.typedcss === 'string'
+          ? [
+              [
+                pkg.name + subpath.slice(1),
+                `./${path.relative(cwd, path.resolve(pkg.dir, entry.typedcss)).replace(/\\/g, '/')}`,
+              ],
+            ]
+          : [],
+      );
+    }),
+  );
+}
+
+// The source directories as they appear under node_modules, which also matches
+// a package that pnpm links from its store.
+function sourcePath(packages: SourcePackage[]): RegExp | undefined {
+  const dirs = packages.flatMap((pkg) =>
+    pkg.sourceDirs
+      .filter((dir) => dir === pkg.dir || dir.startsWith(pkg.dir + path.sep))
+      .map((dir) => {
+        const inner = path.relative(pkg.dir, dir).replace(/\\/g, '/');
+        return escape(`node_modules/${pkg.name}/${inner ? `${inner}/` : ''}`);
+      }),
+  );
+  return dirs.length > 0
+    ? new RegExp(`(?:^|/)(?:${dirs.join('|')})`)
+    : undefined;
+}
+
+export function withTypedCSS(
+  nextConfig: NextConfig = {},
+  { lint = true, ...options }: WithTypedCSSOptions = {},
+): NextConfig {
+  if (lint) startNextLintGuard(lintOverrides(options));
+  const root = options.root ?? process.cwd();
+  const loaderOptions: Record<string, unknown> = { ...options, root };
+  const packages = oxide.sourcePackages(root);
+  const fromPackage = sourcePath(packages);
+  const rule = {
+    loaders: [
+      {
+        loader: '@typedcss/next-plugin/loader',
+        options: loaderOptions as Record<string, never>,
+      },
+    ],
     condition: {
-      all: [{ not: 'foreign' }, { content }],
+      all: [
+        fromPackage
+          ? { any: [{ not: 'foreign' }, { path: fromPackage }] }
+          : { not: 'foreign' },
+        { content: contentPattern(options.styleProp ?? DEFAULT_STYLE_PROP) },
+      ],
     },
   };
-
-  const cssLoader = {
-    loader: '@plumeria/turbopack-loader/css',
-    options: turbopackOptions as Record<string, never>,
-  };
-
-  const plumeriaRules: PlumeriaTurbopackRules = {
-    '*.ts': ruleItem,
-    '*.tsx': ruleItem,
-    '*.js': ruleItem,
-    '*.jsx': ruleItem,
-    'zero-virtual.css': { loaders: [cssLoader], as: '*.css' },
-  };
-
-  const mergeTurbopackRules = (
-    existingRules: TurbopackRules = {},
-    newRules: PlumeriaTurbopackRules,
-  ): TurbopackRules => {
-    const mergedRules = { ...existingRules };
-
-    for (const [key, newRule] of Object.entries(newRules)) {
-      const existing = mergedRules[key];
-
-      if (existing && isRuleConfigItem(existing)) {
-        const newLoaders = newRule.loaders;
-
-        const existingLoaders = Array.isArray(existing.loaders)
-          ? existing.loaders
-          : existing.loaders
-            ? [existing.loaders]
-            : [];
-
-        mergedRules[key] = {
-          ...existing,
-          loaders: [...newLoaders, ...existingLoaders],
-        };
-      } else {
-        mergedRules[key] = newRule as TurbopackRuleValue;
-      }
-    }
-    return mergedRules;
-  };
-
+  const rules = {
+    '*.ts': rule,
+    '*.tsx': rule,
+    '*.js': rule,
+    '*.jsx': rule,
+    'zero-virtual.css': {
+      loaders: [
+        {
+          loader: '@typedcss/next-plugin/css',
+          options: loaderOptions as Record<string, never>,
+        },
+      ],
+      as: '*.css',
+    },
+  } as Rules;
+  if (packages.length === 0) {
+    return {
+      ...nextConfig,
+      turbopack: {
+        ...nextConfig.turbopack,
+        rules: { ...nextConfig.turbopack?.rules, ...rules },
+      },
+    };
+  }
   return {
     ...nextConfig,
+    transpilePackages: [
+      ...(nextConfig.transpilePackages ?? []),
+      ...packages.map((pkg) => pkg.name),
+    ],
     turbopack: {
-      ...nextConfig?.turbopack,
-      rules: mergeTurbopackRules(nextConfig?.turbopack?.rules, plumeriaRules),
-    },
-
-    webpack(config: Configuration, context: WebpackConfigContext) {
-      if (typeof originalWebpack === 'function') {
-        config = originalWebpack(config, context);
-      }
-
-      const existingIgnored = config.watchOptions?.ignored;
-      const plumeriaIgnored = ['node_modules', '.next', '.git'];
-
-      const mergedIgnored =
-        existingIgnored instanceof RegExp
-          ? existingIgnored
-          : Array.from(
-              new Set([
-                ...(Array.isArray(existingIgnored)
-                  ? existingIgnored
-                  : existingIgnored
-                    ? [existingIgnored]
-                    : []),
-                ...plumeriaIgnored,
-              ]),
-            );
-
-      config.watchOptions = {
-        ...config.watchOptions,
-        ignored: mergedIgnored,
-      };
-
-      config.module?.rules?.unshift({
-        enforce: 'pre',
-        test: /\.(tsx|ts|jsx|js)$/,
-        exclude: [/node_modules/, /\.next/, /\.git/],
-        use: { loader: '@plumeria/turbopack-loader', options },
-      });
-
-      config.module?.rules?.unshift({
-        enforce: 'pre',
-        test: /zero-virtual\.css$/,
-        use: { loader: '@plumeria/turbopack-loader/css', options },
-      });
-
-      return config;
+      ...nextConfig.turbopack,
+      resolveAlias: {
+        ...sourceAliases(packages, process.cwd()),
+        ...nextConfig.turbopack?.resolveAlias,
+      },
+      rules: { ...nextConfig.turbopack?.rules, ...rules },
     },
   };
 }
+
+export default withTypedCSS;
