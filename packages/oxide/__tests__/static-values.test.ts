@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
   let fixturePath = '';
 
   let fixtureCount = 0;
@@ -16,7 +16,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
     fixturePath = path.join(FIXTURE_DIR, `fixture-${fixtureCount++}.tsx`);
     fs.writeFileSync(
       fixturePath,
-      `import * as css from '@plumeria/core';\n${body}\n`,
+      `import * as css from '@typedcss/css';\n${body}\n`,
       'utf-8',
     );
     return compileCSS({
@@ -33,7 +33,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
       const css = compile(
         `const theme = { colors: { brand: { primary: 'blue' } } };\n` +
           `const styles = css.create({ root: { color: theme.colors.brand.primary } });\n` +
-          `export const App = () => <div classStyle={styles.root} />;`,
+          `export const App = () => <div sx={styles.root} />;`,
       );
       expect(css).toContain('color: blue');
     });
@@ -45,7 +45,7 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
       const css = compile(
         `const theme = { space: { sm: '4px' } };\n` +
           'const styles = css.create({ root: { padding: `${theme.space.sm} 0` } });\n' +
-          `export const App = () => <div classStyle={styles.root} />;`,
+          `export const App = () => <div sx={styles.root} />;`,
       );
       expect(css).toContain('padding: 4px 0');
     });
