@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ compileCSS }) => {
-  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-'));
+  const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-'));
   const FIXTURE_PATH = path.join(FIXTURE_DIR, 'fixture.tsx');
 
   const compile = (body: string) => {
@@ -23,10 +23,10 @@ describe.each(implementations)('$name', ({ compileCSS }) => {
       // One class serves both call sites: the default lives in the sheet and an
       // argument overrides it through the variable.
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({ tinted: (c = 'teal') => ({ color: c }) });
-export const A = () => <div classStyle={s.tinted()} />;
-export const B = (p: any) => <div classStyle={s.tinted(p.c)} />;
+export const A = () => <div sx={s.tinted()} />;
+export const B = (p: any) => <div sx={s.tinted(p.c)} />;
 `);
       expect(css).toContain('color: var(--xefxcruu-c, teal)');
       expect(css.match(/color: var\(/g)).toHaveLength(1);
@@ -36,13 +36,13 @@ export const B = (p: any) => <div classStyle={s.tinted(p.c)} />;
       // The fallback belongs to the variable reference, not to the declaration,
       // so the text on either side of it has to survive.
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({
   grad: (c = 'teal') => ({ background: \`linear-gradient(\${c}, #000)\` }),
   twice: (g = 'red') => ({ background: \`linear-gradient(\${g}, \${g})\` }),
 });
-export const A = () => <div classStyle={s.grad()} />;
-export const B = () => <div classStyle={s.twice()} />;
+export const A = () => <div sx={s.grad()} />;
+export const B = () => <div sx={s.twice()} />;
 `);
       expect(css).toMatch(
         /background: linear-gradient\(var\(--[a-z0-9]+-c, teal\), black\)/,
@@ -56,13 +56,13 @@ export const B = () => <div classStyle={s.twice()} />;
       // The unit is decided per declaration, so the fallback cannot be built
       // once from whichever property happens to come first.
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({
   paired: (c = 'red') => ({ color: c, ':hover': { borderColor: c } }),
   units: (n = 4) => ({ padding: n, zIndex: n }),
 });
-export const A = () => <div classStyle={s.paired()} />;
-export const B = () => <div classStyle={s.units()} />;
+export const A = () => <div sx={s.paired()} />;
+export const B = () => <div sx={s.units()} />;
 `);
       expect(css).toMatch(/color: var\(--([a-z0-9]+)-c, red\)/);
       expect(css).toMatch(/border-color: var\(--[a-z0-9]+-c, red\)/);
@@ -72,27 +72,27 @@ export const B = () => <div classStyle={s.units()} />;
 
     it('gives a numeric default its unit', () => {
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({ spaced: (n = 4) => ({ padding: n }) });
-export const A = () => <div classStyle={s.spaced()} />;
+export const A = () => <div sx={s.spaced()} />;
 `);
       expect(css).toContain('padding: var(--x4zkwd45-n, 4px)');
     });
 
     it('emits a destructured default as the variable fallback', () => {
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({ toned: ({ tone = 'navy' }) => ({ backgroundColor: tone }) });
-export const A = () => <div classStyle={s.toned({})} />;
+export const A = () => <div sx={s.toned({})} />;
 `);
       expect(css).toMatch(/background-color: var\(--[a-z0-9]+-tone, navy\)/);
     });
 
     it('emits a plain rule for a style function that takes no parameter', () => {
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({ plain: () => ({ color: 'olive' }) });
-export const A = () => <div classStyle={s.plain()} />;
+export const A = () => <div sx={s.plain()} />;
 `);
       expect(css).toContain('color: olive');
       expect(css).not.toContain('var(');
@@ -102,9 +102,9 @@ export const A = () => <div classStyle={s.plain()} />;
       // The class hash is derived from the declaration text, so the variable
       // name here has to match the one the bundler plugin puts in `style`.
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({ palette: (color: string) => ({ color }) });
-export const A = (p: any) => <div classStyle={s.palette(p.c)} />;
+export const A = (p: any) => <div sx={s.palette(p.c)} />;
 `);
       expect(css).toContain('.xokp0532');
       expect(css).toContain('color: var(--x80848wl-color)');
@@ -114,10 +114,10 @@ export const A = (p: any) => <div classStyle={s.palette(p.c)} />;
       // The class is chosen at runtime, so the rule behind it has to be in the
       // sheet whichever way the condition goes.
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({ plain: { color: 'gray' }, palette: (color: string) => ({ color }) });
-export const A = (p: any) => <div classStyle={p.on ? s.palette(p.c) : s.plain} />;
-export const B = (p: any) => <div classStyle={p.on && s.palette(p.d)} />;
+export const A = (p: any) => <div sx={p.on ? s.palette(p.c) : s.plain} />;
+export const B = (p: any) => <div sx={p.on && s.palette(p.d)} />;
 `);
       expect(css).toContain('.xokp0532 { color: var(--x80848wl-color); }');
       expect(css).toContain('color: gray');
@@ -125,14 +125,14 @@ export const B = (p: any) => <div classStyle={p.on && s.palette(p.d)} />;
 
     it('emits the same rule whether the parameter is named or positional', () => {
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const s = css.create({
   positional: (tone: string) => ({ color: tone }),
   named: ({ tone }: { tone: string }) => ({ color: tone }),
 });
 export const A = (p: any) => (<div>
-  <i classStyle={s.positional(p.t)} />
-  <b classStyle={s.named({ tone: p.t })} />
+  <i sx={s.positional(p.t)} />
+  <b sx={s.named({ tone: p.t })} />
 </div>);
 `);
       // One declaration, so one hash and one custom property, written twice.
@@ -143,10 +143,10 @@ export const A = (p: any) => (<div>
 
     it('keeps two creates that share a key name apart', () => {
       const css = compile(`
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 const a = css.create({ palette: (color: string) => ({ backgroundColor: color }) });
 const b = css.create({ palette: (color: string) => ({ borderColor: color }) });
-export const B = (p: any) => <div classStyle={[a.palette(p.x), b.palette(p.y)]} />;
+export const B = (p: any) => <div sx={[a.palette(p.x), b.palette(p.y)]} />;
 `);
       expect(css).toContain('background-color: var(--xav007xm-color)');
       expect(css).toContain('border-color: var(--xcf1maiq-color)');
