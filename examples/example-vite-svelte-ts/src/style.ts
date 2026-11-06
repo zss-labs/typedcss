@@ -1,4 +1,4 @@
-import * as css from '@plumeria/core';
+import * as css from '@typedcss/css';
 
 const styles = css.create({
   color: {
@@ -8,4 +8,4 @@ const styles = css.create({
   },
 });
 
-export const svelteClass = css.use(styles.color);
+export const svelteClass = css.props(styles.color).className;
