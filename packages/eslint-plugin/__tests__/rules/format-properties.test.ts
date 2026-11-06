@@ -10,14 +10,14 @@ const ruleTester = new RuleTester({
 ruleTester.run('format-properties', formatProperties, {
   valid: [
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     display: 'flex'
@@ -25,10 +25,10 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ empty: {} });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ empty: {} });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     // display: 'flex',
@@ -37,7 +37,7 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     /* display: 'flex', */
@@ -45,7 +45,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
     },
-    // Without @plumeria/core import, should NOT trigger
+    // Without @typedcss/css import, should NOT trigger
     {
       code: `const styles = {
   testKey: { fontSize: 24 }
@@ -55,26 +55,26 @@ ruleTester.run('format-properties', formatProperties, {
       code: `import * as css from 'other'; const styles = css.create({ s: { color: 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.create(myVar);`,
+      code: `import * as css from '@typedcss/css'; css.create(myVar);`,
     },
     {
-      code: `import * as css from '@plumeria/core'; css.other({ s: { color: 'red' } });`,
+      code: `import * as css from '@typedcss/css'; css.other({ s: { color: 'red' } });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; (function(){})()`,
+      code: `import * as css from '@typedcss/css'; (function(){})()`,
     },
     {
-      code: `import { create } from '@plumeria/core'; create(myVar);`,
+      code: `import { create } from '@typedcss/css'; create(myVar);`,
     },
     {
-      code: `import { "create" as c } from '@plumeria/core'; c({
+      code: `import { "create" as c } from '@typedcss/css'; c({
   s: {
     color: 'red'
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24, // comment
     display: 'flex'
@@ -82,14 +82,14 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css['create']({
+      code: `import * as css from '@typedcss/css'; const styles = css['create']({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     ...props,
     fontSize: 24
@@ -98,7 +98,7 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Case with comment in the "between" space of noEmptyLines
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
 
@@ -108,7 +108,7 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   [testKey]: {
     fontSize: 24
   }
@@ -116,28 +116,28 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Top-level spread in create
-      code: `import * as css from '@plumeria/core'; const styles = css.create({ ...props });`,
+      code: `import * as css from '@typedcss/css'; const styles = css.create({ ...props });`,
     },
     {
-      // Other import from @plumeria/core
-      code: `import { use } from '@plumeria/core'; use({ s: { color: 'red' } });`,
+      // Other import from @typedcss/css
+      code: `import { use } from '@typedcss/css'; use({ s: { color: 'red' } });`,
     },
   ],
   invalid: [
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: { fontSize: 24, /* comment */ display: 'flex' }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
       // Outer object is fixed, inner object is NOT fixed because of the comment
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24, /* comment */ display: 'flex'
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: { fontSize: 24 }
 });`,
       errors: [
@@ -145,14 +145,14 @@ ruleTester.run('format-properties', formatProperties, {
           messageId: 'mustBeMultiline',
         },
       ],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: { fontSize: 24, display: 'flex' }
 });`,
       errors: [
@@ -160,7 +160,7 @@ ruleTester.run('format-properties', formatProperties, {
           messageId: 'mustBeMultiline',
         },
       ],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     display: 'flex'
@@ -168,7 +168,7 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
 
@@ -178,7 +178,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
       errors: [{ messageId: 'noEmptyLines' }, { messageId: 'noEmptyLines' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     display: 'flex',
@@ -187,13 +187,13 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     ':hover': { color: 'red' }
   }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     ':hover': {
       color: 'red'
@@ -202,71 +202,71 @@ ruleTester.run('format-properties', formatProperties, {
 });`,
     },
     {
-      code: `import { create } from '@plumeria/core'; const styles = create({
+      code: `import { create } from '@typedcss/css'; const styles = create({
   testKey: { fontSize: 24 }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import { create } from '@plumeria/core'; const styles = create({
+      output: `import { create } from '@typedcss/css'; const styles = create({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import { keyframes } from '@plumeria/core'; const anim = keyframes({
+      code: `import { keyframes } from '@typedcss/css'; const anim = keyframes({
   testKey: { fontSize: 24 }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import { keyframes } from '@plumeria/core'; const anim = keyframes({
+      output: `import { keyframes } from '@typedcss/css'; const anim = keyframes({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const above = css.positionTry({ top: 0,
+      code: `import * as css from '@typedcss/css'; const above = css.positionTry({ top: 0,
   left: 0 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import * as css from '@plumeria/core'; const above = css.positionTry({
+      output: `import * as css from '@typedcss/css'; const above = css.positionTry({
   top: 0,
   left: 0
 });`,
     },
     {
-      code: `import { viewTransitionClass } from '@plumeria/core'; const vt = viewTransitionClass({
+      code: `import { viewTransitionClass } from '@typedcss/css'; const vt = viewTransitionClass({
   testKey: { fontSize: 24 }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import { viewTransitionClass } from '@plumeria/core'; const vt = viewTransitionClass({
+      output: `import { viewTransitionClass } from '@typedcss/css'; const vt = viewTransitionClass({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import plumeria from '@plumeria/core'; const styles = plumeria.create({
+      code: `import plumeria from '@typedcss/css'; const styles = plumeria.create({
   testKey: { fontSize: 24 }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import plumeria from '@plumeria/core'; const styles = plumeria.create({
+      output: `import plumeria from '@typedcss/css'; const styles = plumeria.create({
   testKey: {
     fontSize: 24
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: { fontSize: 24, }
 });`,
       errors: [{ messageId: 'mustBeMultiline' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
   }
 });`,
     },
     {
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
 
@@ -275,7 +275,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
       errors: [{ messageId: 'noEmptyLines' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     display: 'flex'
@@ -284,7 +284,7 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Multiple invalid objects
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   a: { color: 'red' },
   b: { color: 'blue' }
 });`,
@@ -292,7 +292,7 @@ ruleTester.run('format-properties', formatProperties, {
         { messageId: 'mustBeMultiline' },
         { messageId: 'mustBeMultiline' },
       ],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   a: {
     color: 'red'
   },
@@ -303,7 +303,7 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Tab character in empty line
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
 \t
@@ -311,7 +311,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
       errors: [{ messageId: 'noEmptyLines' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     display: 'flex'
@@ -320,7 +320,7 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Spread element with empty line
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
 
@@ -328,7 +328,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
       errors: [{ messageId: 'noEmptyLines' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     fontSize: 24,
     ...props
@@ -337,7 +337,7 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Mixed empty and normal lines to cover all branches in the second pass
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     prop1: 1,
 
@@ -346,7 +346,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
       errors: [{ messageId: 'noEmptyLines' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     prop1: 1,
     prop2: 2,
@@ -356,7 +356,7 @@ ruleTester.run('format-properties', formatProperties, {
     },
     {
       // Mixed pure empty lines and commented empty lines to cover L155 false branch
-      code: `import * as css from '@plumeria/core'; const styles = css.create({
+      code: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     prop1: 1,
 
@@ -367,7 +367,7 @@ ruleTester.run('format-properties', formatProperties, {
   }
 });`,
       errors: [{ messageId: 'noEmptyLines' }],
-      output: `import * as css from '@plumeria/core'; const styles = css.create({
+      output: `import * as css from '@typedcss/css'; const styles = css.create({
   testKey: {
     prop1: 1,
     prop2: 2,
