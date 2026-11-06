@@ -6,7 +6,6 @@ dist
 out
 node_modules
 *.mdx
-*.md
 .*/
 
 packages/oxide/binding.js
