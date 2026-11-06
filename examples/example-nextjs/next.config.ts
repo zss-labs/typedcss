@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
-import { withPlumeria } from '@plumeria/next-plugin';
+import { withTypedCSS } from '@typedcss/next-plugin';
 
-const nextConfig: NextConfig = withPlumeria({});
+const nextConfig: NextConfig = {};
 
-export default nextConfig;
+export default withTypedCSS(nextConfig);
