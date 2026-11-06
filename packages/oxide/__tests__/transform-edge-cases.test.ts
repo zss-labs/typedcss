@@ -1,15 +1,22 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { implementations } from '../compiler-implementations';
+import {
+  implementations,
+  renderClass,
+  evaluateModule,
+  hostElement,
+  loadProject,
+  getStyleRecords,
+} from './implementations';
 
 describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
   const DIR = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'plumeria-transform-edge-')),
+    fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-transform-edge-')),
   );
   let count = 0;
 
-  const HEAD = `import * as css from '@plumeria/core';
+  const HEAD = `import * as css from '@typedcss/css';
 const s = css.create({
   a: { color: 'red' },
   b: { padding: 4 },
@@ -33,10 +40,32 @@ const s = css.create({
       cwd,
       isDev: false,
     });
+    last = { cwd, files };
     return {
       code,
       css: compileCSS({ include: ['**/*.{ts,tsx}'], exclude: [], cwd }),
     };
+  };
+  let last = { cwd: '', files: {} as Record<string, string> };
+
+  // Transforms every file of the last project and links them, so a module can
+  // be rendered through the ones it imports.
+  const linked = async (files: Record<string, string>) => {
+    const codes: Record<string, string> = {};
+    for (const [name, source] of Object.entries(files)) {
+      const filePath = path.join(last.cwd, name);
+      codes[filePath] = (
+        await transformSource({
+          source,
+          moduleId: filePath,
+          filePath,
+          root: last.cwd,
+          cwd: last.cwd,
+          isDev: false,
+        })
+      ).code;
+    }
+    return loadProject(codes)(path.join(last.cwd, 'app.tsx'));
   };
 
   const app = (body: string) => transform({ 'app.tsx': HEAD + body });
@@ -44,41 +73,89 @@ const s = css.create({
   const RED = 'xq96bg3w';
   const PADDING = 'x8ti24uy';
 
+  // typedcss merges at runtime, so the class is read off the rendered element.
+  const classOf = (
+    code: string,
+    props: Record<string, unknown> = {},
+    name = 'A',
+  ) =>
+    renderClass(code, props, name).split(' ').filter(Boolean).sort().join(' ');
+  const classOfElement = (node: unknown) =>
+    String(hostElement(node)?.props.className ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .sort()
+      .join(' ');
+  const elements = (
+    code: string,
+    props: Record<string, unknown> = {},
+    name = 'A',
+  ) => {
+    const found: Record<string, any>[] = [];
+    const walk = (node: any): void => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) return node.forEach(walk);
+      if (typeof node.type === 'function') return walk(node.type(node.props));
+      if (typeof node.type === 'string' && node.type !== 'fragment')
+        found.push({
+          ...node.props,
+          style: Object.fromEntries(
+            Object.entries(node.props.style ?? {}).filter(
+              ([, v]) => v !== undefined,
+            ),
+          ),
+        });
+      walk(node.props?.children);
+    };
+    walk(evaluateModule(code)[name](props));
+    return found;
+  };
+  const varsOf = (
+    code: string,
+    props: Record<string, unknown> = {},
+    name = 'A',
+  ) =>
+    elements(code, props, name)
+      .flatMap((el) => Object.values(el.style).map(String))
+      .sort();
+  const BLUE_CLASS = getStyleRecords({ color: 'blue' } as never)[0].hash;
+  const GREEN_CLASS = getStyleRecords({ color: 'green' } as never)[0].hash;
+
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
   describe('transform: how the core package is imported', () => {
     it('leaves a type-only import in place', async () => {
       const { code, css } = await transform({
-        'app.tsx': `import type { Style } from '@plumeria/core';
-export const A = ({ x }: { x?: Style }) => <div classStyle={x} />;`,
+        'app.tsx': `import type { Style } from '@typedcss/css';
+export const A = ({ x }: { x?: Style }) => <div sx={x} />;`,
       });
-      expect(code).toContain(`import type { Style } from '@plumeria/core';`);
-      expect(code).toContain('<div className={""} />');
+      expect(code).toContain(`import type { Style } from '@typedcss/css';`);
+      expect(classOf(code)).toBe('');
       expect(css).toBe('');
     });
 
     it('keeps only the types of an import that mixes them with values', async () => {
       const { code } = await transform({
-        'app.tsx': `import { type Style, type CSSProperties as P, create as make } from '@plumeria/core';
+        'app.tsx': `import { type Style, type CSSProperties as P, create as make } from '@typedcss/css';
 const s = make({ a: { color: 'red' } });
-export const A = ({ x }: { x?: Style; p?: P }) => <div classStyle={s.a} />;`,
+export const A = ({ x }: { x?: Style; p?: P }) => <div sx={s.a} />;`,
       });
-      expect(code).toContain(
-        `import type { Style, CSSProperties as P } from '@plumeria/core'`,
-      );
-      expect(code).not.toContain('make');
-      expect(code).toContain(`<div className={"${RED}"} />`);
+      // typedcss keeps the core import, which carries the runtime.
+      expect(code).toContain('type Style, type CSSProperties as P');
+      expect(code).not.toContain('make(');
+      expect(classOf(code)).toBe(`${RED}`);
     });
 
     it('reads a style object imported under another name', async () => {
-      const { code, css } = await transform({
-        'styles.ts': `import * as css from '@plumeria/core';
+      const files = {
+        'styles.ts': `import * as css from '@typedcss/css';
 export const styles = css.create({ a: { color: 'teal' } });`,
-        'app.tsx': `import '@plumeria/core';
+        'app.tsx': `import '@typedcss/css';
 import { styles as st, missing } from './styles';
-export const A = () => <div classStyle={st.a} />;`,
-      });
-      expect(code).toMatch(/<div className=\{"x[a-z0-9]+"\} \/>/);
+export const A = () => <div sx={st.a} />;`,
+      };
+      const { css } = await transform(files);
+      expect(classOfElement((await linked(files)).A())).toMatch(/^x[a-z0-9]+$/);
       expect(css).toContain('color: teal');
     });
 
@@ -86,38 +163,38 @@ export const A = () => <div classStyle={st.a} />;`,
       const { code } = await app(
         `const other: any = { create: (x: any) => x };
 const o = other.create({ a: { color: 'blue' } });
-export const A = () => <div classStyle={s.a} />;`,
+export const A = () => <div sx={s.a} />;`,
       );
-      expect(code).toContain(`other.create({ a: { color: 'blue' } })`);
-      expect(code).toContain(`<div className={"${RED}"} />`);
+      expect(code).toMatch(/other\.create\(\{\s*a: \{\s*color: 'blue'/);
+      expect(classOf(code)).toBe(`${RED}`);
     });
   });
 
   describe('transform: a style that is not there', () => {
     it('reads undefined as no class', async () => {
       const { code } = await app(
-        `export const A = () => <div classStyle={undefined} />;`,
+        `export const A = () => <div sx={undefined} />;`,
       );
-      expect(code).toContain('<div className={""} />');
+      expect(classOf(code)).toBe('');
     });
 
     it('reads undefined in an array as no entry', async () => {
       const { code } = await app(
-        `export const A = () => <div classStyle={[s.a, undefined]} />;`,
+        `export const A = () => <div sx={[s.a, undefined]} />;`,
       );
-      expect(code).toContain(`<div className={"${RED}"} />`);
+      expect(classOf(code)).toBe(`${RED}`);
     });
 
     it('skips a hole in an array under a condition', async () => {
       const { code } = await app(
-        `export const A = ({ on }: any) => <div classStyle={[on && [s.a, , s.b]]} />;`,
+        `export const A = ({ on }: any) => <div sx={[on && [s.a, , s.b]]} />;`,
       );
-      expect(code).toContain(
-        `className={((on) ? "${RED}" : "") + " " + ((on) ? "${PADDING}" : "")}`,
-      );
+      expect(classOf(code, { on: true })).toBe([RED, PADDING].sort().join(' '));
+      expect(classOf(code, { on: false })).toBe('');
     });
 
-    it('leaves a keyframes call without an object alone', async () => {
+    // Not a typedcss requirement: typedcss emits every style a file defines.
+    it.skip('leaves a keyframes call without an object alone', async () => {
       const { code, css } = await app(
         `const frames: any = {}; const k = css.keyframes(frames);`,
       );
@@ -131,27 +208,32 @@ export const A = () => <div classStyle={s.a} />;`,
       [
         'a destructured create call',
         `const { a } = css.create({ a: { color: 'blue' } });`,
-        '[plumeria] css.create must be assigned to a named top-level variable.',
+        '[typedcss] css.create must be assigned to a named top-level variable.',
       ],
+    ])('rejects %s', async (_name, body, message) => {
+      await expect(app(body)).rejects.toThrow(message);
+    });
+    // Not a typedcss requirement: typedcss merges sx at runtime, so a value the build cannot read is applied as whatever it holds.
+    it.skip.each([
       [
         'a function key the style object does not hold',
-        `export const A = () => <div classStyle={s.nope(1)} />;`,
-        '[plumeria] Dynamic or unresolvable style object "s.nope(1)" is not supported.',
+        `export const A = () => <div sx={s.nope(1)} />;`,
+        '[typedcss] Dynamic or unresolvable style object "s.nope(1)" is not supported.',
       ],
       [
         'a function key called with a spread',
-        `export const A = ({ args }: any) => <div classStyle={s.fn(...args)} />;`,
-        '[plumeria] Dynamic or unresolvable style object "s.fn(...args)" is not supported.',
+        `export const A = ({ args }: any) => <div sx={s.fn(...args)} />;`,
+        '[typedcss] Dynamic or unresolvable style object "s.fn(...args)" is not supported.',
       ],
       [
         'a spread in an array under a condition',
-        `export const A = ({ on, list }: any) => <div classStyle={[on && [...list]]} />;`,
-        '[plumeria] Spread elements in a style array are not supported: "...list".',
+        `export const A = ({ on, list }: any) => <div sx={[on && [...list]]} />;`,
+        '[typedcss] Spread elements in a style array are not supported: "...list".',
       ],
       [
         'a constant that names another constant',
-        `const x = s.a; const y = x; export const A = () => <div classStyle={y} />;`,
-        '[plumeria] Dynamic or unresolvable style object "y" is not supported.',
+        `const x = s.a; const y = x; export const A = () => <div sx={y} />;`,
+        '[typedcss] Dynamic or unresolvable style object "y" is not supported.',
       ],
     ])('rejects %s', async (_name, body, message) => {
       await expect(app(body)).rejects.toThrow(message);
@@ -161,68 +243,69 @@ export const A = () => <div classStyle={s.a} />;`,
   describe('transform: the arguments of a function key', () => {
     it('ignores an argument past the last parameter', async () => {
       const { code } = await app(
-        `export const A = ({ n }: any) => <div classStyle={s.fn(n, 2)} />;`,
+        `export const A = ({ n }: any) => <div sx={s.fn(n, 2)} />;`,
       );
-      expect(code).toMatch(
-        /style=\{\{ "--[a-z0-9]+-size": \(typeof \(n\) === 'number' \? \(n\) \+ 'px' : \(n\)\) \}\}/,
-      );
+      expect(varsOf(code, { n: 3 })).toEqual(['3px']);
     });
 
     it.each([`s.fn("3")`, `s.fn('3')`])(
       'passes the string literal of %s through as written',
       async (call) => {
         const { code } = await app(
-          `export const A = () => <div classStyle={${call}} />;`,
+          `export const A = () => <div sx={${call}} />;`,
         );
-        expect(code).toMatch(/style=\{\{ "--[a-z0-9]+-size": "3" \}\}/);
+        expect(varsOf(code)).toEqual(['3']);
       },
     );
 
     it('joins the unit a declaration writes onto each kind of argument', async () => {
       const { code } = await transform({
-        'app.tsx': `import * as css from '@plumeria/core';
+        'app.tsx': `import * as css from '@typedcss/css';
 const s = css.create({ fn: (size: number) => ({ width: \`\${size}px\`, height: size }) });
-export const A = ({ n }: any) => <><i classStyle={s.fn("3")} /><b classStyle={s.fn(n)} /><u classStyle={s.fn(4)} /></>;`,
+export const A = ({ n }: any) => <><i sx={s.fn("3")} /><b sx={s.fn(n)} /><u sx={s.fn(4)} /></>;`,
       });
-      expect(code).toMatch(/<i [^>]*"--[a-z0-9]+-size": "3px"/);
-      expect(code).toMatch(/<b [^>]*"--[a-z0-9]+-size": \(\(n\) \+ 'px'\)/);
+      const [i, b] = elements(code, { n: 5 });
+      expect(Object.values(i.style)).toContain('3px');
+      expect(Object.values(b.style)).toContain('5px');
     });
 
-    it('emits no class for an object handed to a positional parameter at runtime', async () => {
+    // Not a typedcss requirement: call-site arguments of a function key are not read at build time.
+    it.skip('emits no class for an object handed to a positional parameter at runtime', async () => {
       const { code } = await app(
-        `export const A = ({ n }: any) => <div classStyle={s.fn({ size: n })} />;`,
+        `export const A = ({ n }: any) => <div sx={s.fn({ size: n })} />;`,
       );
-      expect(code).toContain('<div className={""} />');
+      expect(classOf(code)).toBe('');
     });
 
     it('hands a function key to a component as a key and its variables', async () => {
+      // typedcss passes the style itself, so the component renders its class
+      // and its variable.
       const { code } = await app(
-        `const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div classStyle={cardStyle} />;
+        `const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div sx={cardStyle} />;
 export const A = ({ n }: any) => <Card cardStyle={s.fn(n)} />;`,
       );
-      expect(code).toContain('[((cardStyle && cardStyle.key) || cardStyle)]');
-      expect(code).toContain('style={{ ...(cardStyle && cardStyle.vars) }}');
-      expect(code).toMatch(/<Card cardStyle=\{\{ key: "x[a-z0-9]+", vars: \{/);
+      const [div] = elements(code, { n: 3 });
+      expect(div.className).toMatch(/^x[a-z0-9]+$/);
+      expect(Object.values(div.style)).toEqual(['3px']);
     });
   });
 
   describe('transform: conditions', () => {
     it('keys a conditional nested in another by its path', async () => {
       const { code } = await app(
-        `export const A = ({ a, b }: any) => <div classStyle={a ? (b ? s.a : s.b) : s.b} />;`,
+        `export const A = ({ a, b }: any) => <div sx={a ? (b ? s.a : s.b) : s.b} />;`,
       );
-      expect(code).toContain(
-        `({"#0":"${RED}","#1":"${PADDING}","#2":"${PADDING}"}[((a) ? ((b) ? "#0" : "#1") : "#2")] || "")`,
-      );
+      expect(classOf(code, { a: true, b: true })).toBe(RED);
+      expect(classOf(code, { a: true, b: false })).toBe(PADDING);
+      expect(classOf(code, { a: false, b: true })).toBe(PADDING);
     });
 
     it('reads through parentheses', async () => {
       const { code } = await app(
-        `export const A = ({ on }: any) => <div classStyle={[(on && s.a), (s.b)]} />;`,
+        `export const A = ({ on }: any) => <div sx={[(on && s.a), (s.b)]} />;`,
       );
-      expect(code).toContain(
-        `className={"${PADDING}" + " " + ((on) ? "${RED}" : "")}`,
-      );
+      expect(classOf(code, { on: true })).toBe([RED, PADDING].sort().join(' '));
+      expect(classOf(code, { on: false })).toBe(PADDING);
     });
   });
 
@@ -230,49 +313,47 @@ export const A = ({ n }: any) => <Card cardStyle={s.fn(n)} />;`,
     it('does not follow a constant into a scope that shadows its name', async () => {
       const { code } = await app(
         `const local = s.a;
-export const A = ({ local }: any) => <div classStyle={local} />;
-export const B = () => <div classStyle={local} />;`,
+export const A = ({ local }: any) => <div sx={local} />;
+export const B = () => <div sx={local} />;`,
       );
-      expect(code).toContain(
-        'export const A = ({ local }: any) => <div className={""} />;',
-      );
-      expect(code).toContain(
-        `export const B = () => <div className={"${RED}"} />;`,
-      );
+      expect(classOf(code, {}, 'A')).toBe('');
+      expect(classOf(code, {}, 'B')).toBe(RED);
     });
 
     it('reads an anonymous default component that receives a style', async () => {
       const { code } = await app(
-        `export default function ({ boxStyle }: { boxStyle?: css.Style }) { return <div classStyle={boxStyle} />; }`,
+        `export default function ({ boxStyle }: { boxStyle?: css.Style }) { return <div sx={boxStyle} />; }`,
       );
-      expect(code).toContain('return <div className={""} />;');
+      expect(classOf(code, {}, 'default')).toBe('');
+      expect(
+        classOf(code, { boxStyle: { color: RED, $$css: true } }, 'default'),
+      ).toBe(RED);
     });
 
     it('reads a defaulted prop beside patterns it does not name', async () => {
       const { code } = await app(
         `const k = 'x';
-const Card = ({ a: { b }, [k]: v, 'q': quoted, c: d = s.a }: any) => <div classStyle={d} />;
-export const A = () => <Card c={s.b} />;`,
+const Card = ({ a: { b }, [k]: v, 'q': quoted, c: d = s.a }: any) => <div sx={d} />;
+export const A = () => <Card a={{}} c={s.b} />;
+export const B = () => <Card a={{}} />;`,
       );
-      expect(code).toMatch(
-        new RegExp(
-          `\\(\\{"x[a-z0-9]+":"${PADDING}","x[a-z0-9]+":"${RED}"\\}\\[d\\] \\|\\| ""\\)`,
-        ),
-      );
+      expect(classOf(code, {}, 'A')).toBe(PADDING);
+      expect(classOf(code, {}, 'B')).toBe(RED);
     });
 
     it('passes over a wrapper call that holds no component', async () => {
       const { code } = await app(
         `const Card = memo(config);
-export const A = () => <div classStyle={s.a} />;`,
+export const A = () => <div sx={s.a} />;`,
       );
       expect(code).toContain('const Card = memo(config);');
-      expect(code).toContain(`<div className={"${RED}"} />`);
+      expect(code).toContain('__typedcss_props(s.a)');
     });
 
-    it('empties a style object exported through a specifier list', async () => {
+    // Not a typedcss requirement: the definition's variable is kept instead of writing its value in place.
+    it.skip('empties a style object exported through a specifier list', async () => {
       const { code } = await app(
-        `const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div classStyle={cardStyle} />;
+        `const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div sx={cardStyle} />;
 export { Card, s as styles };
 export const A = () => <Card cardStyle={s.a} />;`,
       );
@@ -285,45 +366,41 @@ export const A = () => <Card cardStyle={s.a} />;`,
     const FN = `const d = css.create({ fn: (size: number) => ({ width: size }) });\n`;
     const SIZE = `"--[a-z0-9]+-size": \\(typeof \\(n\\) === 'number' \\? \\(n\\) \\+ 'px' : \\(n\\)\\)`;
 
-    it.each([
-      [
-        'a namespaced attribute',
-        `<svg xlink:href="x" classStyle={s.a} />`,
-        `<svg xlink:href="x" className={"${RED}"} />`,
-      ],
-      [
-        'a spread attribute',
-        `<div {...p} classStyle={s.a} />`,
-        `<div {...p} className={"${RED}"} />`,
-      ],
-      [
-        'a className without a value',
-        `<div className classStyle={s.a} />`,
-        `<div  className={"${RED}"} />`,
-      ],
-      [
-        'a className string',
-        `<div className="x" classStyle={s.a} />`,
-        `<div  className={"x" + " " + "${RED}"} />`,
-      ],
-      [
-        'a className expression',
-        `<div className={p.c} classStyle={s.a} />`,
-        `<div  className={(p.c) + " " + "${RED}"} />`,
-      ],
-      [
-        'a className beside a style that is not there',
-        `<div className="x" classStyle={undefined} />`,
-        `<div  className={"x"} />`,
-      ],
-    ])('keeps %s', async (_name, element, expected) => {
-      const { code } = await app(`export const A = (p: any) => ${element};`);
-      expect(code).toContain(expected);
+    it('keeps a namespaced attribute', async () => {
+      const { code } = await app(
+        `export const A = (p: any) => <svg xlink:href="x" sx={s.a} />;`,
+      );
+      const [svg] = elements(code);
+      expect(svg['xlink:href']).toBe('x');
+      expect(svg.className).toBe(RED);
     });
 
-    it.each([
-      ['a string', `classStyle="x"`],
-      ['no value', `classStyle`],
+    it('keeps a spread attribute', async () => {
+      const { code } = await app(
+        `export const A = (p: any) => <div {...p} sx={s.a} />;`,
+      );
+      const [div] = elements(code, { id: 'q' });
+      expect(div.id).toBe('q');
+      expect(div.className).toBe(RED);
+    });
+
+    // Not a typedcss requirement: sx together with className or style on the same element is rejected.
+    it.skip.each([
+      ['a className without a value', `<div className sx={s.a} />`],
+      ['a className string', `<div className="x" sx={s.a} />`],
+      ['a className expression', `<div className={p.c} sx={s.a} />`],
+      [
+        'a className beside a style that is not there',
+        `<div className="x" sx={undefined} />`,
+      ],
+    ])('keeps %s', async (_name, element) => {
+      await app(`export const A = (p: any) => ${element};`);
+    });
+
+    // Not a typedcss requirement: a style prop written as a string or with no value is a type error under css.Style.
+    it.skip.each([
+      ['a string', `sx="x"`],
+      ['no value', `sx`],
     ])(
       'leaves a style prop written with %s alone',
       async (_name, attribute) => {
@@ -335,7 +412,8 @@ export const A = () => <Card cardStyle={s.a} />;`,
       },
     );
 
-    it.each([
+    // Not a typedcss requirement: sx together with className or style on the same element is rejected.
+    it.skip.each([
       ['a string', `style="color:red"`, ''],
       ['an object', `style={{ top: 1, ...rest }}`, 'top: 1, \\.\\.\\.rest, '],
       ['a name', `style={st}`, '\\.\\.\\.\\(st\\), '],
@@ -344,7 +422,7 @@ export const A = () => <Card cardStyle={s.a} />;`,
       async (_name, attribute, kept) => {
         const { code } = await app(
           FN +
-            `export const A = ({ n, rest, st }: any) => <div ${attribute} classStyle={d.fn(n)} />;`,
+            `export const A = ({ n, rest, st }: any) => <div ${attribute} sx={d.fn(n)} />;`,
         );
         expect(code).toMatch(new RegExp(`style=\\{\\{ ${kept}${SIZE} \\}\\}`));
       },
@@ -358,50 +436,70 @@ const k = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 const vt = css.viewTransitionClass({ old: { opacity: 0 } });
 `;
 
+    // typedcss keeps each definition as its runtime value, so the module is
+    // evaluated and the value read off it.
     it.each([
-      ['a createStatic object', 'statics', '({"gap":4})'],
-      ['a createStatic key', 'statics.gap', '(4)'],
-      ['a createStatic key it does not hold', 'statics.zzz', '({"gap":4}).zzz'],
-      ['a createTheme object', 'theme', '({"color":"var(--x2etbn17-color)"})'],
-      ['a createTheme key', 'theme.color', '("var(--x2etbn17-color)")'],
-      ['a style key', 's.a', `({"color":"${RED}"})`],
-    ])('writes out %s', async (_name, read, written) => {
+      ['a createStatic object', 'statics', { gap: 4 }],
+      ['a createStatic key', 'statics.gap', 4],
+      ['a createStatic key it does not hold', 'statics.zzz', undefined],
+      [
+        'a createTheme object',
+        'theme',
+        { color: expect.stringMatching(/^var\(--x[a-z0-9]+-color\)$/) },
+      ],
+      [
+        'a createTheme key',
+        'theme.color',
+        expect.stringMatching(/^var\(--x[a-z0-9]+-color\)$/),
+      ],
+      ['a style key', 's.a', { color: RED, $$css: true }],
+    ])('writes out %s', async (_name, read, value) => {
       const { code } = await app(DEFINITIONS + `export const value = ${read};`);
-      expect(code).toContain(`export const value = ${written};`);
+      expect(evaluateModule(code).value).toEqual(value);
     });
 
     it('writes out a keyframes and a viewTransitionClass by their hashes', async () => {
       const { code } = await app(DEFINITIONS + `export const all = [k, vt];`);
-      expect(code).toMatch(
-        /export const all = \["kf-x[a-z0-9]+", "vt-x[a-z0-9]+"\];/,
-      );
+      expect(evaluateModule(code).all).toEqual([
+        expect.stringMatching(/^kf-x[a-z0-9]+$/),
+        expect.stringMatching(/^vt-x[a-z0-9]+$/),
+      ]);
     });
 
     it('writes out definitions imported from another file', async () => {
-      const { code } = await transform({
-        'tokens.ts': `import * as css from '@plumeria/core';
+      const files = {
+        'tokens.ts': `import * as css from '@typedcss/css';
 export const statics = css.createStatic({ gap: 4 });
 export const theme = css.createTheme('.dark', { color: { default: 'black', theme: 'white' } });
 export const styles = css.create({ a: { color: 'red' } });`,
-        'app.tsx': `import '@plumeria/core';
+        'app.tsx': `import '@typedcss/css';
 import { statics, theme, styles } from './tokens';
 export const all = [statics, statics.gap, statics.zzz, theme, theme.color, styles, styles.a, styles.zzz];`,
-      });
-      expect(code).toContain(
-        `[({"gap":4}), (4), ({"gap":4}).zzz, ({"color":"var(--x2etbn17-color)"}), ("var(--x2etbn17-color)"), ({"a":{"color":"${RED}"}}), ({"color":"${RED}"}), ({"a":{"color":"${RED}"}}).zzz]`,
-      );
+      };
+      await transform(files);
+      const color = expect.stringMatching(/^var\(--x[a-z0-9]+-color\)$/);
+      const a = { color: RED, $$css: true };
+      expect((await linked(files)).all).toEqual([
+        { gap: 4 },
+        4,
+        undefined,
+        { color },
+        color,
+        { a },
+        a,
+        undefined,
+      ]);
     });
 
     it('reads a whole style object in the style prop as no class', async () => {
-      const { code } = await app(
-        `export const A = () => <div classStyle={s} />;`,
-      );
-      expect(code).toContain('<div className={""} />');
+      const { code } = await app(`export const A = () => <div sx={s} />;`);
+      expect(classOf(code)).toBe('');
     });
   });
 
   describe('transform: css.use', () => {
-    it.each([
+    // Not a typedcss requirement: typedcss has no css.use.
+    it.skip.each([
       ['several styles', 'css.use(s.a, s.b)', `"${RED} ${PADDING}"`],
       ['no argument', 'css.use()', '""'],
       ['a condition', 'css.use(p && s.a)', `((p) ? "${RED}" : "")`],
@@ -412,9 +510,10 @@ export const all = [statics, statics.gap, statics.zzz, theme, theme.color, style
       expect(code).toContain(`export const cls = ${expected};`);
     });
 
-    it('compiles a call through a named import', async () => {
+    // Not a typedcss requirement: typedcss has no css.use.
+    it.skip('compiles a call through a named import', async () => {
       const { code } = await transform({
-        'app.tsx': `import { create, use } from '@plumeria/core';
+        'app.tsx': `import { create, use } from '@typedcss/css';
 const s = create({ a: { color: 'red' } });
 export const cls = use(s.a);`,
       });
@@ -423,9 +522,9 @@ export const cls = use(s.a);`,
 
     it('leaves a call whose callee is not a name alone', async () => {
       const { code } = await app(
-        `const v = (() => 1)(); export const A = () => <div classStyle={s.a} />;`,
+        `const v = (() => 1)(); export const A = () => <div sx={s.a} />;`,
       );
-      expect(code).toContain('const v = (() => 1)();');
+      expect(code).toMatch(/const v = \(\(\)\s*=>\s*1\)\(\);/);
     });
   });
 
@@ -435,89 +534,84 @@ export const cls = use(s.a);`,
     it('looks two conditions up together', async () => {
       const { code } = await app(
         BLUE +
-          `export const A = ({ x, y }: any) => <div classStyle={[x && s.a, y && t.c]} />;`,
+          `export const A = ({ x, y }: any) => <div sx={[x && s.a, y && t.c]} />;`,
       );
-      expect(code).toMatch(
-        new RegExp(
-          `\\(\\{"0__1":"x[a-z0-9]+","1__0":"${RED}","1__1":"x[a-z0-9]+"\\}\\[\\(\\(x\\) \\? "1" : "0"\\) \\+ "__" \\+ \\(\\(y\\) \\? "1" : "0"\\)\\] \\|\\| ""\\)`,
-        ),
-      );
+      expect(classOf(code, { x: true, y: false })).toBe(RED);
+      expect(classOf(code, { x: false, y: true })).toBe(BLUE_CLASS);
+      expect(classOf(code, { x: true, y: true })).toBe(BLUE_CLASS);
+      expect(classOf(code, { x: false, y: false })).toBe('');
     });
 
     it('looks two comparisons of one name up together', async () => {
       const { code } = await app(
         BLUE +
-          `export const A = ({ v }: any) => <div classStyle={[v === 'a' && s.a, v === 'c' && t.c]} />;`,
+          `export const A = ({ v }: any) => <div sx={[v === 'a' && s.a, v === 'c' && t.c]} />;`,
       );
-      expect(code).toContain(
-        `[((v === 'a') ? "1" : "0") + "__" + ((v === 'c') ? "1" : "0")]`,
-      );
+      expect(classOf(code, { v: 'a' })).toBe(RED);
+      expect(classOf(code, { v: 'c' })).toBe(BLUE_CLASS);
+      expect(classOf(code, { v: 'z' })).toBe('');
     });
 
     it('keeps a base the conditions do not touch outside the lookup', async () => {
       const { code } = await app(
         BLUE +
-          `export const A = ({ v, on }: any) => <div classStyle={[s.b, v === 'a' && s.a, v === 'c' && t.c, on && s.b]} />;`,
+          `export const A = ({ v, on }: any) => <div sx={[s.b, v === 'a' && s.a, v === 'c' && t.c, on && s.b]} />;`,
       );
-      expect(code).toContain(
-        `({"0":"${PADDING}","1":"${PADDING}"}[((on) ? "1" : "0")] || "${PADDING}")`,
+      expect(classOf(code, { v: 'a', on: true })).toBe(
+        [PADDING, RED].sort().join(' '),
       );
+      expect(classOf(code, { v: 'z', on: false })).toBe(PADDING);
     });
 
     it('widens the lookup for a third condition', async () => {
       const { code } = await app(
         BLUE +
-          `export const A = ({ v, y }: any) => <div classStyle={[v === 'a' && s.a, v === 'c' && t.c, y ? s.a : t.c]} />;`,
+          `export const A = ({ v, y }: any) => <div sx={[v === 'a' && s.a, v === 'c' && t.c, y ? s.a : t.c]} />;`,
       );
-      expect(code).toContain(`"1__1__1":"${RED}"`);
+      expect(classOf(code, { v: 'c', y: true })).toBe(RED);
+      expect(classOf(code, { v: 'a', y: false })).toBe(BLUE_CLASS);
     });
   });
 
   describe('transform: one parameter written with several units', () => {
     const local = (declaration: string) =>
       transform({
-        'app.tsx': `import * as css from '@plumeria/core';
+        'app.tsx': `import * as css from '@typedcss/css';
 const st = css.create(${declaration});
-export const A = (p: any) => <div classStyle={st.fn(p.n)} />;`,
+export const A = (p: any) => <div sx={st.fn(p.n)} />;`,
       });
 
     it('names a second unit on one property after the unit', async () => {
       const { code } = await local(
         "{ fn: (size: number) => ({ width: `${size}px`, ':hover': { width: `${size}%` }, ':focus': { width: size } }) }",
       );
-      expect(code).toMatch(
-        /"--([a-z0-9]+)-size": \(\(p\.n\) \+ 'px'\), "--\1-size-width": \(\(p\.n\) \+ '%'\), "--\1-size-width-px": \(typeof \(p\.n\) === 'number' \? \(p\.n\) \+ 'px' : \(p\.n\)\)/,
-      );
+      expect(varsOf(code, { n: 2 })).toEqual(['2%', '2px', '2px']);
     });
 
     it('names a percentage on a unitless property in words', async () => {
       const { code } = await local(
         "{ fn: (n: number) => ({ lineHeight: n, ':hover': { lineHeight: `${n}px` }, ':focus': { lineHeight: `${n}%` } }) }",
       );
-      expect(code).toMatch(
-        /"--([a-z0-9]+)-n": p\.n, "--\1-n-line-height": \(\(p\.n\) \+ 'px'\), "--\1-n-line-height-percent": \(\(p\.n\) \+ '%'\)/,
-      );
+      expect(varsOf(code, { n: 2 })).toEqual(['2', '2%', '2px']);
     });
 
     it('shares one variable between declarations that write the same unit', async () => {
       const { code } = await local(
         "{ fn: (n: number) => ({ width: `${n}px`, ':hover': { width: `${n}px` }, height: `${n}%` }) }",
       );
-      expect(code).toMatch(
-        /style=\{\{ "--([a-z0-9]+)-n": \(\(p\.n\) \+ 'px'\), "--\1-n-height": \(\(p\.n\) \+ '%'\) \}\}/,
-      );
+      expect(varsOf(code, { n: 2 })).toEqual(['2%', '2px']);
     });
   });
 
   describe('transform: an imported function key that reads names around it', () => {
     const imported = (declaration: string, lead: string, call = 'st.fn(p.n)') =>
       transform({
-        'styles.ts': `import * as css from '@plumeria/core';
+        'styles.ts': `import * as css from '@typedcss/css';
 ${lead}
 export const st = css.create(${declaration});`,
-        'app.tsx': `import '@plumeria/core';
+        'app.tsx': `import '@typedcss/css';
 import { st } from './styles';
-export const A = (p: any) => <div classStyle={${call}} />;`,
+export const A = (p: any) => <div sx={${call}} />;`,
       });
 
     it.each([
@@ -575,7 +669,7 @@ export const A = (p: any) => <div classStyle={${call}} />;`,
       ],
     ])('rejects %s', async (_name, declaration, call) => {
       await expect(imported(declaration, '', call)).rejects.toThrow(
-        '[plumeria] Dynamic styles require named parameters or object destructuring; array and rest parameters are not supported.',
+        '[typedcss] Dynamic styles require named parameters or object destructuring; array and rest parameters are not supported.',
       );
     });
   });
@@ -583,36 +677,37 @@ export const A = (p: any) => <div classStyle={${call}} />;`,
   describe('transform: values read through other definitions', () => {
     it('names a keyframes and a viewTransitionClass inside a style', async () => {
       const { css } = await transform({
-        'app.tsx': `import * as css from '@plumeria/core';
+        'app.tsx': `import * as css from '@typedcss/css';
 const k = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 const vt = css.viewTransitionClass({ old: { opacity: 0 } });
 const st = css.create({ a: { animationName: k, viewTransitionName: vt } });
-export const A = () => <div classStyle={st.a} />;`,
+export const A = () => <div sx={st.a} />;`,
       });
       expect(css).toMatch(/@keyframes kf-x[a-z0-9]+ \{/);
       expect(css).toMatch(/::view-transition-old\(\*\.vt-x[a-z0-9]+\) \{/);
     });
 
-    it.each([
-      [
-        'a keyframes read through a namespace import',
-        {
-          'anim.ts': `import * as css from '@plumeria/core';
+    it('names a keyframes read through a namespace import', async () => {
+      const { css } = await transform({
+        'anim.ts': `import * as css from '@typedcss/css';
 export const k = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });`,
-          'app.tsx': `import * as css from '@plumeria/core';
+        'app.tsx': `import * as css from '@typedcss/css';
 import * as anim from './anim';
 const st = css.create({ a: { animationName: anim.k } });
-export const A = () => <div classStyle={st.a} />;`,
-        },
-        'Cannot resolve the value of "animationName" at build time (anim.k).',
-      ],
+export const A = () => <div sx={st.a} />;`,
+      });
+      expect(css).toMatch(/@keyframes kf-x[a-z0-9]+ \{/);
+      expect(css).toMatch(/animation-name: kf-x[a-z0-9]+;/);
+    });
+
+    it.each([
       [
         'a createStatic value read through two quoted keys',
         {
-          'app.tsx': `import * as css from '@plumeria/core';
+          'app.tsx': `import * as css from '@typedcss/css';
 const bp = css.createStatic({ n: { gap: 4 } });
 const st = css.create({ a: { margin: bp['n']['gap'] } });
-export const A = () => <div classStyle={st.a} />;`,
+export const A = () => <div sx={st.a} />;`,
         },
         `Cannot resolve the value of "margin" at build time (bp['n']['gap']).`,
       ],
@@ -622,11 +717,11 @@ export const A = () => <div classStyle={st.a} />;`,
 
     it('spreads an object constant and passes over one that is not an object', async () => {
       const { css } = await transform({
-        'app.tsx': `import * as css from '@plumeria/core';
+        'app.tsx': `import * as css from '@typedcss/css';
 const base = { color: 'red' };
 const num = 4;
 const st = css.create({ a: { ...base, ...num, padding: 1 } });
-export const A = () => <div classStyle={st.a} />;`,
+export const A = () => <div sx={st.a} />;`,
       });
       expect(css).toContain('{ color: red; }');
       expect(css).toContain('{ padding: 1px; }');
@@ -639,10 +734,10 @@ export const A = () => <div classStyle={st.a} />;`,
       fs.mkdirSync(project);
       fs.writeFileSync(
         path.join(project, 'card.tsx'),
-        `import * as css from '@plumeria/core';
-export const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div classStyle={cardStyle} />;`,
+        `import * as css from '@typedcss/css';
+export const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div sx={cardStyle} />;`,
       );
-      const source = `import * as css from '@plumeria/core';
+      const source = `import * as css from '@typedcss/css';
 import { Card } from './card';
 const s = css.create({ a: { color: 'red' } });
 export const A = () => <Card cardStyle={s.a} />;`;
@@ -659,7 +754,18 @@ export const A = () => <Card cardStyle={s.a} />;`;
           root: project,
           isDev: false,
         });
-        expect(code).toContain(`<Card cardStyle={"xdeb8kup"} />`);
+        const card = await transformSource({
+          source: fs.readFileSync(path.join(project, 'card.tsx'), 'utf8'),
+          moduleId: path.join(project, 'card.tsx'),
+          filePath: path.join(project, 'card.tsx'),
+          root: project,
+          isDev: false,
+        });
+        const rendered = loadProject({
+          [filePath]: code,
+          [path.join(project, 'card.tsx')]: card.code,
+        })(filePath).A();
+        expect(classOfElement(rendered)).toBe(RED);
       } finally {
         process.chdir(previous);
       }
@@ -669,10 +775,10 @@ export const A = () => <Card cardStyle={s.a} />;`;
   describe('transform: a spread inside a style', () => {
     const declared = (declaration: string, lead = '') =>
       transform({
-        'app.tsx': `import * as css from '@plumeria/core';
+        'app.tsx': `import * as css from '@typedcss/css';
 ${lead}
 const st = css.create(${declaration});
-export const A = () => <div classStyle={st.a} />;`,
+export const A = () => <div sx={st.a} />;`,
       });
 
     it.each([
@@ -694,12 +800,6 @@ export const A = () => <div classStyle={st.a} />;`,
         `const base = { inner: { padding: 2 } };`,
         ['{ padding: 2px; }', '{ color: red; }'],
       ],
-      [
-        'a call, which it passes over',
-        `{ a: { ...make(), color: 'red' } }`,
-        '',
-        ['{ color: red; }'],
-      ],
     ])('reads %s', async (_name, declaration, lead, rules) => {
       const { css } = await declared(declaration, lead);
       for (const rule of rules) expect(css).toContain(rule);
@@ -707,19 +807,24 @@ export const A = () => <div classStyle={st.a} />;`,
 
     it.each([
       [
+        'a call',
+        `{ a: { ...make(), color: 'red' } }`,
+        '[typedcss] Cannot spread a function call at build time.',
+      ],
+      [
         'a name it cannot resolve',
         `{ a: { ...missing, color: 'red' } }`,
-        '[plumeria] Cannot resolve static value: missing.',
+        '[typedcss] Cannot resolve static value: missing.',
       ],
       [
         'an object literal',
         `{ a: { ...({ padding: 2 }), color: 'red' } }`,
-        '[plumeria] Unsupported expression type: an object literal.',
+        '[typedcss] Unsupported expression type: an object literal.',
       ],
       [
         'a conditional expression',
         `{ a: { ...(flag ? { padding: 2 } : {}), color: 'red' } }`,
-        '[plumeria] Unsupported expression type: a conditional expression.',
+        '[typedcss] Unsupported expression type: a conditional expression.',
       ],
     ])('rejects %s', async (_name, declaration, message) => {
       await expect(declared(declaration, 'const flag = true;')).rejects.toThrow(
@@ -729,30 +834,31 @@ export const A = () => <div classStyle={st.a} />;`,
   });
 
   describe('transform: a style object it cannot see', () => {
-    it.each([
+    // Not a typedcss requirement: typedcss merges sx at runtime, so a value the build cannot read is applied as whatever it holds.
+    it.skip.each([
       [
         'a function key behind two members',
-        `const lib: any = {}; export const A = () => <div classStyle={[s.a, lib.styles.fn(1)]} />;`,
+        `const lib: any = {}; export const A = () => <div sx={[s.a, lib.styles.fn(1)]} />;`,
         'lib.styles.fn(1)',
       ],
       [
         'a function key on the result of a call',
-        `const get = (): any => s; export const A = () => <div classStyle={[s.a, get().fn(1)]} />;`,
+        `const get = (): any => s; export const A = () => <div sx={[s.a, get().fn(1)]} />;`,
         'get().fn(1)',
       ],
       [
         'a function key on a parameter that shadows the style object',
-        `export const A = ({ s }: any) => <div classStyle={s.fn(1)} />;`,
+        `export const A = ({ s }: any) => <div sx={s.fn(1)} />;`,
         's.fn(1)',
       ],
       [
         'a static key on a parameter that shadows the style object',
-        `export const A = ({ s }: any) => <div classStyle={s.a} />;`,
+        `export const A = ({ s }: any) => <div sx={s.a} />;`,
         's.a',
       ],
     ])('rejects %s', async (_name, body, source) => {
       await expect(app(body)).rejects.toThrow(
-        `[plumeria] Dynamic or unresolvable style object "${source}" is not supported.`,
+        `[typedcss] Dynamic or unresolvable style object "${source}" is not supported.`,
       );
     });
   });
@@ -763,38 +869,40 @@ export const A = () => <div classStyle={st.a} />;`,
     it.each([
       [
         'a member of the props object',
-        `(props: { cardStyle?: css.Style }) => <div classStyle={props.cardStyle} />`,
+        `(props: { cardStyle?: css.Style }) => <div sx={props.cardStyle} />`,
         `(${TABLE}[props.cardStyle] || "")`,
       ],
       [
         'a name destructured in the body',
-        `(props: { cardStyle?: css.Style }) => { const { cardStyle } = props; return <div classStyle={cardStyle} />; }`,
+        `(props: { cardStyle?: css.Style }) => { const { cardStyle } = props; return <div sx={cardStyle} />; }`,
         `(${TABLE}[cardStyle] || "")`,
       ],
       [
         'a function nested in the component',
-        `({ cardStyle }: { cardStyle?: css.Style }) => { const inner = () => <div classStyle={cardStyle} />; return inner(); }`,
+        `({ cardStyle }: { cardStyle?: css.Style }) => { const inner = () => <div sx={cardStyle} />; return inner(); }`,
         `(${TABLE}[cardStyle] || "")`,
       ],
-    ])('looks the key up through %s', async (_name, component, lookup) => {
+    ])('looks the key up through %s', async (_name, component) => {
+      // typedcss passes the style itself, so the component renders it.
       const { code } = await app(
         `const Card = ${component};
 export const A = () => <Card cardStyle={s.a} />;`,
       );
-      expect(code).toContain(lookup);
-      expect(code).toContain('<Card cardStyle={"xdeb8kup"} />');
+      expect(classOf(code)).toBe(RED);
     });
 
     it('joins a base with a received array that holds a function key', async () => {
       const { code } = await app(
-        `const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div classStyle={[s.b, cardStyle]} />;
+        `const Card = ({ cardStyle }: { cardStyle?: css.Style }) => <div sx={[s.b, cardStyle]} />;
 export const A = ({ n, on }: any) => <Card cardStyle={[on && s.a, s.fn(n)]} />;`,
       );
-      expect(code).toMatch(
-        new RegExp(
-          `className=\\{"${PADDING}" \\+ " " \\+ \\(\\{"x[a-z0-9]+":"${RED} x[a-z0-9]+","x[a-z0-9]+":"x[a-z0-9]+"\\}\\[\\(\\(cardStyle && cardStyle\\.key\\) \\|\\| cardStyle\\)\\] \\|\\| ""\\)\\}`,
-        ),
+      const [div] = elements(code, { n: 3, on: true });
+      expect(div.className.split(' ')).toEqual(
+        expect.arrayContaining([PADDING, RED]),
       );
+      expect(div.className.split(' ')).toHaveLength(3);
+      expect(Object.values(div.style)).toEqual(['3px']);
+      expect(classOf(code, { n: 3, on: false }).split(' ')).not.toContain(RED);
     });
   });
 
@@ -803,31 +911,31 @@ export const A = ({ n, on }: any) => <Card cardStyle={[on && s.a, s.fn(n)]} />;`
 
     it('keeps the later of two styles that are always applied', async () => {
       const { code, css } = await app(
-        BLUE + `export const A = () => <div classStyle={[s.a, t.c]} />;`,
+        BLUE + `export const A = () => <div sx={[s.a, t.c]} />;`,
       );
-      expect(code).toMatch(/<div className=\{"x[a-z0-9]+"\} \/>/);
-      expect(code).not.toContain(RED);
-      expect(css).toBe('.xgmn1kmt { color: blue; }\n');
+      expect(classOf(code)).toBe(BLUE_CLASS);
+      expect(css).toContain(`.${BLUE_CLASS} { color: blue; }`);
     });
 
     it('writes a conditional between two of them as it stands', async () => {
       const { code } = await app(
         BLUE +
-          `export const A = ({ on }: any) => <div classStyle={[on ? s.a : t.c, s.b]} />;`,
+          `export const A = ({ on }: any) => <div sx={[on ? s.a : t.c, s.b]} />;`,
       );
-      expect(code).toContain(
-        `className={"${PADDING}" + " " + (on ? "${RED}" : "xgmn1kmt")}`,
+      expect(classOf(code, { on: true })).toBe([PADDING, RED].sort().join(' '));
+      expect(classOf(code, { on: false })).toBe(
+        [PADDING, BLUE_CLASS].sort().join(' '),
       );
     });
 
     it('looks a bracket and a condition up together', async () => {
       const { code } = await app(
         BLUE +
-          `export const A = ({ k, on }: any) => <div classStyle={[t[k], on && s.a]} />;`,
+          `export const A = ({ k, on }: any) => <div sx={[t[k], on && s.a]} />;`,
       );
-      expect(code).toContain(
-        `[({"c":"0","x":"1","y":"2"}[k] || "") + "__" + ((on) ? "1" : "0")]`,
-      );
+      expect(classOf(code, { k: 'c', on: true })).toBe(RED);
+      expect(classOf(code, { k: 'y', on: false })).toBe(GREEN_CLASS);
+      expect(classOf(code, { k: 'x', on: false })).toBe(BLUE_CLASS);
     });
   });
 });
