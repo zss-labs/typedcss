@@ -16,12 +16,12 @@ const rename = { messageId: 'rename' };
 tester.run('rename-api', renameApi, {
   valid: [
     {
-      code: `import * as css from '@plumeria/core';
+      code: `import * as css from '@typedcss/css';
 const fade = css.viewTransitionClass({ old: { opacity: 0 } });`,
       options,
     },
     {
-      // a namespace from another package is not Plumeria's
+      // a namespace from another package is not typedcss's
       code: `import * as css from 'other';
 const fade = css.viewTransition({ old: { opacity: 0 } });`,
       options,
@@ -32,34 +32,51 @@ viewTransition();`,
       options,
     },
     {
-      code: `import * as css from '@plumeria/core';
+      code: `import * as css from '@typedcss/css';
 const fade = css['viewTransition'];
 const name = { viewTransition: 1 }.viewTransition;`,
+      options,
+    },
+    {
+      // an import named by a string is left alone
+      code: `import { "viewTransition" as vt } from '@typedcss/css';
+const fade = vt({ old: { opacity: 0 } });`,
+      options,
+    },
+    {
+      // a private name is the class's own, not typedcss's
+      code: `import * as css from '@typedcss/css';
+class Fade {
+  #viewTransition = 0;
+  read() {
+    return css.#viewTransition;
+  }
+}`,
       options,
     },
   ],
   invalid: [
     {
-      code: `import * as css from '@plumeria/core';
+      code: `import * as css from '@typedcss/css';
 const fade = css.viewTransition({ old: { opacity: 0 } });`,
-      output: `import * as css from '@plumeria/core';
+      output: `import * as css from '@typedcss/css';
 const fade = css.viewTransitionClass({ old: { opacity: 0 } });`,
       options,
       errors: [rename],
     },
     {
-      code: `import css from '@plumeria/core';
+      code: `import css from '@typedcss/css';
 const fade = css.viewTransition({ old: { opacity: 0 } });`,
-      output: `import css from '@plumeria/core';
+      output: `import css from '@typedcss/css';
 const fade = css.viewTransitionClass({ old: { opacity: 0 } });`,
       options,
       errors: [rename],
     },
     {
-      code: `import { viewTransition } from '@plumeria/core';
+      code: `import { viewTransition } from '@typedcss/css';
 const fade = viewTransition({ old: { opacity: 0 } });
 const slide = viewTransition({ new: { opacity: 1 } });`,
-      output: `import { viewTransitionClass } from '@plumeria/core';
+      output: `import { viewTransitionClass } from '@typedcss/css';
 const fade = viewTransitionClass({ old: { opacity: 0 } });
 const slide = viewTransitionClass({ new: { opacity: 1 } });`,
       options,
@@ -67,19 +84,19 @@ const slide = viewTransitionClass({ new: { opacity: 1 } });`,
     },
     {
       // only the imported name changes; the local alias stays
-      code: `import { viewTransition as vt } from '@plumeria/core';
+      code: `import { viewTransition as vt } from '@typedcss/css';
 const fade = vt({ old: { opacity: 0 } });`,
-      output: `import { viewTransitionClass as vt } from '@plumeria/core';
+      output: `import { viewTransitionClass as vt } from '@typedcss/css';
 const fade = vt({ old: { opacity: 0 } });`,
       options,
       errors: [rename],
     },
     {
       // a parameter that shadows the import is left alone
-      code: `import { viewTransition } from '@plumeria/core';
+      code: `import { viewTransition } from '@typedcss/css';
 const fade = viewTransition({ old: { opacity: 0 } });
 const f = (viewTransition: string) => viewTransition;`,
-      output: `import { viewTransitionClass } from '@plumeria/core';
+      output: `import { viewTransitionClass } from '@typedcss/css';
 const fade = viewTransitionClass({ old: { opacity: 0 } });
 const f = (viewTransition: string) => viewTransition;`,
       options,
