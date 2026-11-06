@@ -32,7 +32,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           list: {
             'color': 'red',
@@ -48,7 +48,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         const mq = '@media' as '@media';
         const hv = ':hover' as ':hover';
         const mqL = '@media' as const;
@@ -66,9 +66,9 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import { create, create as c, "create" as c2 } from '@plumeria/core';
-        import css from '@plumeria/core';
-        import type { Create } from '@plumeria/core';
+        import { create, create as c, "create" as c2 } from '@typedcss/css';
+        import css from '@typedcss/css';
+        import type { Create } from '@typedcss/css';
         create({ s: {} });
         c({ s: {} });
         c2({ s: {} });
@@ -79,13 +79,13 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import { create } from '@plumeria/core';
+        import { create } from '@typedcss/css';
         create({ ...spread, list: { ...spread, color: 'red' } });
       `,
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.keyframes({
           from: { opacity: 0 },
@@ -103,7 +103,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         const normal = 'color';
         css.create({
@@ -115,7 +115,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.keyframes({ ...base, from: { ...base, opacity: 0 } });
         css.viewTransitionClass({ ...base, old: { ...base, opacity: 0 } });
@@ -123,7 +123,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.keyframes({ from: shared });
         css.viewTransitionClass({ old: shared });
@@ -131,7 +131,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import { keyframes as kf, viewTransitionClass as vt } from '@plumeria/core';
+        import { keyframes as kf, viewTransitionClass as vt } from '@typedcss/css';
 
         kf({ from: { opacity: 0 } });
         vt({ old: { opacity: 0 } });
@@ -139,7 +139,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         (function () { return css; })();
       `,
@@ -148,7 +148,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         css.create({
           list: {
             ':hover': {
@@ -169,7 +169,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-            import { create } from '@plumeria/core';
+            import { create } from '@typedcss/css';
             const mq = '@media' as const;
             const hv = ':hover' as const;
             create({
@@ -186,7 +186,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.keyframes({
           start: { opacity: 0 },
@@ -200,7 +200,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.viewTransitionClass({
           invalid: {},
@@ -210,7 +210,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.viewTransitionClass({
           [1 + 1]: {},
@@ -220,7 +220,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.keyframes({
           [1 + 1]: {},
@@ -230,7 +230,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.create({
           [1 + 1]: {},
@@ -240,7 +240,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.keyframes({
           from: { 
@@ -252,7 +252,7 @@ ruleTester.run('no-invalid-selector', noInvalidSelector, {
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         
         const invalidKey = 123;
         css.create({
@@ -270,14 +270,14 @@ ruleTesterNoType.run('no-invalid-selector', noInvalidSelector, {
   valid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
         
         css.create({ list: { ['@media']: {} } })
       `,
     },
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         const styles = (key: string) => css.create({ list: { [key]: {} } });
       `,
@@ -286,7 +286,7 @@ ruleTesterNoType.run('no-invalid-selector', noInvalidSelector, {
   invalid: [
     {
       code: `
-        import * as css from '@plumeria/core';
+        import * as css from '@typedcss/css';
 
         css.create({ list: { [1 + 1]: {} } })
       `,
@@ -296,7 +296,7 @@ ruleTesterNoType.run('no-invalid-selector', noInvalidSelector, {
 });
 
 const pseudoNesting = (selector: string) => `
-  import * as css from '@plumeria/core';
+  import * as css from '@typedcss/css';
   css.create({ a: { '${selector}': { color: 'red' } } });
 `;
 
@@ -405,6 +405,13 @@ ruleTesterNoType.run(
         errors: [{ messageId: 'flattenSameNamePseudo' }],
       },
       {
+        // `(]` closes at the call's depth but not on its own, so that argument
+        // is kept as written while the nesting before it flattens
+        code: pseudoNesting(':is(:is(.a)):where(.x(]y)'),
+        output: pseudoNesting(':is(.a):where(.x(]y)'),
+        errors: [{ messageId: 'flattenSameNamePseudo' }],
+      },
+      {
         code: pseudoNesting(':where(.x:where(.a))'),
         output: null,
         errors: [{ messageId: 'noSameNamePseudoNesting' }],
@@ -416,7 +423,7 @@ ruleTesterNoType.run(
       },
       {
         code: `
-          import * as css from '@plumeria/core';
+          import * as css from '@typedcss/css';
           const selector = ':where(:where(.a))' as const;
           css.create({ a: { [selector]: { color: 'red' } } });
         `,
@@ -425,11 +432,11 @@ ruleTesterNoType.run(
       },
       {
         code: `
-          import * as css from '@plumeria/core';
+          import * as css from '@typedcss/css';
           css.create({ a: { ":where(:where([data-x='value']))": {} } });
         `,
         output: `
-          import * as css from '@plumeria/core';
+          import * as css from '@typedcss/css';
           css.create({ a: { ":where([data-x='value'])": {} } });
         `,
         errors: [{ messageId: 'flattenSameNamePseudo' }],
@@ -441,7 +448,7 @@ ruleTesterNoType.run(
       },
       {
         code: `
-          import * as css from '@plumeria/core';
+          import * as css from '@typedcss/css';
           css.create({ a: { ":where(:where([data-x=\\"value\\"]))": {} } });
         `,
         output: null,
