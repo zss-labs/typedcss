@@ -1,81 +1,37 @@
 /**
- * @fileoverview Warn when class names are composed outside css.use()
+ * @fileoverview Warn when class names are composed outside css.props()
  */
 
 import type { Rule } from 'eslint';
-import type { Node, Identifier, MemberExpression } from 'estree';
-import { resolveStyleProp, stylePropSchema } from '../util/style-prop';
-
-const memberName = (node: MemberExpression) =>
-  !node.computed && node.property.type === 'Identifier'
-    ? node.property.name
-    : node.computed && node.property.type === 'Literal'
-      ? node.property.value
-      : null;
+import type { Node } from 'estree';
+import { callsCore, memberName, variableOf } from '../util/coreImport';
 
 export const noUnresolvedComposition: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'Warn when class names are composed outside css.use()',
+      description: 'Warn when class names are composed outside css.props()',
     },
-    schema: stylePropSchema,
+    schema: [],
     messages: {
       merge:
-        'Separate css.use() results cannot resolve conflicts with each other. Merge them into one css.use(a, b) call, passing conditional styles as css.use(a, active && b).',
+        'Separate css.props() results cannot resolve conflicts with each other. Merge them into one css.props(a, b) call, passing conditional styles as css.props(a, active && b).',
       wrapped:
-        'css.use() results cannot be passed to functions, including css.use() itself. Pass the styles directly to one css.use() call, e.g. css.use(a, active && b, [c, d]).',
+        'css.props() results cannot be passed to functions, including css.props() itself. Pass the styles directly to one css.props() call, e.g. css.props(a, active && b, [c, d]).',
+      stringified:
+        'css.props() returns { className, style }, not a class string. Spread it onto the element, or read .className.',
       external:
-        'css.use() cannot order external class names ({{values}}); their precedence is left to the CSS cascade. Rewrite them as styles with css.create() and pass them into the same css.use() call.',
-      dynamic:
-        'Function keys cannot go through css.use(). Apply {{source}} to {{styleProp}} instead.',
+        'css.props() cannot order external class names ({{values}}); their precedence is left to the CSS cascade. Rewrite them as styles with css.create() and pass them into the same css.props() call.',
     },
   },
   create(context) {
-    const styleProp = resolveStyleProp(context);
     const reported = new Set<Node>();
-
-    function variableOf(node: Identifier) {
-      let scope = context.sourceCode.getScope(node);
-      while (scope) {
-        const variable = scope.set.get(node.name);
-        if (variable) return variable;
-        if (!scope.upper) break;
-        scope = scope.upper;
-      }
-      return null;
-    }
-
-    function imported(node: Node, name: string): boolean {
-      if (node.type !== 'Identifier') return false;
-      {
-        const variable = variableOf(node);
-        if (variable) {
-          return variable.defs.some((def) => {
-            if (
-              def.type !== 'ImportBinding' ||
-              def.parent.source.value !== '@plumeria/core'
-            )
-              return false;
-            const specifier = def.node;
-            return name === '*'
-              ? specifier.type === 'ImportNamespaceSpecifier' ||
-                  specifier.type === 'ImportDefaultSpecifier'
-              : specifier.type === 'ImportSpecifier' &&
-                  (specifier.imported.type === 'Identifier'
-                    ? specifier.imported.name
-                    : specifier.imported.value) === name;
-          });
-        }
-      }
-      return false;
-    }
 
     function resolve(node: Node, seen: Set<Node>): Node[] {
       if (seen.has(node)) return [];
       seen.add(node);
       if (node.type === 'Identifier') {
-        const variable = variableOf(node);
+        const variable = variableOf(context, node);
         if (!variable || variable.defs.some((def) => def.type !== 'Variable'))
           return [];
         const start = node.range?.[0] ?? 0;
@@ -113,50 +69,7 @@ export const noUnresolvedComposition: Rule.RuleModule = {
       );
     }
 
-    function isUse(node: Node): boolean {
-      if (node.type !== 'CallExpression') return false;
-      const callee = node.callee;
-      return callee.type === 'MemberExpression'
-        ? memberName(callee) === 'use' && imported(callee.object, '*')
-        : callee.type === 'Identifier' && imported(callee, 'use');
-    }
-
-    function isCreate(node: Node): boolean {
-      if (node.type !== 'CallExpression') return false;
-      const callee = node.callee;
-      return callee.type === 'MemberExpression'
-        ? memberName(callee) === 'create' && imported(callee.object, '*')
-        : callee.type === 'Identifier' && imported(callee, 'create');
-    }
-
-    function dynamic(node: Node, seen = new Set<Node>()): boolean {
-      if (seen.has(node)) return false;
-      seen.add(node);
-      if (node.type === 'SpreadElement') return dynamic(node.argument, seen);
-      if (node.type === 'ArrayExpression') {
-        return node.elements.some(
-          (element) => element !== null && dynamic(element, seen),
-        );
-      }
-      if (node.type === 'ConditionalExpression') {
-        return dynamic(node.consequent, seen) || dynamic(node.alternate, seen);
-      }
-      if (node.type === 'LogicalExpression') {
-        return dynamic(node.left, seen) || dynamic(node.right, seen);
-      }
-      if (
-        node.type === 'CallExpression' &&
-        node.callee.type === 'MemberExpression' &&
-        memberName(node.callee) !== null
-      ) {
-        const object = node.callee.object;
-        return [object, ...resolve(object, new Set())].some(isCreate);
-      }
-      if (node.type === 'Identifier' || node.type === 'MemberExpression') {
-        return resolve(node, new Set()).some((value) => dynamic(value, seen));
-      }
-      return false;
-    }
+    const isUse = (node: Node) => callsCore(context, node, 'props');
 
     function parts(node: Node): Node[] | null {
       if (node.type === 'BinaryExpression' && node.operator === '+') {
@@ -197,8 +110,23 @@ export const noUnresolvedComposition: Rule.RuleModule = {
       return true;
     }
 
+    function isProps(node: Node): boolean {
+      if (isUse(node)) return true;
+      if (node.type !== 'Identifier' && node.type !== 'MemberExpression')
+        return false;
+      return resolve(node, new Set()).some(isUse);
+    }
+
+    function isResult(node: Node): boolean {
+      return (
+        node.type === 'MemberExpression' &&
+        memberName(node) === 'className' &&
+        isProps(node.object)
+      );
+    }
+
     function uses(node: Node, seen = new Set<Node>()): Node[] {
-      if (isUse(node)) return [node];
+      if (isResult(node)) return [node];
       if (
         (node.type === 'Identifier' || node.type === 'MemberExpression') &&
         stored(node, seen)
@@ -217,6 +145,7 @@ export const noUnresolvedComposition: Rule.RuleModule = {
 
     function passed(node: Node): Node[] {
       if (node.type === 'SpreadElement') return passed(node.argument);
+      if (isProps(node)) return [node];
       const arrays = [node, ...resolve(node, new Set())].filter(
         (value) => value.type === 'ArrayExpression',
       );
@@ -231,20 +160,6 @@ export const noUnresolvedComposition: Rule.RuleModule = {
     }
 
     function check(node: Node) {
-      if (isUse(node) && node.type === 'CallExpression') {
-        node.arguments
-          .filter((argument) => dynamic(argument))
-          .forEach((argument) =>
-            context.report({
-              node: argument,
-              messageId: 'dynamic',
-              data: {
-                source: context.sourceCode.getText(argument),
-                styleProp,
-              },
-            }),
-          );
-      }
       if (node.type === 'CallExpression') {
         const calls = node.arguments.flatMap(passed);
         if (calls.some((call) => !reported.has(call))) {
@@ -257,6 +172,13 @@ export const noUnresolvedComposition: Rule.RuleModule = {
       if (!children) return;
       const flatten = (child: Node): Node[] =>
         parts(child)?.flatMap(flatten) ?? [child];
+      const objects = children.flatMap(flatten).filter(isProps);
+      if (objects.length > 0) {
+        if (objects.every((object) => reported.has(object))) return;
+        objects.forEach((object) => reported.add(object));
+        context.report({ node, messageId: 'stringified' });
+        return;
+      }
       const values = children.flatMap(flatten).filter(meaningful);
       const calls = values.flatMap((value) => uses(value));
       if (values.length < 2 || !calls.some((call) => !reported.has(call)))
