@@ -10,7 +10,7 @@ const ZERO_CSS_SUFFIX = '(?:$|\\?|%3F)';
 const VIRTUAL_CSS_PATH = new RegExp(`\\.zero\\.css${ZERO_CSS_SUFFIX}`);
 
 export function attachWebpackHooks(plugin: any) {
-  const { setDev, setRoot, setCssImport } = plugin.__plumeriaInternal;
+  const { setDev, setRoot, setCssImport } = plugin.__typedcssInternal;
 
   setCssImport(({ id, cssFilename }: CssImportContext) => {
     let rel = path.relative(path.dirname(id), cssFilename).replace(/\\/g, '/');
@@ -22,7 +22,8 @@ export function attachWebpackHooks(plugin: any) {
     const [pathId] = id.split('?', 1);
     return (
       /\.(ts|tsx|js|jsx)$/.test(pathId) &&
-      !pathId.includes('node_modules') &&
+      (!pathId.includes('node_modules') ||
+        plugin.__typedcssInternal.inSource(pathId)) &&
       !pathId.endsWith('.html')
     );
   };
@@ -34,7 +35,7 @@ export function attachWebpackHooks(plugin: any) {
 
   plugin.resolveId = function (id: string, importer?: string) {
     const [pathId, query] = id.split('?');
-    const { cssLookup } = plugin.__plumeriaInternal;
+    const { cssLookup } = plugin.__typedcssInternal;
 
     if (pathId.endsWith('.zero.css')) {
       let resolvedAbsolute: string | null = null;
@@ -54,23 +55,19 @@ export function attachWebpackHooks(plugin: any) {
         return query ? `${resolvedAbsolute}?${query}` : resolvedAbsolute;
       }
     }
-    return null;
+    return plugin.__typedcssInternal.resolveSource(id);
   };
 
   plugin.load = function (this: any, id: string) {
     const [pathId] = id.split('?', 1);
-    const { cssLookup, targets } = plugin.__plumeriaInternal;
-
-    const sourceTarget = targets.find(
-      (t: any) =>
-        `${t.id.replace(/\.(ts|tsx|js|jsx)$/, '')}.zero.css` === pathId,
-    );
-    if (sourceTarget && typeof this.addDependency === 'function') {
-      this.addDependency(sourceTarget.id);
-    }
+    const { cssLookup, stylesheetFiles } = plugin.__typedcssInternal;
 
     const css = cssLookup.get(pathId);
     if (css == null) return null;
+
+    if (typeof this.addDependency === 'function') {
+      for (const file of stylesheetFiles) this.addDependency(file);
+    }
 
     return { code: css, moduleType: 'css' };
   };
