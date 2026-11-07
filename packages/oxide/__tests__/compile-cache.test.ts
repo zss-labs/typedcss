@@ -15,7 +15,7 @@ export const Box = () => <div sx={styles.box} />;`;
 
 describe.each(implementations)(
   '$name incremental CSS',
-  ({ name, compileCSS, scanAll }) => {
+  ({ name, compileCSS }) => {
     let dir: string;
     let clock = Date.now() / 1000;
     const write = (file: string, source: string) => {
