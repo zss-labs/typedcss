@@ -1,144 +1,40 @@
-# @plumeria/core
+# TypedCSS
 
-![License](https://img.shields.io/badge/License-MIT-10B981)
-![npm](https://img.shields.io/npm/v/@plumeria/core?&color=10B981)
+TypedCSS is a second execution model for [Plumeria](https://plumeria.dev) that delegates some of the compilation responsibilities to the runtime resolver.
+It shares an API with Plumeria, so the migration cost is minimal.
 
-![Web](https://img.shields.io/badge/Web-atomic-6366F1?logo=npm&logoColor=white)
-![Types](https://img.shields.io/badge/Types-100%25-6366F1?logo=npm&logoColor=white)
-![Runtime](https://img.shields.io/badge/Runtime-never-6366F1?logo=npm&logoColor=white)
-
-**Plumeria** is a **zero-cost abstraction layer** for styling React components. You write type-safe styles in TypeScript, and what ships is a class string — not a style object and a merger. Style composition is a monoid whose operation is fully determined at compile time, which is where the predictability comes from: styles are composable by construction, and strict syntax and linting keep the cognitive overhead low.
-
-> The compiler is written in Rust with oxc, so builds are fast. The CSS types and the property list the linter checks against are generated from MDN data, so properties and keywords follow what MDN documents.
-
-## Installation
-
-`@plumeria/core` contains type definitions only. Which JSX prop carries styles is declared in your project — one line for the default `classStyle`, see [Declaring the styling prop](#declaring-the-styling-prop). Styles are compiled away at build time by a bundler integration — [`@plumeria/next-plugin`](https://www.npmjs.com/package/@plumeria/next-plugin) for Next.js, or [`@plumeria/unplugin`](https://www.npmjs.com/package/@plumeria/unplugin) for Vite, Webpack, and others.
+## Quick start
 
 ```sh
-npx @plumeria/init
+npx @typedcss/init
 ```
 
-It detects the bundler and the package manager, installs the packages, and writes the configs. To set up by hand:
+### Migrating
 
 ```sh
-pnpm add -D @plumeria/core
+npx @plumeria/codemod migrate-to-typedcss
 ```
 
-See the [installation guide](https://plumeria.dev/docs/installation) for full setup, and [`@plumeria/eslint-plugin`](https://www.npmjs.com/package/@plumeria/eslint-plugin) for the linting rules.
-
-## Example
-
-Styles can be passed to the `classStyle` prop. That prop accepts static and dynamic styles as an array. At build time, the compiler resolves `classStyle` into a static `className`; dynamic values are passed as CSS variables through the `style` attribute — no runtime library is involved.
-
-```tsx
-import * as css from '@plumeria/core';
-
-const styles = css.create({
-  text: {
-    fontSize: 12
-  },
-  cond: {
-    background: 'navy'
-  },
-  scale: (value) => ({
-    scale: value
-  })
-});
-
-export default function App({ cond }) {
-  const scale = useScale(); // from your own hook
-  return (
-    <div
-      classStyle={[
-        styles.text,
-        cond && styles.cond,
-        styles.scale(scale)
-      ]}
-    />
-  );
-}
+```sh
+npx @typedcss/codemod migrate-to-plumeria
 ```
 
-**Compiled:**
+typedcss and Plumeria share every version number, and each package takes the same options as its Plumeria counterpart:
 
-```tsx
-<div
-  className={'xhrr6ses xhxthtyw' + ' ' + (cond ? 'xj00ajs1' : '')}
-  style={{ '--xfuma1qq-value': scale }}
-/>
-```
+| typedcss                  | Plumeria                  |
+| ------------------------- | ------------------------- |
+| `@typedcss/codemod`       | `@plumeria/codemod`       |
+| `@typedcss/css`           | `@plumeria/core`          |
+| `@typedcss/eslint-plugin` | `@plumeria/eslint-plugin` |
+| `@typedcss/init`          | `@plumeria/init`          |
+| `@typedcss/next-plugin`   | `@plumeria/next-plugin`   |
+| `@typedcss/oxide`         | `@plumeria/compiler`      |
+| `@typedcss/swc-jest`      | `@plumeria/swc-jest`      |
+| `@typedcss/unplugin`      | `@plumeria/unplugin`      |
+| `@typedcss/wind`          | `@plumeria/wind`          |
 
-**Generated CSS:**
-
-```css
-.xhrr6ses:not(#\#) {
-  font-size: 12px;
-}
-.xhxthtyw {
-  scale: var(--xfuma1qq-value);
-}
-.xj00ajs1 {
-  background: navy;
-}
-```
-
-## Declaring the styling prop
-
-The prop name is a build-time setting — `styleProp` on the bundler plugin — so `@plumeria/core` declares no prop of its own. Baking one in would let the types and the compiler disagree. Add one file to your project naming the prop you compile with.
-
-For the default, `classStyle`, reference the declaration that ships with the package:
-
-```ts
-// plumeria.d.ts
-/// <reference types="@plumeria/core/class-style" />
-```
-
-If you renamed the prop, declare that name on React's attribute interfaces instead. `Style` is the type of anything the prop accepts — a style, a conditional, or an array of them:
-
-```ts
-// plumeria.d.ts
-import type { Style } from '@plumeria/core';
-
-declare global {
-  namespace React {
-    interface HTMLAttributes<T> {
-      sx?: Style
-    }
-    interface SVGAttributes<T> {
-      sx?: Style
-    }
-  }
-}
-```
-
-```tsx
-<div sx={[styles.text, cond && styles.cond]} />
-```
-
-Declaration merging is additive, so several names can coexist during a migration. Whichever you declare has to match what the bundler plugin was given — if they disagree the prop type-checks but is never compiled away.
-
-Explore the [documentation](https://plumeria.dev/) for the core principles, full API reference, and integrations.
-
-## API Stability
-
-Plumeria publishes frequently. To make that legible, every public API is rated for **future** change likelihood — not past churn. The rating is a commitment about what will happen next, not a description of what already has.
-
-| API                       | Stability |        |
-| ------------------------- | --------- | ------ |
-| `css.create`              | ★★★★★     | Frozen |
-| `css.createTheme`         | ★★★★★     | Frozen |
-| `css.createStatic`        | ★★★★★     | Frozen |
-| `css.keyframes`           | ★★★★★     | Frozen |
-| `css.viewTransitionClass` | ★★★★★     | Frozen |
-| `css.positionTry`         | ★★★★☆     | Stable |
-| `css.varType`             | ★★★★☆     | Stable |
-| `css.marker`              | ★★★★☆     | Stable |
-| `css.extended`            | ★★★★☆     | Stable |
-| `css.use`/`classStyle`    | ★★★★★     | Frozen |
-
-> The **`classStyle`** can be renamed via configuration
+Read [plumeria.dev/docs/typedcss](https://plumeria.dev/docs/typedcss) for what differs, and the Plumeria documentation for everything else.
 
 ## License
 
-Plumeria is [MIT licensed](https://github.com/zss-in-js/plumeria/blob/main/LICENSE).
+TypedCSS is [MIT licensed](https://github.com/zss-labs/typedcss/blob/main/LICENSE).
