@@ -32,7 +32,7 @@
     "@emnapi/core": "1.11.3",
     "@emnapi/runtime": "1.11.3",
     "@mdn/browser-compat-data": "^8.1.5",
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.65.0",
     "@typedcss/eslint-plugin": "workspace:^",
     "@typedcss/init": "workspace:^",
     "@swc/core": "catalog:",
