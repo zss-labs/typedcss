@@ -1,4 +1,4 @@
-# TypedCSS
+# @typedcss/css
 
 TypedCSS is a second execution model for [Plumeria](https://plumeria.dev) that delegates some of the compilation responsibilities to the runtime resolver.
 It shares an API with Plumeria, so the migration cost is minimal.
