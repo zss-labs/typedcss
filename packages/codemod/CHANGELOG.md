@@ -1,4 +1,94 @@
-# @plumeria/codemod
+# @typedcss/codemod
+
+## 21.2.7
+
+### Patch Changes
+
+- 83e304f: Bump version to 21.2.7
+
+## 21.2.6
+
+### Patch Changes
+
+- d708d87: Bump version to 21.2.6
+
+## 21.2.5
+
+### Patch Changes
+
+- 40fb1e0: Bump version to 21.2.5
+
+## 21.2.4
+
+### Patch Changes
+
+- 6c025b8: Bump version to 21.2.4
+
+## 21.2.3
+
+### Patch Changes
+
+- 1f5ad12: Bump version to 21.2.3
+
+## 21.2.2
+
+### Patch Changes
+
+- 30cfad5: - Fix: a computed key the build cannot inline, such as `[MOBILE]` read from a plain module, stops the build and points at `css.createStatic` instead of dropping the rule without an error
+  - Fix: a spread of a function call, such as `...mixin()`, stops the build instead of dropping what it returns without an error
+  - Fix: a shorthand holding a runtime value, such as `{ margin }`, stops the build like the same property written out instead of dropping the declaration without an error
+  - Fix: a shorthand holding `css.keyframes`, such as `{ animationName }`, compiles like the same property written out
+  - Fix: a method or an accessor in a style, such as `get margin() { ... }`, stops the build instead of dropping the declaration without an error
+  - Fix: `migrate --from plumeria` joins a `classStyle` list member it cannot name, such as a prop, as a class string, instead of exporting the styles and leaving a list that no longer builds
+  - Update: lead README.md with what decides the winning style
+
+## 21.2.1
+
+### Patch Changes
+
+- 2089b8a: Bump version to 21.2.1
+
+## 21.2.0
+
+### Minor Changes
+
+- fb82771: Bump version to 21.2.0
+
+## 21.1.8
+
+### Patch Changes
+
+- de2791a: Bump version to 21.1.8
+
+## 21.1.7
+
+### Patch Changes
+
+- 0f80855: Bump version to 21.1.7
+
+## 21.1.6
+
+### Patch Changes
+
+- b94dcc8: Bump version to 21.1.6
+
+## 21.1.5
+
+### Patch Changes
+
+- 17a242d: Bump version to 21.1.5
+
+## 21.1.4
+
+### Patch Changes
+
+- f26493b: Bump version to 21.1.4
+
+## 21.1.3
+
+### Patch Changes
+
+- 2bf6c80: - Update: Move repository links to the zss-labs organization
 
 ## 21.1.2
 
@@ -26,7 +116,7 @@
   - Feat: a `css.viewTransitionClass` is emitted when it is used in one of those `<ViewTransition>` props, including both sides of a condition and the values of a type map, as well as when it is used in `css.create`
   - Update: a name from `css.keyframes`, `css.viewTransitionClass`, `css.positionTry` or `css.varType` is written where it is read, and its declaration is dropped as with `css.createTheme`, so no definition is left in the bundle
   - Feat: reading a Plumeria definition through a namespace import, by member, string key, destructuring, a rest element or the namespace as a whole, is a compile error that asks for a named import
-  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @plumeria/codemod rename-api viewTransition viewTransitionClass`
+  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @typedcss/codemod rename-api viewTransition viewTransitionClass`
   - Update: the ESLint rules that read `css.viewTransition` read `css.viewTransitionClass`
 
 ## 20.0.0
@@ -148,8 +238,8 @@
 ### Patch Changes
 
 - def91c1: - Remove the `funding` field from package.json
-  - Move the test-only devDependencies of `@plumeria/compiler` to the workspace root
-  - Update the `next` devDependency of `@plumeria/next-plugin` to 16.3.8
+  - Move the test-only devDependencies of `@typedcss/compiler` to the workspace root
+  - Update the `next` devDependency of `@typedcss/next-plugin` to 16.3.8
 
 ## 19.8.1
 
@@ -680,7 +770,7 @@
 
 ### Patch Changes
 
-- 69b7897: - Feat: `npx @plumeria/codemod migrate --from plumeria` exports `css.create` definitions to CSS Modules, writes global styles (`createTheme`, `keyframes`, `viewTransition`) to `src/styles/global.css`, and rewrites consumers to use `className`.
+- 69b7897: - Feat: `npx @typedcss/codemod migrate --from plumeria` exports `css.create` definitions to CSS Modules, writes global styles (`createTheme`, `keyframes`, `viewTransition`) to `src/styles/global.css`, and rewrites consumers to use `className`.
   - Fix: import specifiers are resolved through `tsconfig.json` `paths`, directory `index` files, and filenames that carry a dot, so a definition reached under an alias is found instead of reported as dynamic.
   - Feat: `css.createStatic` values imported from another file are inlined into the generated CSS, and the import is removed only when nothing outside the exported styles still reads it.
   - Feat: `css.marker` and `css.extended` are expanded into the custom property and the `@container style()` rule they compile to.
@@ -691,7 +781,7 @@
 
 ### Patch Changes
 
-- e2018e9: - Feat: `npx @plumeria/codemod migrate --from plumeria` exports `css.create` definitions to CSS Modules, writes global styles (`createTheme`, `keyframes`, `viewTransition`) to `src/styles/global.css`, and rewrites consumers to use `className`.
+- e2018e9: - Feat: `npx @typedcss/codemod migrate --from plumeria` exports `css.create` definitions to CSS Modules, writes global styles (`createTheme`, `keyframes`, `viewTransition`) to `src/styles/global.css`, and rewrites consumers to use `className`.
 
 ## 18.2.17
 
