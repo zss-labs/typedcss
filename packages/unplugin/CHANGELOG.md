@@ -1,5 +1,14 @@
 # @typedcss/unplugin
 
+## 22.0.3
+
+### Patch Changes
+
+- 3dd8098: Bump version to 22.0.3
+- Updated dependencies [3dd8098]
+  - @typedcss/eslint-plugin@22.0.3
+  - @typedcss/oxide@22.0.3
+
 ## 22.0.2
 
 ### Patch Changes
