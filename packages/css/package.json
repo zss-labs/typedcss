@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/css",
   "version": "22.0.3",
-  "description": "React styling library for reliable interfaces",
+  "description": "The Atomic CSS-in-JS Dual model of Plumeria",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
