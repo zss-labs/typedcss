@@ -1,18 +1,171 @@
-# @plumeria/unplugin
+# @typedcss/unplugin
+
+## 21.2.7
+
+### Patch Changes
+
+- 83e304f: Bump version to 21.2.7
+- Updated dependencies [83e304f]
+- Updated dependencies [83e304f]
+  - @typedcss/compiler@21.2.7
+  - @typedcss/eslint-plugin@21.2.7
+
+## 21.2.6
+
+### Patch Changes
+
+- d708d87: - Fix: resolve and compile component source from packages exposing the plumeria condition
+  - Fix: full-reload when a prop-driven update reaches a module that cannot accept it
+  - Fix: keep node_modules out of the lint guard
+  - Feat: `sourcePackages()` in the compiler lists the packages exposing the plumeria condition, so the bundler plugins share the compiler's discovery instead of scanning dependencies themselves
+- Updated dependencies [d708d87]
+  - @typedcss/compiler@21.2.6
+  - @typedcss/eslint-plugin@21.2.6
+
+## 21.2.5
+
+### Patch Changes
+
+- 40fb1e0: Bump version to 21.2.5
+- Updated dependencies [40fb1e0]
+- Updated dependencies [40fb1e0]
+  - @typedcss/eslint-plugin@21.2.5
+  - @typedcss/compiler@21.2.5
+
+## 21.2.4
+
+### Patch Changes
+
+- 6c025b8: - Fix: a style passed to a default export, or to a component that `memo` or `forwardRef` wraps, is handed to that component and applied
+  - Fix: the component a call makes is the argument that renders, wherever it sits, so `memo(Component, compare)` and a wrapper that takes options first pass a style on, and a component name the call takes, as in `memo(Inner, compare)`, stands for that component
+  - Fix: a call with more than one argument that could be the component stops the build with an error when a style is passed to it, instead of guessing which one receives it
+  - Fix: `no-style-prop-relay` reads the component a call wraps as the compiler does, so it no longer checks a comparator or an options value in place of the component
+  - Fix: a value read through a call handed a definition, such as `pick(T).w`, is reported as unresolvable instead of being read as the definition
+  - Fix: a namespace import reads its exports when the file already declares a name such as `t$blue`, and when it sits next to a default import, as in `import def, * as t from './tokens'`
+  - Fix: the Vite plugin leaves a package that exports only Plumeria source, under a `plumeria` condition with no fallback, out of dependency pre-bundling
+  - Refactor: namespace reads are resolved on the AST instead of by rewriting the source
+- Updated dependencies [6c025b8]
+  - @typedcss/compiler@21.2.4
+  - @typedcss/eslint-plugin@21.2.4
+
+## 21.2.3
+
+### Patch Changes
+
+- 1f5ad12: Bump version to 21.2.3
+- Updated dependencies [1f5ad12]
+  - @typedcss/compiler@21.2.3
+  - @typedcss/eslint-plugin@21.2.3
+
+## 21.2.2
+
+### Patch Changes
+
+- 30cfad5: Bump version to 21.2.2
+- Updated dependencies [30cfad5]
+- Updated dependencies [30cfad5]
+  - @typedcss/eslint-plugin@21.2.2
+  - @typedcss/compiler@21.2.2
+
+## 21.2.1
+
+### Patch Changes
+
+- 2089b8a: Bump version to 21.2.1
+- Updated dependencies [2089b8a]
+  - @typedcss/compiler@21.2.1
+  - @typedcss/eslint-plugin@21.2.1
+
+## 21.2.0
+
+### Minor Changes
+
+- fb82771: - Feat: a package can share its Plumeria definitions as source: when its `exports` point a `plumeria` condition at its TypeScript files, as in `"plumeria": "./src/index.ts"`, an app that lists it in its dependencies reads the definitions it exports, such as `css.createStatic` values, `css.create` styles and `css.keyframes` names, as it reads a local module, including subpath and pattern exports and packages linked from a pnpm store
+  - Feat: `@typedcss/wind` provides the Tailwind CSS v4.3.3 design tokens, such as the color palettes, spacing, type scale, radius, shadows and animations, as `css.createStatic` values; each value is compiled into the styles that read it, so the package adds nothing to the bundle
+  - Feat: a definition read by name through a namespace import, such as `tokens.blue[500]` after `import * as tokens from './tokens'`, compiles as it does through `import { blue }`; a string key, destructuring, a rest element or the namespace passed as a whole still stops the build and asks for a named import
+  - Fix: an import whose names are all compiled away, such as a `css.createStatic` import read only inside `css.create`, is removed from the output, so the bundler no longer resolves or loads that module; an import still read at runtime, rendered as a component or re-exported is kept
+  - Fix: reading a module's exports before the first project scan, as `resolveExport` and `resolveExportValue` can, no longer leaves that module out of the scan
+  - Fix: `no-combinator` checks only the `css.createStatic` values that start with `:` or `[`, the ones that become a selector when used as a key, so a value with spaces, such as a shadow or a font stack, is no longer reported
+  - Update: `no-unknown-css-properties` accepts `fit-tolerance`, `min-size` and `max-size`, from the latest MDN and webref data
+
+### Patch Changes
+
+- Updated dependencies [fb82771]
+  - @typedcss/compiler@21.2.0
+  - @typedcss/eslint-plugin@21.2.0
+
+## 21.1.8
+
+### Patch Changes
+
+- de2791a: Bump version to 21.1.8
+- Updated dependencies [de2791a]
+  - @typedcss/compiler@21.1.8
+  - @typedcss/eslint-plugin@21.1.8
+
+## 21.1.7
+
+### Patch Changes
+
+- 0f80855: - Fix: `no-unused-keys` treats any non-literal bracket key, such as `styles[item.kind]`, as dynamic access instead of reporting every key as unused
+  - Fix: `no-unused-keys` recognizes dynamic access that appears before the `css.create` call, such as inside a hoisted function
+- Updated dependencies [0f80855]
+- Updated dependencies [0f80855]
+  - @typedcss/compiler@21.1.7
+  - @typedcss/eslint-plugin@21.1.7
+
+## 21.1.6
+
+### Patch Changes
+
+- b94dcc8: - Fix: a dynamic style parameter inside a color, filter or scale function, such as `hsl()`, `brightness()` or `scaleX()`, no longer gets a `px` unit
+- Updated dependencies [b94dcc8]
+  - @typedcss/compiler@21.1.6
+  - @typedcss/eslint-plugin@21.1.6
+
+## 21.1.5
+
+### Patch Changes
+
+- 17a242d: - Fix: write `plumeria.d.ts` into `src/` when the project has one, so a tsconfig that includes only `src`, such as the Vite React template, reads the `classStyle` declaration
+  - Fix: `expand-border-shorthands` writes the longhands in the order `sort-properties` expects, so a single `oxlint --fix` pass settles both rules
+  - Fix: `sort-properties` keeps the trailing comma and moves each property's comments with it when it reorders an object
+- Updated dependencies [17a242d]
+- Updated dependencies [17a242d]
+  - @typedcss/eslint-plugin@21.1.5
+  - @typedcss/compiler@21.1.5
+
+## 21.1.4
+
+### Patch Changes
+
+- f26493b: Bump version to 21.1.4
+- Updated dependencies [f26493b]
+  - @typedcss/compiler@21.1.4
+  - @typedcss/eslint-plugin@21.1.4
+
+## 21.1.3
+
+### Patch Changes
+
+- 2bf6c80: - Update: Move repository links to the zss-labs organization
+- Updated dependencies [2bf6c80]
+  - @typedcss/compiler@21.1.3
+  - @typedcss/eslint-plugin@21.1.3
 
 ## 21.1.2
 
 ### Patch Changes
 
-- f8bd21e: - Fix: a received style can be composed onto a component the build never scans, such as a `@plumeria/headlessui` part, with `classStyle={[styles.base, classStyle]}` instead of failing the build
+- f8bd21e: - Fix: a received style can be composed onto a component the build never scans, such as a `@typedcss/headlessui` part, with `classStyle={[styles.base, classStyle]}` instead of failing the build
   - Fix: passing a received style to a component that declares the style prop fails the build at that attribute, even when the same style is also applied to an element, instead of the style being silently dropped
   - Fix: `no-style-prop-relay` reports a received style passed to a component that declares the style prop, the same case the build stops at, including a component imported from another file
   - Fix: `no-order-dependent-overlap` no longer reports selectors that cannot match at the same time: the same attribute with different values, `:not([attr])` with `[attr=...]`, `:user-valid` with `:user-invalid`, `:playing` with `:paused`, `:dir(ltr)` with `:dir(rtl)`, and odd with even `:nth-*()`
   - Fix: `no-style-prop-relay` reports a file the editor opens under a path that differs from the real one, such as a different letter case on macOS
-  - Update: Next.js in `@plumeria/next-plugin` devDependencies to 16.4.2
+  - Update: Next.js in `@typedcss/next-plugin` devDependencies to 16.4.2
 - Updated dependencies [f8bd21e]
-  - @plumeria/compiler@21.1.2
-  - @plumeria/eslint-plugin@21.1.2
+  - @typedcss/compiler@21.1.2
+  - @typedcss/eslint-plugin@21.1.2
 
 ## 21.1.1
 
@@ -20,8 +173,8 @@
 
 - bc7f0f9: - Fix: the transform scans the project from the bundler root (Jest `rootDir` in swc-jest) instead of the process working directory, so a build started from a monorepo root no longer rescans every workspace on each file
 - Updated dependencies [bc7f0f9]
-  - @plumeria/compiler@21.1.1
-  - @plumeria/eslint-plugin@21.1.1
+  - @typedcss/compiler@21.1.1
+  - @typedcss/eslint-plugin@21.1.1
 
 ## 21.1.0
 
@@ -33,8 +186,8 @@
 
 - Updated dependencies [8dba130]
 - Updated dependencies [8dba130]
-  - @plumeria/compiler@21.1.0
-  - @plumeria/eslint-plugin@21.1.0
+  - @typedcss/compiler@21.1.0
+  - @typedcss/eslint-plugin@21.1.0
 
 ## 21.0.0
 
@@ -44,14 +197,14 @@
   - Feat: a `css.viewTransitionClass` is emitted when it is used in one of those `<ViewTransition>` props, including both sides of a condition and the values of a type map, as well as when it is used in `css.create`
   - Update: a name from `css.keyframes`, `css.viewTransitionClass`, `css.positionTry` or `css.varType` is written where it is read, and its declaration is dropped as with `css.createTheme`, so no definition is left in the bundle
   - Feat: reading a Plumeria definition through a namespace import, by member, string key, destructuring, a rest element or the namespace as a whole, is a compile error that asks for a named import
-  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @plumeria/codemod rename-api viewTransition viewTransitionClass`
+  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @typedcss/codemod rename-api viewTransition viewTransitionClass`
   - Update: the ESLint rules that read `css.viewTransition` read `css.viewTransitionClass`
 
 ### Patch Changes
 
 - Updated dependencies [f462d48]
-  - @plumeria/compiler@21.0.0
-  - @plumeria/eslint-plugin@21.0.0
+  - @typedcss/compiler@21.0.0
+  - @typedcss/eslint-plugin@21.0.0
 
 ## 20.0.0
 
@@ -68,8 +221,8 @@
 ### Patch Changes
 
 - Updated dependencies [1bf429a]
-  - @plumeria/compiler@20.0.0
-  - @plumeria/eslint-plugin@20.0.0
+  - @typedcss/compiler@20.0.0
+  - @typedcss/eslint-plugin@20.0.0
 
 ## 19.15.0
 
@@ -83,8 +236,8 @@
 ### Patch Changes
 
 - Updated dependencies [2a4673f]
-  - @plumeria/compiler@19.15.0
-  - @plumeria/eslint-plugin@19.15.0
+  - @typedcss/compiler@19.15.0
+  - @typedcss/eslint-plugin@19.15.0
 
 ## 19.14.4
 
@@ -92,8 +245,8 @@
 
 - 1e59337: Bump version to 19.14.4
 - Updated dependencies [1e59337]
-  - @plumeria/compiler@19.14.4
-  - @plumeria/eslint-plugin@19.14.4
+  - @typedcss/compiler@19.14.4
+  - @typedcss/eslint-plugin@19.14.4
 
 ## 19.14.3
 
@@ -101,8 +254,8 @@
 
 - e3f505f: Bump version to 19.14.3
 - Updated dependencies [6e9ed5d]
-  - @plumeria/compiler@19.14.3
-  - @plumeria/eslint-plugin@19.14.3
+  - @typedcss/compiler@19.14.3
+  - @typedcss/eslint-plugin@19.14.3
 
 ## 19.14.2
 
@@ -112,8 +265,8 @@
   - Fix: `compileCSS` no longer fails when a file is deleted while the project is being compiled, such as during a branch switch
 - Updated dependencies [57dfbc9]
 - Updated dependencies [57dfbc9]
-  - @plumeria/eslint-plugin@19.14.2
-  - @plumeria/compiler@19.14.2
+  - @typedcss/eslint-plugin@19.14.2
+  - @typedcss/compiler@19.14.2
 
 ## 19.14.1
 
@@ -121,8 +274,8 @@
 
 - 28cb676: Bump version to 19.14.1
 - Updated dependencies [8c70c05]
-  - @plumeria/compiler@19.14.1
-  - @plumeria/eslint-plugin@19.14.1
+  - @typedcss/compiler@19.14.1
+  - @typedcss/eslint-plugin@19.14.1
 
 ## 19.14.0
 
@@ -138,8 +291,8 @@
 
 - Updated dependencies [4ef2f4d]
 - Updated dependencies [4ef2f4d]
-  - @plumeria/compiler@19.14.0
-  - @plumeria/eslint-plugin@19.14.0
+  - @typedcss/compiler@19.14.0
+  - @typedcss/eslint-plugin@19.14.0
 
 ## 19.13.0
 
@@ -160,8 +313,8 @@
 
 - Updated dependencies [ba9260a]
 - Updated dependencies [ba9260a]
-  - @plumeria/eslint-plugin@19.13.0
-  - @plumeria/compiler@19.13.0
+  - @typedcss/eslint-plugin@19.13.0
+  - @typedcss/compiler@19.13.0
 
 ## 19.12.1
 
@@ -178,8 +331,8 @@
   - Update: README.md
 - Updated dependencies [8b7fc9e]
 - Updated dependencies [8b7fc9e]
-  - @plumeria/eslint-plugin@19.12.1
-  - @plumeria/compiler@19.12.1
+  - @typedcss/eslint-plugin@19.12.1
+  - @typedcss/compiler@19.12.1
 
 ## 19.12.0
 
@@ -195,23 +348,23 @@
 ### Patch Changes
 
 - Updated dependencies [e784644]
-  - @plumeria/compiler@19.12.0
-  - @plumeria/eslint-plugin@19.12.0
+  - @typedcss/compiler@19.12.0
+  - @typedcss/eslint-plugin@19.12.0
 
 ## 19.11.0
 
 ### Minor Changes
 
 - 21c541a: - Rename the CLI from `plumerialint` to `plumeria-lint`; `plumerialint` prints that it has been renamed and exits with code 1
-  - `@plumeria/init` writes `plumeria-lint` into the build script and renames an existing `plumerialint`
+  - `@typedcss/init` writes `plumeria-lint` into the build script and renames an existing `plumerialint`
   - The build lint keeps a compile cache in `node_modules/.cache/plumeria-lint`, so oxlint and the rules load faster from the second build
 
 ### Patch Changes
 
 - Updated dependencies [21c541a]
 - Updated dependencies [21c541a]
-  - @plumeria/compiler@19.11.0
-  - @plumeria/eslint-plugin@19.11.0
+  - @typedcss/compiler@19.11.0
+  - @typedcss/eslint-plugin@19.11.0
 
 ## 19.10.4
 
@@ -220,8 +373,8 @@
 - 2079db2: - `no-unknown-css-properties` adds the shipped properties missing from known-css-properties to its known list, such as `cornerShape`, `interestDelay`, `viewTransitionScope` and `textDecorationInset`
 - Updated dependencies [2079db2]
 - Updated dependencies [2079db2]
-  - @plumeria/compiler@19.10.4
-  - @plumeria/eslint-plugin@19.10.4
+  - @typedcss/compiler@19.10.4
+  - @typedcss/eslint-plugin@19.10.4
 
 ## 19.10.3
 
@@ -231,8 +384,8 @@
   - The build lint and `plumerialint` run oxlint on 2 threads, and `plumerialint` keeps a `--threads` you pass
 - Updated dependencies [0a9c2d8]
 - Updated dependencies [0a9c2d8]
-  - @plumeria/eslint-plugin@19.10.3
-  - @plumeria/compiler@19.10.3
+  - @typedcss/eslint-plugin@19.10.3
+  - @typedcss/compiler@19.10.3
 
 ## 19.10.2
 
@@ -240,13 +393,13 @@
 
 - 50858a7: - The build lint reads the styling prop from `styleProp`, so `no-mixed-styling-props`, `no-inline-object`, `no-style-prop-relay`, `no-unresolved-composition` and `custom-props-require-import` check the prop the compiler transforms instead of `classStyle`
   - `plumerialint` takes the styling prop with `--style-prop`, or reads `settings.plumeria.styleProp` from the ESLint config when ESLint is installed
-  - `@plumeria/init` writes `--style-prop` into the build script it guards with `plumerialint` when the styling prop is renamed
-  - `@plumeria/init` writes a renamed styling prop into the ESLint config as `settings.plumeria.styleProp`, so the editor checks the same prop the compiler transforms
-  - `@plumeria/eslint-plugin/guard` exports `lintOverrides` in place of `spellingRules`
+  - `@typedcss/init` writes `--style-prop` into the build script it guards with `plumerialint` when the styling prop is renamed
+  - `@typedcss/init` writes a renamed styling prop into the ESLint config as `settings.plumeria.styleProp`, so the editor checks the same prop the compiler transforms
+  - `@typedcss/eslint-plugin/guard` exports `lintOverrides` in place of `spellingRules`
 - Updated dependencies [50858a7]
 - Updated dependencies [50858a7]
-  - @plumeria/eslint-plugin@19.10.2
-  - @plumeria/compiler@19.10.2
+  - @typedcss/eslint-plugin@19.10.2
+  - @typedcss/compiler@19.10.2
 
 ## 19.10.1
 
@@ -255,29 +408,29 @@
 - 107a11a: Bump version to 19.10.1
 - Updated dependencies [107a11a]
 - Updated dependencies [107a11a]
-  - @plumeria/compiler@19.10.1
-  - @plumeria/eslint-plugin@19.10.1
+  - @typedcss/compiler@19.10.1
+  - @typedcss/eslint-plugin@19.10.1
 
 ## 19.10.0
 
 ### Minor Changes
 
-- db560c7: - `@plumeria/next-plugin` and `@plumeria/unplugin` run `@plumeria/eslint-plugin` through oxlint alongside a production build and stop it on any error or warning, so no build script is needed
-  - `@plumeria/unplugin` lints on Vite, webpack, Rspack, Rollup, Rolldown and Farm
+- db560c7: - `@typedcss/next-plugin` and `@typedcss/unplugin` run `@typedcss/eslint-plugin` through oxlint alongside a production build and stop it on any error or warning, so no build script is needed
+  - `@typedcss/unplugin` lints on Vite, webpack, Rspack, Rollup, Rolldown and Farm
   - `withoutLogicalProperties` and `withoutPhysicalProperties` turn on the matching lint rule in that lint
-  - Add the `lint` option to `@plumeria/next-plugin` and `@plumeria/unplugin` to build without the lint
+  - Add the `lint` option to `@typedcss/next-plugin` and `@typedcss/unplugin` to build without the lint
   - `expand-border-shorthands` joins the recommended rules as a warning
-  - `plumerialint` runs the oxlint that `@plumeria/eslint-plugin` depends on, so oxlint needs no separate install
+  - `plumerialint` runs the oxlint that `@typedcss/eslint-plugin` depends on, so oxlint needs no separate install
   - The lint runs the Plumeria rules only, not oxlint's own default rules, and passes when there is no file to lint
-  - `@plumeria/eslint-plugin` depends on oxlint 1.87.0
-  - `@plumeria/init` prefixes the build script with `plumerialint --` only on esbuild and Bun, and no longer installs oxlint or asks about border shorthands
+  - `@typedcss/eslint-plugin` depends on oxlint 1.87.0
+  - `@typedcss/init` prefixes the build script with `plumerialint --` only on esbuild and Bun, and no longer installs oxlint or asks about border shorthands
 
 ### Patch Changes
 
 - Updated dependencies [db560c7]
 - Updated dependencies [db560c7]
-  - @plumeria/compiler@19.10.0
-  - @plumeria/eslint-plugin@19.10.0
+  - @typedcss/compiler@19.10.0
+  - @typedcss/eslint-plugin@19.10.0
 
 ## 19.9.1
 
@@ -285,7 +438,7 @@
 
 - f51e812: Bump version to 19.9.1
 - Updated dependencies [f51e812]
-  - @plumeria/compiler@19.9.1
+  - @typedcss/compiler@19.9.1
 
 ## 19.9.0
 
@@ -296,17 +449,17 @@
 ### Patch Changes
 
 - Updated dependencies [353ffb0]
-  - @plumeria/compiler@19.9.0
+  - @typedcss/compiler@19.9.0
 
 ## 19.8.2
 
 ### Patch Changes
 
 - def91c1: - Remove the `funding` field from package.json
-  - Move the test-only devDependencies of `@plumeria/compiler` to the workspace root
-  - Update the `next` devDependency of `@plumeria/next-plugin` to 16.3.8
+  - Move the test-only devDependencies of `@typedcss/compiler` to the workspace root
+  - Update the `next` devDependency of `@typedcss/next-plugin` to 16.3.8
 - Updated dependencies [def91c1]
-  - @plumeria/compiler@19.8.2
+  - @typedcss/compiler@19.8.2
 
 ## 19.8.1
 
@@ -316,7 +469,7 @@
   - Count escaped pseudo-class names such as `:\69s()` and `:nth-chil\64()`
   - Count type selectors that start with a non-ASCII character
 - Updated dependencies [2dbd3fc]
-  - @plumeria/compiler@19.8.1
+  - @typedcss/compiler@19.8.1
 
 ## 19.8.0
 
@@ -330,7 +483,7 @@
 ### Patch Changes
 
 - Updated dependencies [2cdf7b8]
-  - @plumeria/compiler@19.8.0
+  - @typedcss/compiler@19.8.0
 
 ## 19.7.0
 
@@ -344,7 +497,7 @@
 ### Patch Changes
 
 - Updated dependencies [6f4fa61]
-  - @plumeria/compiler@19.7.0
+  - @typedcss/compiler@19.7.0
 
 ## 19.6.2
 
@@ -352,7 +505,7 @@
 
 - 82de66e: Bump version to 19.6.2
 - Updated dependencies [82de66e]
-  - @plumeria/compiler@19.6.2
+  - @typedcss/compiler@19.6.2
 
 ## 19.6.1
 
@@ -360,7 +513,7 @@
 
 - aed69d7: Bump version to 19.6.1
 - Updated dependencies [aed69d7]
-  - @plumeria/compiler@19.6.1
+  - @typedcss/compiler@19.6.1
 
 ## 19.6.0
 
@@ -371,7 +524,7 @@
 ### Patch Changes
 
 - Updated dependencies [32a9dba]
-  - @plumeria/compiler@19.6.0
+  - @typedcss/compiler@19.6.0
 
 ## 19.5.2
 
@@ -380,30 +533,30 @@
 - 674b065: - Scan a project whose imports go through a module that re-exports many names without slowing down as the project grows. Every import resolved through such a module copied its whole export list, so editing that module, a cold scan and the scan behind each transform cost more than linear time: in a project of 4,000 files around one barrel, a rescan after editing the barrel took about 300 ms and now takes about 55 ms, and a cold scan went from about 390 ms to about 110 ms. The scan now reads only the name it resolves
   - Read the files a scan has to parse again in parallel once there are 512 or more of them, as the scan already does for their timestamps
 - Updated dependencies [674b065]
-  - @plumeria/compiler@19.5.2
+  - @typedcss/compiler@19.5.2
 
 ## 19.5.1
 
 ### Patch Changes
 
-- 037b7d9: - Compile a project that sits inside another Git repository whose `.gitignore` ignores it. The file walk behind `compileCSS` and the project scan applied every `.gitignore` from the repository root down, so a parent `.gitignore` such as `*` in a home directory hid every source file: development styles appeared, but the production stylesheet came out empty. When a parent `.gitignore` ignores the project directory itself, the walk now leaves out every `.gitignore` above the project and still honors the ones inside it. A repository `.gitignore` keeps applying to an app inside a monorepo. `@plumeria/utils` 19.4 and earlier behaved the same way
-  - `@plumeria/turbopack-loader` and `@plumeria/unplugin` run the optimizer only where its result is used, and call the synchronous compiler functions without `await`. The output does not change
+- 037b7d9: - Compile a project that sits inside another Git repository whose `.gitignore` ignores it. The file walk behind `compileCSS` and the project scan applied every `.gitignore` from the repository root down, so a parent `.gitignore` such as `*` in a home directory hid every source file: development styles appeared, but the production stylesheet came out empty. When a parent `.gitignore` ignores the project directory itself, the walk now leaves out every `.gitignore` above the project and still honors the ones inside it. A repository `.gitignore` keeps applying to an app inside a monorepo. `@typedcss/utils` 19.4 and earlier behaved the same way
+  - `@typedcss/turbopack-loader` and `@typedcss/unplugin` run the optimizer only where its result is used, and call the synchronous compiler functions without `await`. The output does not change
 - Updated dependencies [037b7d9]
-  - @plumeria/compiler@19.5.1
+  - @typedcss/compiler@19.5.1
 
 ## 19.5.0
 
 ### Minor Changes
 
-- 0f3ea0f: - `@plumeria/compiler` is now written in Rust with napi-rs. One native module scans the project, transforms each file, compiles the production sheet and minifies it with lightningcss, and replaces the TypeScript compiler built on `@swc/core`, `@rust-gear/glob`, `zss-engine`, `postcss` and `lightningcss`. Prebuilt binaries ship for macOS, Linux (glibc, musl and armv7), Windows, Android, FreeBSD and `wasm32-wasi`, and the package requires Node.js 20 or later
-  - `@plumeria/turbopack-loader`, `@plumeria/unplugin` and `@plumeria/eslint-plugin` scan, transform and resolve through `@plumeria/compiler` instead of `@plumeria/utils`
-  - `@plumeria/compiler` also exports `transformSource`, `scanAll`, `optimizer`, `needsCompile`, `resolvePropertyPolicy`, `resolveImportPath`, `resolveExport`, `resolveExportValue`, `getStyleRecords`, `themeHashOf`, `createTheme` and `DEFAULT_STYLE_PROP`
-  - `@plumeria/utils` keeps the TypeScript implementation and adds `compileCSS`, the previous `@plumeria/compiler` entry point
+- 0f3ea0f: - `@typedcss/compiler` is now written in Rust with napi-rs. One native module scans the project, transforms each file, compiles the production sheet and minifies it with lightningcss, and replaces the TypeScript compiler built on `@swc/core`, `@rust-gear/glob`, `zss-engine`, `postcss` and `lightningcss`. Prebuilt binaries ship for macOS, Linux (glibc, musl and armv7), Windows, Android, FreeBSD and `wasm32-wasi`, and the package requires Node.js 20 or later
+  - `@typedcss/turbopack-loader`, `@typedcss/unplugin` and `@typedcss/eslint-plugin` scan, transform and resolve through `@typedcss/compiler` instead of `@typedcss/utils`
+  - `@typedcss/compiler` also exports `transformSource`, `scanAll`, `optimizer`, `needsCompile`, `resolvePropertyPolicy`, `resolveImportPath`, `resolveExport`, `resolveExportValue`, `getStyleRecords`, `themeHashOf`, `createTheme` and `DEFAULT_STYLE_PROP`
+  - `@typedcss/utils` keeps the TypeScript implementation and adds `compileCSS`, the previous `@typedcss/compiler` entry point
 
 ### Patch Changes
 
 - Updated dependencies [0f3ea0f]
-  - @plumeria/compiler@19.5.0
+  - @typedcss/compiler@19.5.0
 
 ## 19.4.0
 
@@ -414,19 +567,19 @@
 ### Patch Changes
 
 - Updated dependencies [f97cb91]
-  - @plumeria/utils@19.4.0
+  - @typedcss/utils@19.4.0
 
 ## 19.3.0
 
 ### Minor Changes
 
-- aa5fc25: - Compile a file that writes the styling prop without importing `@plumeria/core`. The scan, the Turbopack and unplugin transforms, and the file condition `withPlumeria` hands to Turbopack used to skip every file that did not mention `@plumeria/core`, so a component handed `classStyle={styles.a}` from such a file received an empty class. They now also compile a file that writes the styling prop as a JSX attribute, and a lightweight reader keeps a mention in a comment, a string or JSX text from pulling a file in
-  - `props-require-import` is renamed to `custom-props-require-import` and no longer reports the styling prop. It now reports a file without the `@plumeria/core` import that passes a `css.create` style to a component through any other prop, following the import to the file that defines the style, and its fix adds the import
+- aa5fc25: - Compile a file that writes the styling prop without importing `@typedcss/core`. The scan, the Turbopack and unplugin transforms, and the file condition `withPlumeria` hands to Turbopack used to skip every file that did not mention `@typedcss/core`, so a component handed `classStyle={styles.a}` from such a file received an empty class. They now also compile a file that writes the styling prop as a JSX attribute, and a lightweight reader keeps a mention in a comment, a string or JSX text from pulling a file in
+  - `props-require-import` is renamed to `custom-props-require-import` and no longer reports the styling prop. It now reports a file without the `@typedcss/core` import that passes a `css.create` style to a component through any other prop, following the import to the file that defines the style, and its fix adds the import
 
 ### Patch Changes
 
 - Updated dependencies [aa5fc25]
-  - @plumeria/utils@19.3.0
+  - @typedcss/utils@19.3.0
 
 ## 19.2.16
 
@@ -437,7 +590,7 @@
   - Show the source of a style value that cannot be resolved at build time, such as `t.missing` or `a ? 1 : 2`, instead of its syntax node type
   - Start every build error with `[plumeria]`. The turbopack-loader and unplugin transforms printed `Plumeria:` while the compiler printed `[plumeria]`, so the same error read differently in development and production builds
 - Updated dependencies [225551a]
-  - @plumeria/utils@19.2.16
+  - @typedcss/utils@19.2.16
 
 ## 19.2.15
 
@@ -445,7 +598,7 @@
 
 - 83fa450: - Reject a style value that cannot be known at build time instead of dropping it. A value the build could not resolve produced no declaration at all: the build succeeded, no warning was printed, and the element came out with an empty class, so the only way to notice was to look at the screen. `css.create`, `css.createStatic`, `css.createTheme`, `css.keyframes` and `css.viewTransition` now compare the keys they were given against the keys they resolved and fail on any that went missing, naming the property, the expression behind it, and the function form of `css.create` as the way to pass a value that is only known at runtime. This covers a call, a method chain, a constructor, a tagged template, a ternary and an array literal, whether written at the call site or behind a local `const`, as well as an identifier or member expression that resolves to nothing. Literals, locally resolvable constants, template literals built from them, spreads, computed keys, `null`, and style functions still compile as they did. A property is left unchecked in one situation only: something later in the same object replaced what it was given, either a second use of its key or a spread that carries that key. A property is only rejected where the style still uses it: a later property or a later spread writing the same key replaces it, and then the value it replaced is never looked at. That holds wherever the value was written — at the call site, behind a local `const`, inside a `const` an object spreads in, or in the object a style function returns, where a value that does not come from the parameter is rejected the same way while `width: w` compiles to a variable as it always did
 - Updated dependencies [83fa450]
-  - @plumeria/utils@19.2.15
+  - @typedcss/utils@19.2.15
 
 ## 19.2.14
 
@@ -454,7 +607,7 @@
 - cc34f05: - Order the transform ahead of the framework plugins. The plugin declared `enforce: 'pre'`, which only wins against plugins that do not, so a framework plugin that also enforces pre and was listed first compiled the JSX away before Plumeria ever saw the style prop; the transform hook now declares its own `order: 'pre'`, and the Vite adapter keeps that order when it rewraps the hook. Solid was the visible case — the style prop produced no class and no CSS at all
   - Write the class attribute a non-React renderer reads. The style prop rewrite emitted `className`, which only reaches the DOM on renderers that alias it, so on Solid the class silently never landed and the CSS never applied; the Vite adapter now recognises a Solid build from its resolved plugins and writes `class` instead, under the same name it reads an existing attribute to merge with. Dynamic function keys keep their companion `style` attribute either way, and a React build is unchanged
 - Updated dependencies [cc34f05]
-  - @plumeria/utils@19.2.14
+  - @typedcss/utils@19.2.14
 
 ## 19.2.13
 
@@ -463,7 +616,7 @@
 - da08650: - Collect a module's imports from its body. Building the alias and import maps ran a full AST walk to reach declarations that can only appear at the top level; the transform now iterates the module body
   - Reuse the source buffer when splicing the replacements. Writing the transformed file encoded the source into a second buffer that the parse step had already built. On a 17 KB module with 26 imports and 240 top-level declarations the two together save about 170 µs, roughly 9% of the SWC parse of the same file; modules the size of the benchmark's fixtures are unchanged
 - Updated dependencies [da08650]
-  - @plumeria/utils@19.2.13
+  - @typedcss/utils@19.2.13
 
 ## 19.2.12
 
@@ -474,7 +627,7 @@
   - Overlay a file's local values on the scanned static table. Resolving a dynamic style's parameters, a member expression's root identifier, and a file's local constants each rebuilt the project-wide static table to add a handful of entries
   - Read a compile pass's tables through one overlay. Each transform took its own copy of the scanned tables before layering the file's entries on top; a compile now layers over a base that is rebuilt only when the scan changes
 - Updated dependencies [85bb229]
-  - @plumeria/utils@19.2.12
+  - @typedcss/utils@19.2.12
 
 ## 19.2.11
 
@@ -485,7 +638,7 @@
   - Order the replacements once before resolving deferred sources. Each deferred expression copied and re-sorted the whole replacement list, and the final splice sorted it again
   - Overlay the file-local aliases on the scanned tables. Transforming one file copied every keyframes, view transition, create, theme, and static-create entry in the project before adding its own aliases; the aliases now sit on top of the scanned table instead
 - Updated dependencies [cf51115]
-  - @plumeria/utils@19.2.11
+  - @typedcss/utils@19.2.11
 
 ## 19.2.10
 
@@ -494,7 +647,7 @@
 - 5f9a3b6: - Read a misordered property's reported position from the index `sort-properties` already builds. The rule mapped every property to its sorted position to decide what was out of order, then scanned the sorted list again once per report
   - Collect a file's extracted stylesheets in a set. Every sheet was matched against the growing array, and the on-demand pass rebuilt its own lookup from that array on each call; both now write through one insertion-ordered set, and `extractOndemandStyles` takes the collector rather than the array
 - Updated dependencies [5f9a3b6]
-  - @plumeria/utils@19.2.10
+  - @typedcss/utils@19.2.10
 
 ## 19.2.9
 
@@ -502,7 +655,7 @@
 
 - 5754269: - Scan a file again once an import that resolved to nothing names a real file. Deleting a module a component imports its styles from leaves the importer holding a specifier that resolves nowhere, and restoring the file only scanned the file itself, so the importer was never visited again: a style handed to a child through a prop stayed missing and the child kept rendering `className=""`. A scan that finds files it has not seen now revisits whatever was left holding an unresolved specifier
 - Updated dependencies [5754269]
-  - @plumeria/utils@19.2.9
+  - @typedcss/utils@19.2.9
 
 ## 19.2.8
 
@@ -511,7 +664,7 @@
 - c49a6ae: - Share a file's modification time across one scan while resolving exports. Resolving an export checks the file it names on disk, and a barrel re-exported by every consumer was checked once per consumer. The result now lives for the length of the scan and is dropped when it ends, so a rescan reads each file once: about 5% off a rescan that reparses 201 files, and 2% off a cold scan
   - Match a component's prop entries through a key set rather than a scan of the ones already collected. Every entry was compared against each one already held, serializing both sides' conditions to do it, so the work grew with the square of the call sites a component is used from. A component used from 1600 call sites scans about 6% faster; below a few hundred the difference is not measurable
 - Updated dependencies [c49a6ae]
-  - @plumeria/utils@19.2.8
+  - @typedcss/utils@19.2.8
 
 ## 19.2.7
 
@@ -520,7 +673,7 @@
 - 5015ddf: - Read a file's exports once per scan rather than twice. Each parsed file had its imports and exports walked before the scan and again at the end of the first pass, which also resolved every import specifier a second time. A rescan that reparses 201 files drops about 3%, and 400 needless file system lookups go with it
   - Order the entries a component's prop collects by code unit rather than by locale. Comparing two paths with `localeCompare` builds the collator the first time it runs, which cost about 7 ms inside the first scan of every process; a build that scans from several workers paid it once per worker. Paths are internal keys, and they now sort the way the scanned file list already does
 - Updated dependencies [5015ddf]
-  - @plumeria/utils@19.2.7
+  - @typedcss/utils@19.2.7
 
 ## 19.2.6
 
@@ -528,7 +681,7 @@
 
 - 26ef466: - Remove a changed file's entries from the aggregated tables by name. Every invalidated file searched all of those tables for the keys it had written, so a rescan cost the number of changed files times the size of the project: editing a module that 200 others import spent more than half of the rescan inside that search. The keys a file writes are now recorded as it writes them, including the ones it published before it threw, and a rescan of the same edit takes about half as long
 - Updated dependencies [26ef466]
-  - @plumeria/utils@19.2.6
+  - @typedcss/utils@19.2.6
 
 ## 19.2.5
 
@@ -536,7 +689,7 @@
 
 - d06d7e0: - Read a relative import written for `NodeNext` as the file it names. Under `moduleResolution` set to `node16` or `nodenext` a relative specifier has to carry the `.js` extension TypeScript will emit, so `./styles.js` was looked for on disk exactly as written and never reached `styles.ts`: a `create` or a `keyframes` declared there was left out of the sheet and the element lost the class, while the build still passed. A `.js` specifier now falls back to `.ts` and `.tsx`, and `.jsx` to `.tsx`, only where the file it names is not itself written
 - Updated dependencies [d06d7e0]
-  - @plumeria/utils@19.2.5
+  - @typedcss/utils@19.2.5
 
 ## 19.2.4
 
@@ -545,7 +698,7 @@
 - 2fcd158: - Resolve a `paths` alias from the `tsconfig.json` as it is actually written. A config carrying comments or a trailing comma, one saved with a byte order mark, one inheriting `paths` through `extends`, and the scaffolded pair that keeps its real config under `references` were each read as strict JSON from the root file alone, so the alias resolved to nothing without a word: a `keyframes` or a `create` imported under one was left out of the sheet and the element lost the class, while the build still passed. An inherited substitution is anchored to the config that declares it, the way `tsc` anchors it. `baseUrl` stays unread — it is deprecated in TypeScript 6 and stops functioning in 7
   - Match the longest alias prefix rather than the first one written. Where `@/*` and `@/lib/*` are both declared, `@/lib/button` was taken under `@/*`, so a file that happened to sit at that path was compiled in place of the real one
 - Updated dependencies [2fcd158]
-  - @plumeria/utils@19.2.4
+  - @typedcss/utils@19.2.4
 
 ## 19.2.3
 
@@ -553,7 +706,7 @@
 
 - 78cdc59: Bump version to 19.2.3
 - Updated dependencies [78cdc59]
-  - @plumeria/utils@19.2.3
+  - @typedcss/utils@19.2.3
 
 ## 19.2.2
 
@@ -561,16 +714,16 @@
 
 - 8e49d67: Bump version to 19.2.2
 - Updated dependencies [8e49d67]
-  - @plumeria/utils@19.2.2
+  - @typedcss/utils@19.2.2
 
 ## 19.2.1
 
 ### Patch Changes
 
-- fae8ab3: - Depend on the internal packages by exact version rather than by caret range. `@plumeria/utils` carries the scan tables between the plugins and is not a stable surface; a caret range let an installed plugin float onto a later `utils` whose tables no longer had the shape that plugin reads
-  - `@plumeria/unplugin` below 18.5.3 reads `variantsHashTable` off the scan result, and 18.5.3 dropped that table. Any of those versions installed today resolves `@plumeria/utils` to 18.5.4 and throws on a table that is no longer there
+- fae8ab3: - Depend on the internal packages by exact version rather than by caret range. `@typedcss/utils` carries the scan tables between the plugins and is not a stable surface; a caret range let an installed plugin float onto a later `utils` whose tables no longer had the shape that plugin reads
+  - `@typedcss/unplugin` below 18.5.3 reads `variantsHashTable` off the scan result, and 18.5.3 dropped that table. Any of those versions installed today resolves `@typedcss/utils` to 18.5.4 and throws on a table that is no longer there
 - Updated dependencies [fae8ab3]
-  - @plumeria/utils@19.2.1
+  - @typedcss/utils@19.2.1
 
 ## 19.2.0
 
@@ -581,7 +734,7 @@
 ### Patch Changes
 
 - Updated dependencies [d14254c]
-  - @plumeria/utils@19.2.0
+  - @typedcss/utils@19.2.0
 
 ## 19.1.10
 
@@ -589,7 +742,7 @@
 
 - 83c79d5: Bump version to 19.1.10
 - Updated dependencies [83c79d5]
-  - @plumeria/utils@19.1.10
+  - @typedcss/utils@19.1.10
 
 ## 19.1.9
 
@@ -597,7 +750,7 @@
 
 - 5c7c7f3: Bump version to 19.1.9
 - Updated dependencies [5c7c7f3]
-  - @plumeria/utils@19.1.9
+  - @typedcss/utils@19.1.9
 
 ## 19.1.8
 
@@ -605,7 +758,7 @@
 
 - 9ad8598: Bump version to 19.1.8
 - Updated dependencies [9ad8598]
-  - @plumeria/utils@19.1.8
+  - @typedcss/utils@19.1.8
 
 ## 19.1.7
 
@@ -613,7 +766,7 @@
 
 - dea2ce8: Bump version to 19.1.7
 - Updated dependencies [dea2ce8]
-  - @plumeria/utils@19.1.7
+  - @typedcss/utils@19.1.7
 
 ## 19.1.6
 
@@ -621,7 +774,7 @@
 
 - 5aec304: Bump version to 19.1.6
 - Updated dependencies [5aec304]
-  - @plumeria/utils@19.1.6
+  - @typedcss/utils@19.1.6
 
 ## 19.1.5
 
@@ -629,7 +782,7 @@
 
 - 120fa3e: - Update dependencies
 - Updated dependencies [120fa3e]
-  - @plumeria/utils@19.1.5
+  - @typedcss/utils@19.1.5
 
 ## 19.1.4
 
@@ -637,7 +790,7 @@
 
 - 829a573: Bump version to 19.1.4
 - Updated dependencies [829a573]
-  - @plumeria/utils@19.1.4
+  - @typedcss/utils@19.1.4
 
 ## 19.1.3
 
@@ -649,7 +802,7 @@
   - Fix: emit the app's atomic CSS as one sheet in an RSC build, instead of letting it follow the chunks. The per-file CSS import is not written in the first place, rather than written and then stripped back out. `build.cssCodeSplit` is no longer forced off for the whole app, which used to leave the client references without CSS and strip every client component of its styles in production. The sheet is emitted once from the `rsc` environment, and every chunk of that environment resolves to that same file, so whichever server module renders the browser fetches the one sheet. Code-split CSS repeats a shared declaration once per chunk it reaches, which is the one thing atomic CSS exists to avoid.
   - Refactor: the host decides what a module's CSS import says, through one formatter on the plugin's internal surface, rather than the core writing a statement that three bundler adapters then rewrite with a regex. Those rewrites depended on the exact spelling the core happened to produce, and a change to it would have gone unnoticed until the wrong stylesheet loaded; the disk-emitting form is now written once and shared by Vite and Farm instead of living twice.
 - Updated dependencies [ee9fd3d]
-  - @plumeria/utils@19.1.3
+  - @typedcss/utils@19.1.3
 
 ## 19.1.2
 
@@ -657,7 +810,7 @@
 
 - 4196ef2: Bump version to 19.1.2
 - Updated dependencies [4196ef2]
-  - @plumeria/utils@19.1.2
+  - @typedcss/utils@19.1.2
 
 ## 19.1.1
 
@@ -667,7 +820,7 @@
   - Fix: hoist a function declaration nested in a block to the enclosing function scope, so a reference to it is no longer collected as a module reference.
   - Refactor: drop the unreachable null paths from `resolveDynamicStyle` and the call sites that guarded them.
 - Updated dependencies [3cf65a7]
-  - @plumeria/utils@19.1.1
+  - @typedcss/utils@19.1.1
 
 ## 19.1.0
 
@@ -678,7 +831,7 @@
 ### Patch Changes
 
 - Updated dependencies [5ed2778]
-  - @plumeria/utils@19.1.0
+  - @typedcss/utils@19.1.0
 
 ## 19.0.0
 
@@ -689,7 +842,7 @@
 ### Patch Changes
 
 - Updated dependencies [137fae9]
-  - @plumeria/utils@19.0.0
+  - @typedcss/utils@19.0.0
 
 ## 18.5.4
 
@@ -697,7 +850,7 @@
 
 - 4bc0c1b: - Fix: carry a preserved inline style object one property at a time, so a trailing comma or a line comment no longer breaks the merged style attribute.
 - Updated dependencies [4bc0c1b]
-  - @plumeria/utils@18.5.4
+  - @typedcss/utils@18.5.4
 
 ## 18.5.3
 
@@ -707,7 +860,7 @@
   - Refactor: remove the legacy css.variants tables, which the bracket notation on css.create replaces.
   - Fix: stop applying legacy css.variants checks in no-inline-object, no-combinator, no-inner-call, and no-destructure while preserving current API diagnostics.
 - Updated dependencies [63dbf49]
-  - @plumeria/utils@18.5.3
+  - @typedcss/utils@18.5.3
 
 ## 18.5.2
 
@@ -717,7 +870,7 @@
   - Fix: report a style prop default that is not a defined style, instead of dropping it or emitting a rule nothing can set.
   - Fix: resolve a constant that names another constant, so its value reaches the style.
 - Updated dependencies [cab3a5e]
-  - @plumeria/utils@18.5.2
+  - @typedcss/utils@18.5.2
 
 ## 18.5.1
 
@@ -733,7 +886,7 @@
   - Fix: report a spread element in a style array instead of dropping the styles behind it.
   - Fix: read a destructured props parameter the same way in the compiler, the loader, and the plugin.
 - Updated dependencies [e85b075]
-  - @plumeria/utils@18.5.1
+  - @typedcss/utils@18.5.1
 
 ## 18.5.0
 
@@ -749,7 +902,7 @@
 ### Patch Changes
 
 - Updated dependencies [9fe1a2f]
-  - @plumeria/utils@18.5.0
+  - @typedcss/utils@18.5.0
 
 ## 18.4.2
 
@@ -758,7 +911,7 @@
 - 128309e: - Fix: skip false, null and undefined style entries while preserving adjacent styles and existing class names.
   - Fix: resolve renamed destructured style props by their original prop names.
 - Updated dependencies [128309e]
-  - @plumeria/utils@18.4.2
+  - @typedcss/utils@18.4.2
 
 ## 18.4.1
 
@@ -767,7 +920,7 @@
 - 683fef4: - Fix: a dynamic function key handed to a component through a style prop was silently dropped. The key now reaches the element together with the variables the caller computed, so `<Card styleArray={styles.tone(color)} />` renders the class and the custom property that writing the call on the element would.
   - Fix: `css.use()` reports a style prop that carries a dynamic function key instead of dropping it, because such a value has to reach the element as a custom property and a class name string cannot carry one.
 - Updated dependencies [683fef4]
-  - @plumeria/utils@18.4.1
+  - @typedcss/utils@18.4.1
 
 ## 18.4.0
 
@@ -779,7 +932,7 @@
 ### Patch Changes
 
 - Updated dependencies [51978e5]
-  - @plumeria/utils@18.4.0
+  - @typedcss/utils@18.4.0
 
 ## 18.3.18
 
@@ -787,7 +940,7 @@
 
 - bdf8a49: - Fix: a style function parameter used in declarations with different unit rules shared one variable, so `(n: number) => ({ padding: n, zIndex: n })` set it to `4px` and left `z-index` invalid. Such a parameter now gets one variable per unit rule, and a parameter whose declarations agree keeps the single variable it had.
 - Updated dependencies [bdf8a49]
-  - @plumeria/utils@18.3.18
+  - @typedcss/utils@18.3.18
 
 ## 18.3.17
 
@@ -796,7 +949,7 @@
 - d70dd1e: - Fix: a style function parameter with a default overwrote the whole declaration value with its variable, so ``background: `linear-gradient(${c}, #000)` `` compiled to `background: var(--hash-c, teal)` and the text around the variable was dropped. The fallback is now written into the variable reference.
   - Fix: the default only reached the first declaration the parameter landed in, so `(c = 'red') => ({ color: c, borderColor: c })` left `border-color` without a fallback. Every declaration now gets one, with the unit decided per declaration.
 - Updated dependencies [d70dd1e]
-  - @plumeria/utils@18.3.17
+  - @typedcss/utils@18.3.17
 
 ## 18.3.16
 
@@ -807,7 +960,7 @@
   - Fix: a hex code inside `url()` or a quoted value was replaced with its color name, so `url(#fff)` became `url(white)` and `content: '#fff'` became `content: 'white'`. Those values are now left as written.
   - Update: `navy`, `springgreen`, `powderblue` and `lavenderblush` are normalized like the other named colors.
 - Updated dependencies [63c9330]
-  - @plumeria/utils@18.3.16
+  - @typedcss/utils@18.3.16
 
 ## 18.3.15
 
@@ -815,7 +968,7 @@
 
 - cea31e3: - Fix: an error thrown while scanning the file a style is declared in was reported under the name of the file that uses the style. It is now reported under the name of the file it came from, including when the style is reached through a re-export.
 - Updated dependencies [cea31e3]
-  - @plumeria/utils@18.3.15
+  - @typedcss/utils@18.3.15
 
 ## 18.3.14
 
@@ -825,7 +978,7 @@
   - Change: a wrapped component is now held to the same rule as every other one, so a style prop it never applies to an element is reported where it is received. Passing that style on to another component already failed the build, but the error was raised in the component that received it next.
 
 - Updated dependencies [0be895c]
-  - @plumeria/utils@18.3.14
+  - @typedcss/utils@18.3.14
 
 ## 18.3.13
 
@@ -835,7 +988,7 @@
   - Fix: a style prop on a component the file does not declare at the top level — one wrapped in `memo`, `forwardRef` or any other call — was resolved by taking the first component in the file that takes a prop of that name, which depends on registration order and could bind another component's style or none at all. Every candidate in the file is now collected, and the key the caller passed selects among them at runtime.
 
 - Updated dependencies [1b27b59]
-  - @plumeria/utils@18.3.13
+  - @typedcss/utils@18.3.13
 
 ## 18.3.12
 
@@ -846,7 +999,7 @@
   Fix: a constant read through more than one property, such as `theme.colors.primary`, resolved to nothing, so the declaration was dropped from the sheet without an error and an interpolation of it was left empty. The whole path is now walked.
 
 - Updated dependencies [cf0091d]
-  - @plumeria/utils@18.3.12
+  - @typedcss/utils@18.3.12
 
 ## 18.3.11
 
@@ -857,7 +1010,7 @@
   Perf: a value that holds none of `kf-`, `vt-` or `cr-` skips the reference marker scan, which the on-demand walk had been running over every string it visits. Every match begins with one of the three, so the set of references found is unchanged.
 
 - Updated dependencies [dc8fb4d]
-  - @plumeria/utils@18.3.11
+  - @typedcss/utils@18.3.11
 
 ## 18.3.10
 
@@ -865,7 +1018,7 @@
 
 - c53466e: Perf: a value that holds no `var(` skips the custom property scan, which the on-demand walk had been running over every string it visits. The gate is implied by the pattern it guards, so the set of variables found is unchanged.
 - Updated dependencies [c53466e]
-  - @plumeria/utils@18.3.10
+  - @typedcss/utils@18.3.10
 
 ## 18.3.9
 
@@ -873,7 +1026,7 @@
 
 - 69cd071: Bump version to 18.3.9
 - Updated dependencies [69cd071]
-  - @plumeria/utils@18.3.9
+  - @typedcss/utils@18.3.9
 
 ## 18.3.8
 
@@ -881,7 +1034,7 @@
 
 - 9fc80c2: Update README.md
 - Updated dependencies [9fc80c2]
-  - @plumeria/utils@18.3.8
+  - @typedcss/utils@18.3.8
 
 ## 18.3.7
 
@@ -889,7 +1042,7 @@
 
 - b867ab2: Fix: a theme variable written with a fallback, or nested inside another variable's fallback, was not recognised as used, so its declaration never reached the sheet and the value fell back for want of anything to read. The name is now read up to where the fallback begins, rather than up to a closing parenthesis that may belong to an inner `var()`.
 - Updated dependencies [b867ab2]
-  - @plumeria/utils@18.3.7
+  - @typedcss/utils@18.3.7
 
 ## 18.3.6
 
@@ -898,7 +1051,7 @@
 - 5c48f91: - Fix: a `css.keyframes` or `css.viewTransition` binding read inside a template literal or a concatenation lost the `kf-` / `vt-` prefix its own name carries, so the value named a rule that was never emitted and an `animation` shorthand built that way animated nothing. The binding now reads the same wherever it is read.
   - Fix: a reference sitting in the middle of a value, as an `animation` shorthand holds one, is now found when collecting the rules a sheet needs, instead of only when it is the whole value.
 - Updated dependencies [5c48f91]
-  - @plumeria/utils@18.3.6
+  - @typedcss/utils@18.3.6
 
 ## 18.3.5
 
@@ -907,16 +1060,16 @@
 - eb4fb7e: - Fix: a `css.createTheme` selector written as anything other than a string literal — a template literal, or a name the file declares — was read as an empty selector, which dropped the theme's whole rule and left the styles pointing at custom properties nothing declared. The selector is now resolved the same way a style value is, so a name or a `createStatic` entry works, and two themes that differ only by selector stay apart.
   - Fix: a selector that still cannot be read at build time is now reported where it is written, instead of compiling to no CSS at all.
 - Updated dependencies [eb4fb7e]
-  - @plumeria/utils@18.3.5
+  - @typedcss/utils@18.3.5
 
 ## 18.3.4
 
 ### Patch Changes
 
 - 91c1796: - Fix: editing only the selector passed to `css.createTheme` left the rule under the old selector setting the same custom properties, because their names were hashed from the value alone and never from the selector. The selector is now part of the hash, so the rule left behind declares variables of its own and stops competing with the new one.
-  - Fix: `@plumeria/utils` hashes a `createTheme` declaration the same way in the scan pass as in the transform, which had left the selector out of the scan pass alone.
+  - Fix: `@typedcss/utils` hashes a `createTheme` declaration the same way in the scan pass as in the transform, which had left the selector out of the scan pass alone.
 - Updated dependencies [91c1796]
-  - @plumeria/utils@18.3.4
+  - @typedcss/utils@18.3.4
 
 ## 18.3.3
 
@@ -924,7 +1077,7 @@
 
 - 79812c2: Bump version to 18.3.3
 - Updated dependencies [79812c2]
-  - @plumeria/utils@18.3.3
+  - @typedcss/utils@18.3.3
 
 ## 18.3.2
 
@@ -932,7 +1085,7 @@
 
 - a524e7a: Bump version to 18.3.2
 - Updated dependencies [a524e7a]
-  - @plumeria/utils@18.3.2
+  - @typedcss/utils@18.3.2
 
 ## 18.3.1
 
@@ -940,27 +1093,27 @@
 
 - 64c033e: - Update: README.md
 - Updated dependencies [64c033e]
-  - @plumeria/utils@18.3.1
+  - @typedcss/utils@18.3.1
 
 ## 18.3.0
 
 ### Minor Changes
 
-- 8449a58: - Feat: add the `@plumeria/unplugin/factory` subpath, which hands back the transform as a plain function, so a test compiles a source string and reads the class names and the stylesheet out of it with no bundler in between. The bundler entries reach `unplugin` itself, which is ESM and cannot be required from a CommonJS runner; the factory carries only a type import of it, and loads under Jest as it stands.
-  - Update: `@plumeria/turbopack-loader` declares `exports` rather than leaning on `main`. The entry and `zero-virtual.css` are named — the two `@plumeria/next-plugin` resolves, and the two a test driving the loader directly reaches — where nothing else under `dist/` was ever referenced.
+- 8449a58: - Feat: add the `@typedcss/unplugin/factory` subpath, which hands back the transform as a plain function, so a test compiles a source string and reads the class names and the stylesheet out of it with no bundler in between. The bundler entries reach `unplugin` itself, which is ESM and cannot be required from a CommonJS runner; the factory carries only a type import of it, and loads under Jest as it stands.
+  - Update: `@typedcss/turbopack-loader` declares `exports` rather than leaning on `main`. The entry and `zero-virtual.css` are named — the two `@typedcss/next-plugin` resolves, and the two a test driving the loader directly reaches — where nothing else under `dist/` was ever referenced.
 
 ### Patch Changes
 
 - Updated dependencies [8449a58]
-  - @plumeria/utils@18.3.0
+  - @typedcss/utils@18.3.0
 
 ## 18.2.34
 
 ### Patch Changes
 
-- f3794bd: - Fix: a style function with a destructured parameter called with no argument — `styles.box()` against `({ tone = 'navy' }) => ...` — aborted the build with an internal `TypeError` instead of compiling. The same call already worked under `@plumeria/turbopack-loader`, and a parameter left without a default is now reported the way a named call with a missing key already was.
+- f3794bd: - Fix: a style function with a destructured parameter called with no argument — `styles.box()` against `({ tone = 'navy' }) => ...` — aborted the build with an internal `TypeError` instead of compiling. The same call already worked under `@typedcss/turbopack-loader`, and a parameter left without a default is now reported the way a named call with a missing key already was.
 - Updated dependencies [f3794bd]
-  - @plumeria/utils@18.2.34
+  - @typedcss/utils@18.2.34
 
 ## 18.2.33
 
@@ -968,7 +1121,7 @@
 
 - 903ea85: Bump version to 18.2.33
 - Updated dependencies [903ea85]
-  - @plumeria/utils@18.2.33
+  - @typedcss/utils@18.2.33
 
 ## 18.2.32
 
@@ -976,7 +1129,7 @@
 
 - 72b0f67: Bump version to 18.2.32
 - Updated dependencies [72b0f67]
-  - @plumeria/utils@18.2.32
+  - @typedcss/utils@18.2.32
 
 ## 18.2.31
 
@@ -984,7 +1137,7 @@
 
 - bffb1cd: Bump version to 18.2.31
 - Updated dependencies [bffb1cd]
-  - @plumeria/utils@18.2.31
+  - @typedcss/utils@18.2.31
 
 ## 18.2.30
 
@@ -992,7 +1145,7 @@
 
 - f4ba436: Bump version to 18.2.30
 - Updated dependencies [f4ba436]
-  - @plumeria/utils@18.2.30
+  - @typedcss/utils@18.2.30
 
 ## 18.2.29
 
@@ -1000,7 +1153,7 @@
 
 - e87798c: Bump version to 18.2.29
 - Updated dependencies [e87798c]
-  - @plumeria/utils@18.2.29
+  - @typedcss/utils@18.2.29
 
 ## 18.2.28
 
@@ -1008,7 +1161,7 @@
 
 - 8a62e49: Bump version to 18.2.28
 - Updated dependencies [8a62e49]
-  - @plumeria/utils@18.2.28
+  - @typedcss/utils@18.2.28
 
 ## 18.2.27
 
@@ -1016,7 +1169,7 @@
 
 - e184f05: Bump version to 18.2.27
 - Updated dependencies [e184f05]
-  - @plumeria/utils@18.2.27
+  - @typedcss/utils@18.2.27
 
 ## 18.2.26
 
@@ -1025,13 +1178,13 @@
 - 9f53ed0: - Fix: two components declared in one file that receive a style through the same prop name shared one lookup table, so the second rendered with the first one's keys and reached the element with no class at all. Each component now reads the table it owns, in the bundler plugins and in the generated stylesheet alike.
   - Fix: a style function's parameter default was read as neither a default nor a name, so `(c = 'red') => ({ color: c })` produced an empty class even when an argument was passed. A default now compiles to the CSS variable's fallback, so `box()` and `box('blue')` share one class and only the second writes an inline style.
   - Fix: a style function that takes no parameter resolved to nothing when it was called, so `() => ({ color: 'red' })` left the styling prop off the element entirely. It now compiles to the class its static equivalent would.
-  - Fix: a style key that is only digits was dropped without a word. `css.create({ 1: { color: 'red' } })` is now reported, the way `@plumeria/no-invalid-selector` already reported it; a quoted `'1'` and a name carrying digits are unaffected.
+  - Fix: a style key that is only digits was dropped without a word. `css.create({ 1: { color: 'red' } })` is now reported, the way `@typedcss/no-invalid-selector` already reported it; a quoted `'1'` and a name carrying digits are unaffected.
   - Fix: a style key holding a quote or a backslash was written into the run-time lookup table unescaped, which made the compiled module invalid JavaScript.
-  - Fix: `css.use()` with no arguments, and `css.use()` on a style that cannot be resolved, survived into the output after the `@plumeria/core` import had already been removed, leaving a module that throws on load. The first compiles to an empty class and the second is reported.
+  - Fix: `css.use()` with no arguments, and `css.use()` on a style that cannot be resolved, survived into the output after the `@typedcss/core` import had already been removed, leaving a module that throws on load. The first compiles to an empty class and the second is reported.
   - Fix: `css.keyframes()` with no argument aborted the transform with an internal error instead of being skipped, the way `create()` and `viewTransition()` already are.
   - Update: the style prop table is read by the owning component's key rather than scanned, so a project with many components generates its stylesheet faster — 44ms against 83ms on a 400-component benchmark.
 - Updated dependencies [9f53ed0]
-  - @plumeria/utils@18.2.26
+  - @typedcss/utils@18.2.26
 
 ## 18.2.25
 
@@ -1039,7 +1192,7 @@
 
 - 0b45a2d: Update dependencies
 - Updated dependencies [0b45a2d]
-  - @plumeria/utils@18.2.25
+  - @typedcss/utils@18.2.25
 
 ## 18.2.24
 
@@ -1047,7 +1200,7 @@
 
 - e8067fc: Bump version to 18.2.24
 - Updated dependencies [e8067fc]
-  - @plumeria/utils@18.2.24
+  - @typedcss/utils@18.2.24
 
 ## 18.2.23
 
@@ -1055,7 +1208,7 @@
 
 - 14ac9f0: Bump version to 18.2.23
 - Updated dependencies [14ac9f0]
-  - @plumeria/utils@18.2.23
+  - @typedcss/utils@18.2.23
 
 ## 18.2.22
 
@@ -1063,7 +1216,7 @@
 
 - 1da7747: Bump version to 18.2.22
 - Updated dependencies [1da7747]
-  - @plumeria/utils@18.2.22
+  - @typedcss/utils@18.2.22
 
 ## 18.2.21
 
@@ -1071,7 +1224,7 @@
 
 - ad35eaa: Bump version to 18.2.21
 - Updated dependencies [ad35eaa]
-  - @plumeria/utils@18.2.21
+  - @typedcss/utils@18.2.21
 
 ## 18.2.20
 
@@ -1079,7 +1232,7 @@
 
 - a1c9e4b: Bump version to 18.2.20
 - Updated dependencies [a1c9e4b]
-  - @plumeria/utils@18.2.20
+  - @typedcss/utils@18.2.20
 
 ## 18.2.19
 
@@ -1087,7 +1240,7 @@
 
 - 69b7897: Bump version to 18.2.19
 - Updated dependencies [69b7897]
-  - @plumeria/utils@18.2.19
+  - @typedcss/utils@18.2.19
 
 ## 18.2.18
 
@@ -1095,7 +1248,7 @@
 
 - e2018e9: Bump version to 18.2.18
 - Updated dependencies [e2018e9]
-  - @plumeria/utils@18.2.18
+  - @typedcss/utils@18.2.18
 
 ## 18.2.17
 
@@ -1103,7 +1256,7 @@
 
 - e8950f2: Bump version to 18.2.17
 - Updated dependencies [e8950f2]
-  - @plumeria/utils@18.2.17
+  - @typedcss/utils@18.2.17
 
 ## 18.2.16
 
@@ -1111,7 +1264,7 @@
 
 - 172eeaa: Bump version to 18.2.16
 - Updated dependencies [172eeaa]
-  - @plumeria/utils@18.2.16
+  - @typedcss/utils@18.2.16
 
 ## 18.2.15
 
@@ -1119,7 +1272,7 @@
 
 - 050be48: - Feat: two states that can hold at once, such as `:hover` and `:focus`, now settle their intersection by composition order. The atom from the style written further right in `classStyle` receives one more `:not(#\#)` and becomes a class of its own, so reversing the array reverses the winner and the module the bundler reached first no longer decides. Only a pair that is otherwise indistinguishable is weighted; a differing at-rule, shorthand depth or selector specificity is left alone, and an explicit compound such as `:hover:focus` stays above the weighting.
 - Updated dependencies [050be48]
-  - @plumeria/utils@18.2.15
+  - @typedcss/utils@18.2.15
 
 ## 18.2.14
 
@@ -1127,7 +1280,7 @@
 
 - 6ee1a20: Bump version to 18.2.14
 - Updated dependencies [6ee1a20]
-  - @plumeria/utils@18.2.14
+  - @typedcss/utils@18.2.14
 
 ## 18.2.13
 
@@ -1141,7 +1294,7 @@
 
 - Updated dependencies [13d5fd7]
 - Updated dependencies [d2f5a82]
-  - @plumeria/utils@18.2.13
+  - @typedcss/utils@18.2.13
 
 ## 18.2.12
 
@@ -1149,7 +1302,7 @@
 
 - 7c32413: Bump version to 18.2.12
 - Updated dependencies [7c32413]
-  - @plumeria/utils@18.2.12
+  - @typedcss/utils@18.2.12
 
 ## 18.2.11
 
@@ -1157,7 +1310,7 @@
 
 - 79cf605: Bump version to 18.2.11
 - Updated dependencies [65e086a]
-  - @plumeria/utils@18.2.11
+  - @typedcss/utils@18.2.11
 
 ## 18.2.10
 
@@ -1165,7 +1318,7 @@
 
 - 05ec58a: Bump version to 18.2.10
 - Updated dependencies [05ec58a]
-  - @plumeria/utils@18.2.10
+  - @typedcss/utils@18.2.10
 
 ## 18.2.9
 
@@ -1173,7 +1326,7 @@
 
 - cacc782: Bump version to 18.2.9
 - Updated dependencies [cacc782]
-  - @plumeria/utils@18.2.9
+  - @typedcss/utils@18.2.9
 
 ## 18.2.8
 
@@ -1181,7 +1334,7 @@
 
 - 3f0f14b: Bump version to 18.2.8
 - Updated dependencies [3f0f14b]
-  - @plumeria/utils@18.2.8
+  - @typedcss/utils@18.2.8
 
 ## 18.2.7
 
@@ -1189,7 +1342,7 @@
 
 - ddc0c29: Bump version to 18.2.7
 - Updated dependencies [ddc0c29]
-  - @plumeria/utils@18.2.7
+  - @typedcss/utils@18.2.7
 
 ## 18.2.6
 
@@ -1197,7 +1350,7 @@
 
 - 055e0a1: Bump version to 18.2.6
 - Updated dependencies [055e0a1]
-  - @plumeria/utils@18.2.6
+  - @typedcss/utils@18.2.6
 
 ## 18.2.5
 
@@ -1205,7 +1358,7 @@
 
 - fa97e3e: Bump version to 18.2.5
 - Updated dependencies [fa97e3e]
-  - @plumeria/utils@18.2.5
+  - @typedcss/utils@18.2.5
 
 ## 18.2.4
 
@@ -1214,7 +1367,7 @@
 - a259fce: Fix: drop the asterisk wildcard from style prop attribution. A prop now counts as applied only inside the component that received it, so a component that merely forwards a same-named prop fails the never-applied check instead of slipping past it.
 
 - Updated dependencies [a259fce]
-  - @plumeria/utils@18.2.4
+  - @typedcss/utils@18.2.4
 
 ## 18.2.3
 
@@ -1223,7 +1376,7 @@
 - 7641416: Fix: a style prop that is never applied fails the build instead of silently dropping the style. `classStyle={[styles.base, cond && styleArray]}` and `classStyle={cond ? styleArray : styles.base}` now compile: the styles a prop's call sites pass are carried through the condition, and a closed gate leaves the surrounding styles in place.
 
 - Updated dependencies [7641416]
-  - @plumeria/utils@18.2.3
+  - @typedcss/utils@18.2.3
 
 ## 18.2.2
 
@@ -1231,7 +1384,7 @@
 
 - a2db725: Bump version to 18.2.2
 - Updated dependencies [a2db725]
-  - @plumeria/utils@18.2.2
+  - @typedcss/utils@18.2.2
 
 ## 18.2.1
 
@@ -1239,7 +1392,7 @@
 
 - 9e8f603: Bump version to 18.2.1
 - Updated dependencies [9e8f603]
-  - @plumeria/utils@18.2.1
+  - @typedcss/utils@18.2.1
 
 ## 18.2.0
 
@@ -1250,7 +1403,7 @@
 ### Patch Changes
 
 - Updated dependencies [9becf0a]
-  - @plumeria/utils@18.2.0
+  - @typedcss/utils@18.2.0
 
 ## 18.1.9
 
@@ -1258,7 +1411,7 @@
 
 - 73fc784: Keep a literal argument to a dynamic function key off the px fallback on a unitless property
 - Updated dependencies [73fc784]
-  - @plumeria/utils@18.1.9
+  - @typedcss/utils@18.1.9
 
 ## 18.1.8
 
@@ -1266,7 +1419,7 @@
 
 - fa39906: Update dependencies (postcss 8.5.25, GHSA-r28c-9q8g-f849)
 - Updated dependencies [fa39906]
-  - @plumeria/utils@18.1.8
+  - @typedcss/utils@18.1.8
 
 ## 18.1.7
 
@@ -1274,7 +1427,7 @@
 
 - f233fe1: Bump version to 18.1.7
 - Updated dependencies [f233fe1]
-  - @plumeria/utils@18.1.7
+  - @typedcss/utils@18.1.7
 
 ## 18.1.6
 
@@ -1286,7 +1439,7 @@
   Fix: read the named parameters of a destructured signature, and fold such an argument into the rule only when its value is written out in full
   Fix: report a dynamic function key that cannot reach the element, instead of emitting a call that throws at runtime
 - Updated dependencies [5d03b90]
-  - @plumeria/utils@18.1.6
+  - @typedcss/utils@18.1.6
 
 ## 18.1.5
 
@@ -1294,7 +1447,7 @@
 
 - 9f7072b: Bump version to 18.1.5
 - Updated dependencies [9f7072b]
-  - @plumeria/utils@18.1.5
+  - @typedcss/utils@18.1.5
 
 ## 18.1.4
 
@@ -1303,7 +1456,7 @@
 - 4464af6: Fix: keep the virtual css id relative so a bundler cannot print the author's directories into the stylesheet it ships
   Fix: strip the annotation naming the virtual css from the emitted stylesheet on esbuild and Bun
 - Updated dependencies [4464af6]
-  - @plumeria/utils@18.1.4
+  - @typedcss/utils@18.1.4
 
 ## 18.1.3
 
@@ -1311,7 +1464,7 @@
 
 - 0325770: Update dependencies
 - Updated dependencies [0325770]
-  - @plumeria/utils@18.1.3
+  - @typedcss/utils@18.1.3
 
 ## 18.1.2
 
@@ -1320,7 +1473,7 @@
 - b8ee5f7: Fix: tell two bracket groups apart when one condition folds both into a lookup, a key both objects carry no longer answers with the later group's style
   Fix: number a bracket dimension's keys in a compound lookup, a key holding the `__` the compound key is joined with no longer blurs where one dimension ends
 - Updated dependencies [b8ee5f7]
-  - @plumeria/utils@18.1.2
+  - @typedcss/utils@18.1.2
 
 ## 18.1.1
 
@@ -1329,7 +1482,7 @@
 - 4c16d5b: Fix: merge the sources of a styling prop in the order they are written, an unconditional style placed after a condition no longer loses to it
   Fix: a condition placed after a bracket group is no longer overridden by that group
 - Updated dependencies [4c16d5b]
-  - @plumeria/utils@18.1.1
+  - @typedcss/utils@18.1.1
 
 ## 18.1.0
 
@@ -1342,7 +1495,7 @@
 ### Patch Changes
 
 - Updated dependencies [29a90d8]
-  - @plumeria/utils@18.1.0
+  - @typedcss/utils@18.1.0
 
 ## 18.0.1
 
@@ -1353,25 +1506,25 @@
   Fix: track namespace imports so `<Icons.Logo />` resolves through `import * as Icons`
   Perf: resolve the component key once per JSX element instead of once per attribute
 - Updated dependencies [5c34fd1]
-  - @plumeria/utils@18.0.1
+  - @typedcss/utils@18.0.1
 
 ## 18.0.0
 
 ### Major Changes
 
 - 7664aa1: Bump version to 18.0.0
-  - feat: add @plumeria/codemod for renaming the styling prop across a codebase
+  - feat: add @typedcss/codemod for renaming the styling prop across a codebase
   - fix: read styleProp in no-inline-object, it matched styleName only
   - fix: name the configured prop in the css.use() dynamic style error
   - break: rename the default styling prop from styleName to classStyle
-  - break: rename the @plumeria/core/style-name subpath to @plumeria/core/class-style
-  - break: rename the styleName prop on @plumeria/headlessui components to classStyle
+  - break: rename the @typedcss/core/style-name subpath to @typedcss/core/class-style
+  - break: rename the styleName prop on @typedcss/headlessui components to classStyle
   - break: rename the no-inline-object messageId to noInlineObjectInStyleProp
 
 ### Patch Changes
 
 - Updated dependencies [7664aa1]
-  - @plumeria/utils@18.0.0
+  - @typedcss/utils@18.0.0
 
 ## 17.0.1
 
@@ -1380,7 +1533,7 @@
 - 6db8b00: Fix: add contain autocomplete keywords size inline-size layout style paint in csstypes.d.ts
   Fix: fix contain include multiple keywords and single keyword in validate-values.ts
 - Updated dependencies [6db8b00]
-  - @plumeria/utils@17.0.1
+  - @typedcss/utils@17.0.1
 
 ## 17.0.0
 
@@ -1394,14 +1547,14 @@
   - fix: stop collecting prop styles from host elements
   - perf: apply Turbopack rule conditions on Next.js 16 and above
   - perf: skip discarded conversions in the first scanning pass
-  - break: @plumeria/core no longer declares a styling prop, reference @plumeria/core/style-name
+  - break: @typedcss/core no longer declares a styling prop, reference @typedcss/core/style-name
   - break: rename the StyleName type to Style
-  - break: remove @plumeria/postcss-plugin
+  - break: remove @typedcss/postcss-plugin
 
 ### Patch Changes
 
 - Updated dependencies [d844142]
-  - @plumeria/utils@17.0.0
+  - @typedcss/utils@17.0.0
 
 ## 16.5.0
 
@@ -1415,7 +1568,7 @@
 ### Patch Changes
 
 - Updated dependencies [e0efd1c]
-  - @plumeria/utils@16.5.0
+  - @typedcss/utils@16.5.0
 
 ## 16.4.2
 
@@ -1423,7 +1576,7 @@
 
 - a994769: Bump version to 16.4.2 (fix utils/parser.ts for dynamic props edge cases)
 - Updated dependencies [a994769]
-  - @plumeria/utils@16.4.2
+  - @typedcss/utils@16.4.2
 
 ## 16.4.1
 
@@ -1431,7 +1584,7 @@
 
 - ac13d67: Bump version to 16.4.1 (fix next dev mode)
 - Updated dependencies [ac13d67]
-  - @plumeria/utils@16.4.1
+  - @typedcss/utils@16.4.1
 
 ## 16.4.0
 
@@ -1442,7 +1595,7 @@
 ### Patch Changes
 
 - Updated dependencies [9b6ad43]
-  - @plumeria/utils@16.4.0
+  - @typedcss/utils@16.4.0
 
 ## 16.3.0
 
@@ -1453,7 +1606,7 @@
 ### Patch Changes
 
 - Updated dependencies [d04bc8a]
-  - @plumeria/utils@16.3.0
+  - @typedcss/utils@16.3.0
 
 ## 16.2.12
 
@@ -1461,7 +1614,7 @@
 
 - 8eb82a7: Fix: throw an unknown function
 - Updated dependencies [8eb82a7]
-  - @plumeria/utils@16.2.12
+  - @typedcss/utils@16.2.12
 
 ## 16.2.11
 
@@ -1469,7 +1622,7 @@
 
 - 2f08d34: Bump version to 16.2.11
 - Updated dependencies [2f08d34]
-  - @plumeria/utils@16.2.11
+  - @typedcss/utils@16.2.11
 
 ## 16.2.10
 
@@ -1477,7 +1630,7 @@
 
 - 8a93dce: Bump version to 16.2.10 (improve dev mode Incremental generation)
 - Updated dependencies [8a93dce]
-  - @plumeria/utils@16.2.10
+  - @typedcss/utils@16.2.10
 
 ## 16.2.9
 
@@ -1485,7 +1638,7 @@
 
 - e71ab6f: Bump version to 16.2.9 (Update core README.md)
 - Updated dependencies [e71ab6f]
-  - @plumeria/utils@16.2.9
+  - @typedcss/utils@16.2.9
 
 ## 16.2.8
 
@@ -1493,7 +1646,7 @@
 
 - 0906bc9: Bump version to 16.2.8 (@rust-gear/glob to 1.1.0)
 - Updated dependencies [0906bc9]
-  - @plumeria/utils@16.2.8
+  - @typedcss/utils@16.2.8
 
 ## 16.2.7
 
@@ -1501,7 +1654,7 @@
 
 - 542859d: Bump version to 16.2.7
 - Updated dependencies [542859d]
-  - @plumeria/utils@16.2.7
+  - @typedcss/utils@16.2.7
 
 ## 16.2.6
 
@@ -1509,7 +1662,7 @@
 
 - 0b56e62: Fix: change the reverse edge to a safe implementation and switched the key from index to key also output the CSS prop on the parent side
 - Updated dependencies [0b56e62]
-  - @plumeria/utils@16.2.6
+  - @typedcss/utils@16.2.6
 
 ## 16.2.5
 
@@ -1517,7 +1670,7 @@
 
 - 5a9f52e: bump version to 16.2.5
 - Updated dependencies [5a9f52e]
-  - @plumeria/utils@16.2.5
+  - @typedcss/utils@16.2.5
 
 ## 16.2.4
 
@@ -1525,7 +1678,7 @@
 
 - 6172179: Bump version to 16.2.4
 - Updated dependencies [6172179]
-  - @plumeria/utils@16.2.4
+  - @typedcss/utils@16.2.4
 
 ## 16.2.3
 
@@ -1533,7 +1686,7 @@
 
 - 9a85e20: Fix: add getFileDependencies and resolveExport
 - Updated dependencies [9a85e20]
-  - @plumeria/utils@16.2.3
+  - @typedcss/utils@16.2.3
 
 ## 16.2.2
 
@@ -1541,7 +1694,7 @@
 
 - 8c10355: Bump version to 16.2.2
 - Updated dependencies [8c10355]
-  - @plumeria/utils@16.2.2
+  - @typedcss/utils@16.2.2
 
 ## 16.2.1
 
@@ -1549,7 +1702,7 @@
 
 - c7a3a47: Bump version to 16.2.1 (plumerialint can now be executed in parallel)
 - Updated dependencies [c7a3a47]
-  - @plumeria/utils@16.2.1
+  - @typedcss/utils@16.2.1
 
 ## 16.2.0
 
@@ -1560,7 +1713,7 @@
 ### Patch Changes
 
 - Updated dependencies [1e54d3b]
-  - @plumeria/utils@16.2.0
+  - @typedcss/utils@16.2.0
 
 ## 16.1.1
 
@@ -1568,7 +1721,7 @@
 
 - 7d73f9c: Bump version to 16.1.1 (inspector OIDC)
 - Updated dependencies [7d73f9c]
-  - @plumeria/utils@16.1.1
+  - @typedcss/utils@16.1.1
 
 ## 16.1.0
 
@@ -1579,7 +1732,7 @@
 ### Patch Changes
 
 - Updated dependencies [901ebf0]
-  - @plumeria/utils@16.1.0
+  - @typedcss/utils@16.1.0
 
 ## 16.0.0
 
@@ -1590,7 +1743,7 @@
 ### Patch Changes
 
 - Updated dependencies [08c5be7]
-  - @plumeria/utils@16.0.0
+  - @typedcss/utils@16.0.0
 
 ## 15.1.3
 
@@ -1598,7 +1751,7 @@
 
 - f175e10: Bump version to 15.1.3
 - Updated dependencies [f175e10]
-  - @plumeria/utils@15.1.3
+  - @typedcss/utils@15.1.3
 
 ## 15.1.2
 
@@ -1606,7 +1759,7 @@
 
 - 0e54f0e: Update dependencies
 - Updated dependencies [0e54f0e]
-  - @plumeria/utils@15.1.2
+  - @typedcss/utils@15.1.2
 
 ## 15.1.1
 
@@ -1614,7 +1767,7 @@
 
 - 87c6f77: Fix edge case merging the className with a ternary expression
 - Updated dependencies [87c6f77]
-  - @plumeria/utils@15.1.1
+  - @typedcss/utils@15.1.1
 
 ## 15.1.0
 
@@ -1625,7 +1778,7 @@
 ### Patch Changes
 
 - Updated dependencies [2a406a5]
-  - @plumeria/utils@15.1.0
+  - @typedcss/utils@15.1.0
 
 ## 15.0.0
 
@@ -1636,7 +1789,7 @@
 ### Patch Changes
 
 - Updated dependencies [a235bdc]
-  - @plumeria/utils@15.0.0
+  - @typedcss/utils@15.0.0
 
 ## 14.2.1
 
@@ -1644,7 +1797,7 @@
 
 - 565fb17: Bump version to 14.2.1
 - Updated dependencies [565fb17]
-  - @plumeria/utils@14.2.1
+  - @typedcss/utils@14.2.1
 
 ## 14.2.0
 
@@ -1655,7 +1808,7 @@
 ### Patch Changes
 
 - Updated dependencies [3c790f4]
-  - @plumeria/utils@14.2.0
+  - @typedcss/utils@14.2.0
 
 ## 14.1.2
 
@@ -1663,7 +1816,7 @@
 
 - c0ea263: Bump version to 14.1.2
 - Updated dependencies [c0ea263]
-  - @plumeria/utils@14.1.2
+  - @typedcss/utils@14.1.2
 
 ## 14.1.1
 
@@ -1671,7 +1824,7 @@
 
 - 6fa1869: Bump version to 14.1.1
 - Updated dependencies [6fa1869]
-  - @plumeria/utils@14.1.1
+  - @typedcss/utils@14.1.1
 
 ## 14.1.0
 
@@ -1682,7 +1835,7 @@
 ### Patch Changes
 
 - Updated dependencies [717cf1c]
-  - @plumeria/utils@14.1.0
+  - @typedcss/utils@14.1.0
 
 ## 14.0.0
 
@@ -1693,7 +1846,7 @@
 ### Patch Changes
 
 - Updated dependencies [9103875]
-  - @plumeria/utils@14.0.0
+  - @typedcss/utils@14.0.0
 
 ## 13.2.3
 
@@ -1701,7 +1854,7 @@
 
 - f8bd7a0: Align the hash logic of createTheme with turbopack-loader
 - Updated dependencies [f8bd7a0]
-  - @plumeria/utils@13.2.3
+  - @typedcss/utils@13.2.3
 
 ## 13.2.2
 
@@ -1709,7 +1862,7 @@
 
 - 7e40f03: Update dependencies in v13.2.2
 - Updated dependencies [7e40f03]
-  - @plumeria/utils@13.2.2
+  - @typedcss/utils@13.2.2
 
 ## 13.2.1
 
@@ -1717,7 +1870,7 @@
 
 - f34661f: Bump version to 13.2.1
 - Updated dependencies [f34661f]
-  - @plumeria/utils@13.2.1
+  - @typedcss/utils@13.2.1
 
 ## 13.2.0
 
@@ -1728,7 +1881,7 @@
 ### Patch Changes
 
 - Updated dependencies [51c0d47]
-  - @plumeria/utils@13.2.0
+  - @typedcss/utils@13.2.0
 
 ## 13.1.5
 
@@ -1736,7 +1889,7 @@
 
 - 4401cb4: Bump version to 13.1.5
 - Updated dependencies [4401cb4]
-  - @plumeria/utils@13.1.5
+  - @typedcss/utils@13.1.5
 
 ## 13.1.4
 
@@ -1744,7 +1897,7 @@
 
 - a1caf4a: Add funding and homepage in package.json
 - Updated dependencies [a1caf4a]
-  - @plumeria/utils@13.1.4
+  - @typedcss/utils@13.1.4
 
 ## 13.1.3
 
@@ -1752,7 +1905,7 @@
 
 - 3f7305f: Move rollup plugin utils to dependencies
 - Updated dependencies [3f7305f]
-  - @plumeria/utils@13.1.3
+  - @typedcss/utils@13.1.3
 
 ## 13.1.2
 
@@ -1760,7 +1913,7 @@
 
 - da6941d: Bump version to 13.1.2
 - Updated dependencies [da6941d]
-  - @plumeria/utils@13.1.2
+  - @typedcss/utils@13.1.2
 
 ## 13.1.1
 
@@ -1768,7 +1921,7 @@
 
 - 2f463a7: Bump version to 13.1.1
 - Updated dependencies [2f463a7]
-  - @plumeria/utils@13.1.1
+  - @typedcss/utils@13.1.1
 
 ## 13.1.0
 
@@ -1779,7 +1932,7 @@
 ### Patch Changes
 
 - Updated dependencies [77d7a5e]
-  - @plumeria/utils@13.1.0
+  - @typedcss/utils@13.1.0
 
 ## 13.0.2
 
@@ -1787,7 +1940,7 @@
 
 - 37f0541: Bump version to 13.0.2
 - Updated dependencies [37f0541]
-  - @plumeria/utils@13.0.2
+  - @typedcss/utils@13.0.2
 
 ## 13.0.1
 
@@ -1795,7 +1948,7 @@
 
 - 3afcccd: Fix add a colon to the regular expression
 - Updated dependencies [3afcccd]
-  - @plumeria/utils@13.0.1
+  - @typedcss/utils@13.0.1
 
 ## 13.0.0
 
@@ -1806,7 +1959,7 @@
 ### Patch Changes
 
 - Updated dependencies [08751c3]
-  - @plumeria/utils@13.0.0
+  - @typedcss/utils@13.0.0
 
 ## 12.0.8
 
@@ -1814,7 +1967,7 @@
 
 - 51606d5: Bump version to 12.0.8
 - Updated dependencies [51606d5]
-  - @plumeria/utils@12.0.8
+  - @typedcss/utils@12.0.8
 
 ## 12.0.7
 
@@ -1822,7 +1975,7 @@
 
 - b34c654: Update dependencies
 - Updated dependencies [b34c654]
-  - @plumeria/utils@12.0.7
+  - @typedcss/utils@12.0.7
 
 ## 12.0.6
 
@@ -1830,7 +1983,7 @@
 
 - d435d9d: Fix a bug in the ternary operator for function keys
 - Updated dependencies [d435d9d]
-  - @plumeria/utils@12.0.6
+  - @typedcss/utils@12.0.6
 
 ## 12.0.5
 
@@ -1838,7 +1991,7 @@
 
 - 4187423: Fix path resolution and refactoring
 - Updated dependencies [4187423]
-  - @plumeria/utils@12.0.5
+  - @typedcss/utils@12.0.5
 
 ## 12.0.4
 
@@ -1846,7 +1999,7 @@
 
 - 4623785: Bump version to 12.0.4
 - Updated dependencies [4623785]
-  - @plumeria/utils@12.0.4
+  - @typedcss/utils@12.0.4
 
 ## 12.0.3
 
@@ -1854,7 +2007,7 @@
 
 - 8eef799: Bump version to 12.0.3
 - Updated dependencies [8eef799]
-  - @plumeria/utils@12.0.3
+  - @typedcss/utils@12.0.3
 
 ## 12.0.2
 
@@ -1862,7 +2015,7 @@
 
 - 9a3cd2f: Fix correct identifier resolution
 - Updated dependencies [9a3cd2f]
-  - @plumeria/utils@12.0.2
+  - @typedcss/utils@12.0.2
 
 ## 12.0.1
 
@@ -1870,7 +2023,7 @@
 
 - c8c9f74: Bump version to 12.0.1
 - Updated dependencies [c8c9f74]
-  - @plumeria/utils@12.0.1
+  - @typedcss/utils@12.0.1
 
 ## 12.0.0
 
@@ -1881,7 +2034,7 @@
 ### Patch Changes
 
 - Updated dependencies [3aba19c]
-  - @plumeria/utils@12.0.0
+  - @typedcss/utils@12.0.0
 
 ## 11.2.1
 
@@ -1889,7 +2042,7 @@
 
 - 0e9ecfd: Bump version to 11.2.1
 - Updated dependencies [0e9ecfd]
-  - @plumeria/utils@11.2.1
+  - @typedcss/utils@11.2.1
 
 ## 11.2.0
 
@@ -1900,7 +2053,7 @@
 ### Patch Changes
 
 - Updated dependencies [99f5e6f]
-  - @plumeria/utils@11.2.0
+  - @typedcss/utils@11.2.0
 
 ## 11.1.3
 
@@ -1908,7 +2061,7 @@
 
 - a486adb: Prevent theme conflicts and stabilize HMR
 - Updated dependencies [a486adb]
-  - @plumeria/utils@11.1.3
+  - @typedcss/utils@11.1.3
 
 ## 11.1.2
 
@@ -1916,7 +2069,7 @@
 
 - dfcda01: Bump version to 11.1.2
 - Updated dependencies [dfcda01]
-  - @plumeria/utils@11.1.2
+  - @typedcss/utils@11.1.2
 
 ## 11.1.1
 
@@ -1924,7 +2077,7 @@
 
 - 9999562: Bump version to 11.1.1
 - Updated dependencies [9999562]
-  - @plumeria/utils@11.1.1
+  - @typedcss/utils@11.1.1
 
 ## 11.1.0
 
@@ -1935,7 +2088,7 @@
 ### Patch Changes
 
 - Updated dependencies [f58f70a]
-  - @plumeria/utils@11.1.0
+  - @typedcss/utils@11.1.0
 
 ## 11.0.2
 
@@ -1943,7 +2096,7 @@
 
 - 6f8c7da: Feat implementation dynamic key multi arguments
 - Updated dependencies [6f8c7da]
-  - @plumeria/utils@11.0.2
+  - @typedcss/utils@11.0.2
 
 ## 11.0.1
 
@@ -1951,7 +2104,7 @@
 
 - 8426076: Bump version to 11.0.1
 - Updated dependencies [8426076]
-  - @plumeria/utils@11.0.1
+  - @typedcss/utils@11.0.1
 
 ## 11.0.0
 
@@ -1962,4 +2115,4 @@
 ### Patch Changes
 
 - Updated dependencies [132dca2]
-  - @plumeria/utils@11.0.0
+  - @typedcss/utils@11.0.0
