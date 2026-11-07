@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/unplugin",
-  "version": "21.1.2",
-  "description": "Universal typedcss plugin for various build tools",
+  "version": "22.0.1",
+  "description": "Universal TypedCSS plugin for various build tools",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
@@ -14,7 +14,7 @@
     "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "keywords": [
-    "plumeria",
+    "typedcss",
     "css",
     "unplugin",
     "vite",
@@ -97,16 +97,12 @@
   },
   "dependencies": {
     "@typedcss/eslint-plugin": "workspace:*",
+    "@typedcss/oxide": "workspace:*",
     "@rollup/pluginutils": "^5.4.0",
     "unplugin": "^3.0.0",
     "zss-engine": "catalog:"
   },
-  "peerDependencies": {
-    "@typedcss/css": "workspace:^",
-    "@typedcss/oxide": "workspace:^"
-  },
   "devDependencies": {
-    "@typedcss/oxide": "workspace:^",
     "vite": "^8.0.13"
   },
   "publishConfig": {
