@@ -1,4 +1,91 @@
-# @plumeria/init
+# @typedcss/init
+
+## 21.2.7
+
+### Patch Changes
+
+- 83e304f: - Feat: opt-in `no-use-in-jsx` rule that disallows `css.use()` in `.jsx` and `.tsx` files, so the styling prop is the one way to apply styles there
+  - Feat: init asks whether `.jsx` and `.tsx` files apply styles only through the styling prop, and turns on `no-use-in-jsx` unless told otherwise with `--allow-use`
+
+## 21.2.6
+
+### Patch Changes
+
+- d708d87: Bump version to 21.2.6
+
+## 21.2.5
+
+### Patch Changes
+
+- 40fb1e0: Bump version to 21.2.5
+
+## 21.2.4
+
+### Patch Changes
+
+- 6c025b8: Bump version to 21.2.4
+
+## 21.2.3
+
+### Patch Changes
+
+- 1f5ad12: Bump version to 21.2.3
+
+## 21.2.2
+
+### Patch Changes
+
+- 30cfad5: Bump version to 21.2.2
+
+## 21.2.1
+
+### Patch Changes
+
+- 2089b8a: Bump version to 21.2.1
+
+## 21.2.0
+
+### Minor Changes
+
+- fb82771: Bump version to 21.2.0
+
+## 21.1.8
+
+### Patch Changes
+
+- de2791a: Bump version to 21.1.8
+
+## 21.1.7
+
+### Patch Changes
+
+- 0f80855: Bump version to 21.1.7
+
+## 21.1.6
+
+### Patch Changes
+
+- b94dcc8: Bump version to 21.1.6
+
+## 21.1.5
+
+### Patch Changes
+
+- 17a242d: - Fix: write `plumeria.d.ts` into `src/` when the project has one, so a tsconfig that includes only `src`, such as the Vite React template, reads the `classStyle` declaration
+  - Fix: `expand-border-shorthands` writes the longhands in the order `sort-properties` expects, so a single `oxlint --fix` pass settles both rules
+  - Fix: `sort-properties` keeps the trailing comma and moves each property's comments with it when it reorders an object
+
+## 21.1.4
+
+### Patch Changes
+
+- f26493b: Bump version to 21.1.4
+
+## 21.1.3
+
+### Patch Changes
+
+- 2bf6c80: - Update: Move repository links to the zss-labs organization
 
 ## 21.1.2
 
@@ -89,7 +176,7 @@
 ### Minor Changes
 
 - 21c541a: - Rename the CLI from `plumerialint` to `plumeria-lint`; `plumerialint` prints that it has been renamed and exits with code 1
-  - `@plumeria/init` writes `plumeria-lint` into the build script and renames an existing `plumerialint`
+  - `@typedcss/init` writes `plumeria-lint` into the build script and renames an existing `plumerialint`
   - The build lint keeps a compile cache in `node_modules/.cache/plumeria-lint`, so oxlint and the rules load faster from the second build
 
 ## 19.10.4
@@ -110,9 +197,9 @@
 
 - 50858a7: - The build lint reads the styling prop from `styleProp`, so `no-mixed-styling-props`, `no-inline-object`, `no-style-prop-relay`, `no-unresolved-composition` and `custom-props-require-import` check the prop the compiler transforms instead of `classStyle`
   - `plumerialint` takes the styling prop with `--style-prop`, or reads `settings.plumeria.styleProp` from the ESLint config when ESLint is installed
-  - `@plumeria/init` writes `--style-prop` into the build script it guards with `plumerialint` when the styling prop is renamed
-  - `@plumeria/init` writes a renamed styling prop into the ESLint config as `settings.plumeria.styleProp`, so the editor checks the same prop the compiler transforms
-  - `@plumeria/eslint-plugin/guard` exports `lintOverrides` in place of `spellingRules`
+  - `@typedcss/init` writes `--style-prop` into the build script it guards with `plumerialint` when the styling prop is renamed
+  - `@typedcss/init` writes a renamed styling prop into the ESLint config as `settings.plumeria.styleProp`, so the editor checks the same prop the compiler transforms
+  - `@typedcss/eslint-plugin/guard` exports `lintOverrides` in place of `spellingRules`
 
 ## 19.10.1
 
@@ -124,15 +211,15 @@
 
 ### Minor Changes
 
-- db560c7: - `@plumeria/next-plugin` and `@plumeria/unplugin` run `@plumeria/eslint-plugin` through oxlint alongside a production build and stop it on any error or warning, so no build script is needed
-  - `@plumeria/unplugin` lints on Vite, webpack, Rspack, Rollup, Rolldown and Farm
+- db560c7: - `@typedcss/next-plugin` and `@typedcss/unplugin` run `@typedcss/eslint-plugin` through oxlint alongside a production build and stop it on any error or warning, so no build script is needed
+  - `@typedcss/unplugin` lints on Vite, webpack, Rspack, Rollup, Rolldown and Farm
   - `withoutLogicalProperties` and `withoutPhysicalProperties` turn on the matching lint rule in that lint
-  - Add the `lint` option to `@plumeria/next-plugin` and `@plumeria/unplugin` to build without the lint
+  - Add the `lint` option to `@typedcss/next-plugin` and `@typedcss/unplugin` to build without the lint
   - `expand-border-shorthands` joins the recommended rules as a warning
-  - `plumerialint` runs the oxlint that `@plumeria/eslint-plugin` depends on, so oxlint needs no separate install
+  - `plumerialint` runs the oxlint that `@typedcss/eslint-plugin` depends on, so oxlint needs no separate install
   - The lint runs the Plumeria rules only, not oxlint's own default rules, and passes when there is no file to lint
-  - `@plumeria/eslint-plugin` depends on oxlint 1.87.0
-  - `@plumeria/init` prefixes the build script with `plumerialint --` only on esbuild and Bun, and no longer installs oxlint or asks about border shorthands
+  - `@typedcss/eslint-plugin` depends on oxlint 1.87.0
+  - `@typedcss/init` prefixes the build script with `plumerialint --` only on esbuild and Bun, and no longer installs oxlint or asks about border shorthands
 
 ## 19.9.1
 
@@ -151,8 +238,8 @@
 ### Patch Changes
 
 - def91c1: - Remove the `funding` field from package.json
-  - Move the test-only devDependencies of `@plumeria/compiler` to the workspace root
-  - Update the `next` devDependency of `@plumeria/next-plugin` to 16.3.8
+  - Move the test-only devDependencies of `@typedcss/compiler` to the workspace root
+  - Update the `next` devDependency of `@typedcss/next-plugin` to 16.3.8
 
 ## 19.8.1
 
@@ -377,7 +464,7 @@
 
 ### Patch Changes
 
-- 4196ef2: - Feat: add `@plumeria/init`, one command that sets Plumeria up in an existing project. It is run with `npx @plumeria/init`, and installed it is `plumeria-init`, alongside `plumeria-codemod` and `plumerialint`. It detects the package manager and the bundler, installs the packages that are missing, writes `plumeria.d.ts` and the bundler config, extends the ESLint flat config, and puts `plumerialint --` in front of the `build` script.
+- 4196ef2: - Feat: add `@typedcss/init`, one command that sets Plumeria up in an existing project. It is run with `npx @typedcss/init`, and installed it is `plumeria-init`, alongside `plumeria-codemod` and `plumerialint`. It detects the package manager and the bundler, installs the packages that are missing, writes `plumeria.d.ts` and the bundler config, extends the ESLint flat config, and puts `plumerialint --` in front of the `build` script.
   - Feat: ask which spelling of a two-named property the project writes and set both levels from the one answer — `withoutLogicalProperties` or `withoutPhysicalProperties` on the bundler plugin, and `no-logical-properties` or `no-physical-properties` in ESLint — so their directions cannot disagree.
   - Feat: ask whether to turn on `expand-border-shorthands`, and which JSX prop carries styles, writing a renamed prop into the plugin and into `plumeria.d.ts` at once.
   - Feat: patch an existing config rather than replace it, and extend only the `plugins` array the config object owns, so a nested one such as Vitest's `test.plugins` is never written into. Where the plugin cannot be placed safely, print the snippet and touch nothing.
