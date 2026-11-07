@@ -1,6 +1,6 @@
 # TypedCSS
 
-TypedCSS is a second execution model for [Plumeria](https://plumeria.dev) that delegates some of the compilation responsibilities to the runtime resolver.
+TypedCSS is the atomic CSS-in-JS dual model of [Plumeria](https://plumeria.dev) that delegates some of the compilation responsibilities to the runtime resolver.
 It shares an API with Plumeria, so the migration cost is minimal.
 
 ## Quick start
@@ -19,9 +19,9 @@ npx @plumeria/codemod migrate-to-typedcss
 npx @typedcss/codemod migrate-to-plumeria
 ```
 
-typedcss and Plumeria share every version number, and each package takes the same options as its Plumeria counterpart:
+TypedCSS and Plumeria share every version number, and each package takes the same options as its Plumeria counterpart:
 
-| typedcss                  | Plumeria                  |
+| TypedCSS                  | Plumeria                  |
 | ------------------------- | ------------------------- |
 | `@typedcss/codemod`       | `@plumeria/codemod`       |
 | `@typedcss/css`           | `@plumeria/core`          |
