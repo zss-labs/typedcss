@@ -8,6 +8,8 @@ import { createRequire } from 'module';
 import * as swc from '@swc/core';
 import * as oxide from '../index';
 
+export type { PropertyPolicyOptions } from '../index';
+
 export const DEFAULT_STYLE_PROP = 'sx';
 
 type TransformEnv = {
@@ -167,7 +169,9 @@ export async function transformSource(
   const code = oxide.transform(env.source, env.filePath, {
     root: env.root ?? env.cwd ?? process.cwd(),
     styleProp: env.styleProp ?? DEFAULT_STYLE_PROP,
-    ...(env.classProp ? { classProp: env.classProp } : {}),
+    ...(env.classProp
+      ? { classProp: env.classProp as 'className' | 'class' }
+      : {}),
     ...policyOf(env),
   });
   if (code !== null) {
@@ -181,9 +185,11 @@ export async function transformSource(
   return { code: code ?? env.source, dependencies: [] };
 }
 
-const unsupported = (name: string) => () => {
-  throw new Error(`oxide does not expose ${name}`);
-};
+const unsupported =
+  (name: string) =>
+  (..._args: unknown[]): never => {
+    throw new Error(`oxide does not expose ${name}`);
+  };
 
 export const implementations = [
   {
@@ -200,7 +206,7 @@ export const implementations = [
     createTheme: oxide.createTheme,
     themeHashOf: oxide.themeHashOf,
     scanAll: unsupported('scanAll'),
-  } as any,
+  },
 ];
 
 export const getStyleRecords = oxide.getStyleRecords;
