@@ -1,5 +1,9 @@
 # Release Notes
 
+## 22.0.1 (Nov 7, 2026)
+
+Update: add OIDC
+
 
 ## 21.2.7 (Nov 3, 2026) Up to this point, Plumeria
 

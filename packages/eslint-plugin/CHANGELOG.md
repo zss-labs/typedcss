@@ -1,3 +1,10 @@
+## 22.0.2
+
+### Patch Changes
+
+- Updated dependencies [1a659fa]
+  - @typedcss/oxide@22.0.1
+
 ## 21.2.7
 
 ### Patch Changes

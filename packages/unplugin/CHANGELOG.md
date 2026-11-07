@@ -1,5 +1,13 @@
 # @typedcss/unplugin
 
+## 22.0.2
+
+### Patch Changes
+
+- Updated dependencies [1a659fa]
+  - @typedcss/oxide@22.0.1
+  - @typedcss/eslint-plugin@22.0.2
+
 ## 21.2.7
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @typedcss/swc-jest
 
+## 22.0.2
+
+### Patch Changes
+
+- Updated dependencies [1a659fa]
+  - @typedcss/oxide@22.0.1
+
 ## 21.2.7
 
 ### Patch Changes
@@ -133,4 +140,3 @@
   - Update: Next.js in `@typedcss/next-plugin` devDependencies to 16.4.2
 - Updated dependencies [f8bd21e]
   - @typedcss/compiler@21.1.2
-
