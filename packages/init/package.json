@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/init",
-  "version": "21.1.2",
-  "description": "One command that sets up typedcss: detects the bundler, installs the packages, writes the configs",
+  "version": "22.0.1",
+  "description": "One command that sets up TypedCSS: detects the bundler, installs the packages, writes the configs",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
