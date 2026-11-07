@@ -8,10 +8,6 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "@typedcss/eslint-plugin",
-    "@typedcss/next-plugin",
-    "@typedcss/swc-jest",
-    "@typedcss/unplugin",
     "nextjs",
     "vite-react-rsc",
     "example-bun",
