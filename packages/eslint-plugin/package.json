@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/eslint-plugin",
-  "version": "21.2.7",
-  "description": "ESLint plugin for typedcss",
+  "version": "22.0.1",
+  "description": "TypedCSS ESLint plugin",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
@@ -57,13 +57,13 @@
     "@typescript-eslint/utils": "^8.60.0",
     "eslint": "^10.4.0"
   },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
   "dependencies": {
     "@typedcss/oxide": "workspace:*",
     "oxlint": "1.87.0",
     "zss-engine": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
