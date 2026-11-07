@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/codemod",
-  "version": "21.1.2",
-  "description": "Codemods for typedcss: rename the styling prop or an API",
+  "version": "22.0.1",
+  "description": "Codemods for TypedCSS: rename the styling prop or an API",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
@@ -14,7 +14,7 @@
     "url": "https://github.com/zss-labs/typedcss/issues"
   },
   "keywords": [
-    "plumeria",
+    "typedcss",
     "codemod",
     "migration",
     "eslint",
