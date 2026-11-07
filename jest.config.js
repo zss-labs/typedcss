@@ -14,6 +14,7 @@ module.exports = {
     '<rootDir>/packages/eslint-plugin/__tests__',
     '<rootDir>/packages/init/__tests__',
     '<rootDir>/packages/next-plugin/__tests__',
+    '<rootDir>/packages/swc-jest/__tests__',
     '<rootDir>/packages/unplugin/__tests__',
   ],
   testEnvironment: 'node',
