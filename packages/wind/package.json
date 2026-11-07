@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/wind",
-  "version": "21.1.2",
-  "description": "Tailwind CSS design-tokens for typedcss",
+  "version": "22.0.1",
+  "description": "Tailwind CSS design-tokens for TypedCSS",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/wind",
