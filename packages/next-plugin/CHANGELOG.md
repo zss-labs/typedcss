@@ -1,5 +1,13 @@
 # @typedcss/next-plugin
 
+## 22.0.2
+
+### Patch Changes
+
+- Updated dependencies [1a659fa]
+  - @typedcss/oxide@22.0.1
+  - @typedcss/eslint-plugin@22.0.2
+
 ## 21.2.7
 
 ### Patch Changes
@@ -159,4 +167,3 @@
 - Updated dependencies [f8bd21e]
   - @typedcss/eslint-plugin@21.1.2
   - @typedcss/turbopack-loader@21.1.2
-
