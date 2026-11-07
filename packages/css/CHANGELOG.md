@@ -1,4 +1,4 @@
-# @plumeria/core
+# @typedcss/core
 
 ## 21.1.2
 
@@ -26,7 +26,7 @@
   - Feat: a `css.viewTransitionClass` is emitted when it is used in one of those `<ViewTransition>` props, including both sides of a condition and the values of a type map, as well as when it is used in `css.create`
   - Update: a name from `css.keyframes`, `css.viewTransitionClass`, `css.positionTry` or `css.varType` is written where it is read, and its declaration is dropped as with `css.createTheme`, so no definition is left in the bundle
   - Feat: reading a Plumeria definition through a namespace import, by member, string key, destructuring, a rest element or the namespace as a whole, is a compile error that asks for a named import
-  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @plumeria/codemod rename-api viewTransition viewTransitionClass`
+  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @typedcss/codemod rename-api viewTransition viewTransitionClass`
   - Update: the ESLint rules that read `css.viewTransition` read `css.viewTransitionClass`
 
 ## 20.0.0
@@ -177,8 +177,8 @@
 ### Patch Changes
 
 - def91c1: - Remove the `funding` field from package.json
-  - Move the test-only devDependencies of `@plumeria/compiler` to the workspace root
-  - Update the `next` devDependency of `@plumeria/next-plugin` to 16.3.8
+  - Move the test-only devDependencies of `@typedcss/compiler` to the workspace root
+  - Update the `next` devDependency of `@typedcss/next-plugin` to 16.3.8
 
 ## 19.8.1
 
@@ -760,7 +760,7 @@
 
 ### Patch Changes
 
-- ddc0c29: - Fix: `@plumeria/core` exposes `overflowInline` instead of `overflowBlockX` — the logical counterpart of `overflow-x` is `overflow-inline`, and CSS has no `overflow-block-x`.
+- ddc0c29: - Fix: `@typedcss/core` exposes `overflowInline` instead of `overflowBlockX` — the logical counterpart of `overflow-x` is `overflow-inline`, and CSS has no `overflow-block-x`.
   - Fix: `zss-engine@2.4.2` aligns the shorthand graph with the logical property groups: the physical edges now sit below the axis shorthand that sets them across `margin`, `padding`, `inset`, `scroll-margin`, `scroll-padding` and the `border` axes, `overflow` and `overscroll-behavior` gain their missing logical longhands, and `containIntrinsicSize`, `positionTry`, `marker`, `cue`, `pause` and `rest` are registered as shorthands.
 
   Note: these depths decide how many `:not(#\#)` selectors an atomic class receives, so the generated stylesheet changes for the properties listed above. Class names are unaffected.
@@ -878,12 +878,12 @@
 ### Major Changes
 
 - 7664aa1: Bump version to 18.0.0
-  - feat: add @plumeria/codemod for renaming the styling prop across a codebase
+  - feat: add @typedcss/codemod for renaming the styling prop across a codebase
   - fix: read styleProp in no-inline-object, it matched styleName only
   - fix: name the configured prop in the css.use() dynamic style error
   - break: rename the default styling prop from styleName to classStyle
-  - break: rename the @plumeria/core/style-name subpath to @plumeria/core/class-style
-  - break: rename the styleName prop on @plumeria/headlessui components to classStyle
+  - break: rename the @typedcss/core/style-name subpath to @typedcss/core/class-style
+  - break: rename the styleName prop on @typedcss/headlessui components to classStyle
   - break: rename the no-inline-object messageId to noInlineObjectInStyleProp
 
 ## 17.0.1
@@ -905,9 +905,9 @@
   - fix: stop collecting prop styles from host elements
   - perf: apply Turbopack rule conditions on Next.js 16 and above
   - perf: skip discarded conversions in the first scanning pass
-  - break: @plumeria/core no longer declares a styling prop, reference @plumeria/core/style-name
+  - break: @typedcss/core no longer declares a styling prop, reference @typedcss/core/style-name
   - break: rename the StyleName type to Style
-  - break: remove @plumeria/postcss-plugin
+  - break: remove @typedcss/postcss-plugin
 
 ## 16.5.0
 
@@ -2839,13 +2839,13 @@ const layoutStyles = css.create({
 
 ### Patch Changes
 
-- d57e057: feat: replaced @plumeria/collection with style-preset
+- d57e057: feat: replaced @typedcss/collection with style-preset
 
 ## 0.7.9
 
 ### Patch Changes
 
-- e7be3d3: feat: @plumeria/core LTS. To the rust base swc compiler
+- e7be3d3: feat: @typedcss/core LTS. To the rust base swc compiler
 
 ## 0.7.8
 
@@ -2853,7 +2853,7 @@ const layoutStyles = css.create({
 
 - 9f4d373: feat: Distribution dist/esm|cjs types
 - Updated dependencies [9f4d373]
-  - @plumeria/collection@0.5.2
+  - @typedcss/collection@0.5.2
 
 ## 0.7.7
 
@@ -2866,14 +2866,14 @@ const layoutStyles = css.create({
 ### Patch Changes
 
 - Updated dependencies [3be50fe]
-  - @plumeria/collection@0.5.1
+  - @typedcss/collection@0.5.1
 
 ## 0.7.5
 
 ### Patch Changes
 
 - Updated dependencies [8f12aff]
-  - @plumeria/collection@0.5.0
+  - @typedcss/collection@0.5.0
 
 ## 0.7.4
 
@@ -2911,79 +2911,79 @@ const layoutStyles = css.create({
 
 - 6c91a26: feat: security update
 - Updated dependencies [6c91a26]
-  - @plumeria/collection@0.4.1
+  - @typedcss/collection@0.4.1
 
 ## 0.6.8
 
 ### Patch Changes
 
-- [`20bb089`](https://github.com/zss-in-js/plumeria/commit/20bb0898ab15fdb8c355285e0c3e9835c37d2aa4) Thanks [@refirst11](https://github.com/refirst11)! - feat: PseudoElementType has been added to types in zss-engine@0.2.8
+- [`20bb089`](https://github.com/zss-labs/plumeria/commit/20bb0898ab15fdb8c355285e0c3e9835c37d2aa4) Thanks [@refirst11](https://github.com/refirst11)! - feat: PseudoElementType has been added to types in zss-engine@0.2.8
 
 ## 0.6.7
 
 ### Patch Changes
 
-- [`ef0eec2`](https://github.com/zss-in-js/plumeria/commit/ef0eec2dd540bbc6451899e909f1297d9b16a43c) Thanks [@refirst11](https://github.com/refirst11)! - feat: dependencies update zss-engine@0.2.7
+- [`ef0eec2`](https://github.com/zss-labs/plumeria/commit/ef0eec2dd540bbc6451899e909f1297d9b16a43c) Thanks [@refirst11](https://github.com/refirst11)! - feat: dependencies update zss-engine@0.2.7
 
 ## 0.6.6
 
 ### Patch Changes
 
-- Updated dependencies [[`d8cec99`](https://github.com/zss-in-js/plumeria/commit/d8cec995d5cf180e91fa823390dd3c3154aeddde)]:
-  - @plumeria/collection@0.4.0
+- Updated dependencies [[`d8cec99`](https://github.com/zss-labs/plumeria/commit/d8cec995d5cf180e91fa823390dd3c3154aeddde)]:
+  - @typedcss/collection@0.4.0
 
 ## 0.6.5
 
 ### Patch Changes
 
-- [`083c86c`](https://github.com/zss-in-js/plumeria/commit/083c86c82602be1bcbfcf62de7bf71b81467e0ba) Thanks [@refirst11](https://github.com/refirst11)! - Separation of dist and types was complicated to manage, so we rolled it back.
+- [`083c86c`](https://github.com/zss-labs/plumeria/commit/083c86c82602be1bcbfcf62de7bf71b81467e0ba) Thanks [@refirst11](https://github.com/refirst11)! - Separation of dist and types was complicated to manage, so we rolled it back.
 
-- Updated dependencies [[`083c86c`](https://github.com/zss-in-js/plumeria/commit/083c86c82602be1bcbfcf62de7bf71b81467e0ba)]:
-  - @plumeria/collection@0.3.1
+- Updated dependencies [[`083c86c`](https://github.com/zss-labs/plumeria/commit/083c86c82602be1bcbfcf62de7bf71b81467e0ba)]:
+  - @typedcss/collection@0.3.1
 
 ## 0.6.4
 
 ### Patch Changes
 
-- Updated dependencies [[`3333425`](https://github.com/zss-in-js/plumeria/commit/333342500841e5466eaeff0418801174ca9fc42a)]:
-  - @plumeria/collection@0.3.0
+- Updated dependencies [[`3333425`](https://github.com/zss-labs/plumeria/commit/333342500841e5466eaeff0418801174ca9fc42a)]:
+  - @typedcss/collection@0.3.0
 
 ## 0.6.3
 
 ### Patch Changes
 
-- [`966a794`](https://github.com/zss-in-js/plumeria/commit/966a7945cc571c92179602f467ce4f9b042b3c41) Thanks [@refirst11](https://github.com/refirst11)! - feat: build imporve and add sourceMap
+- [`966a794`](https://github.com/zss-labs/plumeria/commit/966a7945cc571c92179602f467ce4f9b042b3c41) Thanks [@refirst11](https://github.com/refirst11)! - feat: build imporve and add sourceMap
 
-- Updated dependencies [[`966a794`](https://github.com/zss-in-js/plumeria/commit/966a7945cc571c92179602f467ce4f9b042b3c41)]:
-  - @plumeria/collection@0.2.2
+- Updated dependencies [[`966a794`](https://github.com/zss-labs/plumeria/commit/966a7945cc571c92179602f467ce4f9b042b3c41)]:
+  - @typedcss/collection@0.2.2
 
 ## 0.6.2
 
 ### Patch Changes
 
-- [`d8e7fce`](https://github.com/zss-in-js/plumeria/commit/d8e7fceca6f03221c09d00bc3bf36757ae71e63e) Thanks [@refirst11](https://github.com/refirst11)! - fix: Minify has been discontinued for security reasons.
+- [`d8e7fce`](https://github.com/zss-labs/plumeria/commit/d8e7fceca6f03221c09d00bc3bf36757ae71e63e) Thanks [@refirst11](https://github.com/refirst11)! - fix: Minify has been discontinued for security reasons.
 
-- Updated dependencies [[`d8e7fce`](https://github.com/zss-in-js/plumeria/commit/d8e7fceca6f03221c09d00bc3bf36757ae71e63e)]:
-  - @plumeria/collection@0.2.1
+- Updated dependencies [[`d8e7fce`](https://github.com/zss-labs/plumeria/commit/d8e7fceca6f03221c09d00bc3bf36757ae71e63e)]:
+  - @typedcss/collection@0.2.1
 
 ## 0.6.1
 
 ### Patch Changes
 
-- [`ee8d212`](https://github.com/zss-in-js/plumeria/commit/ee8d212096f17fb18070fb98f47df834fed9f1eb) Thanks [@refirst11](https://github.com/refirst11)! - feat: zss-engine to v0.2.5
+- [`ee8d212`](https://github.com/zss-labs/plumeria/commit/ee8d212096f17fb18070fb98f47df834fed9f1eb) Thanks [@refirst11](https://github.com/refirst11)! - feat: zss-engine to v0.2.5
 
 ## 0.6.0
 
 ### Minor Changes
 
-- [`a80c383`](https://github.com/zss-in-js/plumeria/commit/a80c383f7510648d2f764f83d91910a7471a9071) Thanks [@refirst11](https://github.com/refirst11)! - feat: Moved bin responsibilities to the compiler and made the compiler independent of dependencies, allowing for gradual adoption.
+- [`a80c383`](https://github.com/zss-labs/plumeria/commit/a80c383f7510648d2f764f83d91910a7471a9071) Thanks [@refirst11](https://github.com/refirst11)! - feat: Moved bin responsibilities to the compiler and made the compiler independent of dependencies, allowing for gradual adoption.
 
 ## 0.5.1
 
 ### Patch Changes
 
-- Updated dependencies [[`1548726`](https://github.com/zss-in-js/plumeria/commit/1548726ea81f757728d25285a07bbd59c8c8dd9f)]:
-  - @plumeria/compiler@0.5.1
+- Updated dependencies [[`1548726`](https://github.com/zss-labs/plumeria/commit/1548726ea81f757728d25285a07bbd59c8c8dd9f)]:
+  - @typedcss/compiler@0.5.1
 
 ## 0.5.0
 
@@ -2994,26 +2994,26 @@ const layoutStyles = css.create({
 ### Patch Changes
 
 - Updated dependencies []:
-  - @plumeria/compiler@0.5.0
-  - @plumeria/collection@0.2.0
+  - @typedcss/compiler@0.5.0
+  - @typedcss/collection@0.2.0
 
 ## 0.4.0
 
 ### Minor Changes
 
-- [`10e3f64`](https://github.com/zss-in-js/plumeria/commit/10e3f642fd0c4983256f2a1c45adbf64bd9af2dc) Thanks [@refirst11](https://github.com/refirst11)! - feat: release v0.4.0 restoring stable implementation from v0.2.5.The experimental changes in v0.3.0 are being reverted in favor of the proven stable implementation from v0.2.5, now released as v0.4.0.
+- [`10e3f64`](https://github.com/zss-labs/plumeria/commit/10e3f642fd0c4983256f2a1c45adbf64bd9af2dc) Thanks [@refirst11](https://github.com/refirst11)! - feat: release v0.4.0 restoring stable implementation from v0.2.5.The experimental changes in v0.3.0 are being reverted in favor of the proven stable implementation from v0.2.5, now released as v0.4.0.
 
 ## 0.3.1
 
 ### Patch Changes
 
-- [`a0ee1fc`](https://github.com/zss-in-js/plumeria/commit/a0ee1fc48e232197003656b33090a199ed0ae4d6) Thanks [@refirst11](https://github.com/refirst11)! - fix: revert compiler has been restored to its dependencies
+- [`a0ee1fc`](https://github.com/zss-labs/plumeria/commit/a0ee1fc48e232197003656b33090a199ed0ae4d6) Thanks [@refirst11](https://github.com/refirst11)! - fix: revert compiler has been restored to its dependencies
 
 ## 0.3.0
 
 ### Minor Changes
 
-- [`0473b77`](https://github.com/zss-in-js/plumeria/commit/0473b77b013284b64a909d585ab5f5b3080dc97a) Thanks [@refirst11](https://github.com/refirst11)! - feat: The @plumeria/compiler has been separated from its @plumeria/core dependencies.
+- [`0473b77`](https://github.com/zss-labs/plumeria/commit/0473b77b013284b64a909d585ab5f5b3080dc97a) Thanks [@refirst11](https://github.com/refirst11)! - feat: The @typedcss/compiler has been separated from its @typedcss/core dependencies.
 
 ## 0.2.5
 
@@ -3033,7 +3033,7 @@ const layoutStyles = css.create({
 
 - 26839d2: fix: removed non-null assertion in defineThemeVars
 - Updated dependencies [c165e69]
-  - @plumeria/collection@0.1.2
+  - @typedcss/collection@0.1.2
 
 ## 0.2.2
 
@@ -3051,7 +3051,7 @@ const layoutStyles = css.create({
 
 ### Minor Changes
 
-- da443f6: feat: ServerCSS move to @plumeria/next
+- da443f6: feat: ServerCSS move to @typedcss/next
 
 ## 0.1.3
 
@@ -3071,4 +3071,4 @@ const layoutStyles = css.create({
 
 - fafccc7: fixup pnpm bin
 - Updated dependencies [fafccc7]
-  - @plumeria/compiler@0.1.1
+  - @typedcss/compiler@0.1.1
