@@ -5,7 +5,7 @@
 - 83e304f: - Feat: opt-in `no-use-in-jsx` rule that disallows `css.use()` in `.jsx` and `.tsx` files, so the styling prop is the one way to apply styles there
   - Feat: init asks whether `.jsx` and `.tsx` files apply styles only through the styling prop, and turns on `no-use-in-jsx` unless told otherwise with `--allow-use`
 - Updated dependencies [83e304f]
-  - @plumeria/compiler@21.2.7
+  - @typedcss/compiler@21.2.7
 
 ## 21.2.6
 
@@ -16,7 +16,7 @@
   - Fix: keep node_modules out of the lint guard
   - Feat: `sourcePackages()` in the compiler lists the packages exposing the plumeria condition, so the bundler plugins share the compiler's discovery instead of scanning dependencies themselves
 - Updated dependencies [d708d87]
-  - @plumeria/compiler@21.2.6
+  - @typedcss/compiler@21.2.6
 
 ## 21.2.5
 
@@ -24,7 +24,7 @@
 
 - 40fb1e0: Bump version to 21.2.5
 - Updated dependencies [40fb1e0]
-  - @plumeria/compiler@21.2.5
+  - @typedcss/compiler@21.2.5
 
 ## 21.2.4
 
@@ -39,7 +39,7 @@
   - Fix: the Vite plugin leaves a package that exports only Plumeria source, under a `plumeria` condition with no fallback, out of dependency pre-bundling
   - Refactor: namespace reads are resolved on the AST instead of by rewriting the source
 - Updated dependencies [6c025b8]
-  - @plumeria/compiler@21.2.4
+  - @typedcss/compiler@21.2.4
 
 ## 21.2.3
 
@@ -49,7 +49,7 @@
   - Fix: a key read through a const, such as `blue[k]` after `const k = '500'`, compiles like the quoted key in a style imported from another file and in the module that defines it
   - Fix: the lint rules that read a static value, such as `validate-at-rules`, check `[bp[500]]` as they check `[bp['500']]`
 - Updated dependencies [1f5ad12]
-  - @plumeria/compiler@21.2.3
+  - @typedcss/compiler@21.2.3
 
 ## 21.2.2
 
@@ -57,7 +57,7 @@
 
 - 30cfad5: Bump version to 21.2.2
 - Updated dependencies [30cfad5]
-  - @plumeria/compiler@21.2.2
+  - @typedcss/compiler@21.2.2
 
 ## 21.2.1
 
@@ -65,14 +65,14 @@
 
 - 2089b8a: Bump version to 21.2.1
 - Updated dependencies [2089b8a]
-  - @plumeria/compiler@21.2.1
+  - @typedcss/compiler@21.2.1
 
 ## 21.2.0
 
 ### Minor Changes
 
 - fb82771: - Feat: a package can share its Plumeria definitions as source: when its `exports` point a `plumeria` condition at its TypeScript files, as in `"plumeria": "./src/index.ts"`, an app that lists it in its dependencies reads the definitions it exports, such as `css.createStatic` values, `css.create` styles and `css.keyframes` names, as it reads a local module, including subpath and pattern exports and packages linked from a pnpm store
-  - Feat: `@plumeria/wind` provides the Tailwind CSS v4.3.3 design tokens, such as the color palettes, spacing, type scale, radius, shadows and animations, as `css.createStatic` values; each value is compiled into the styles that read it, so the package adds nothing to the bundle
+  - Feat: `@typedcss/wind` provides the Tailwind CSS v4.3.3 design tokens, such as the color palettes, spacing, type scale, radius, shadows and animations, as `css.createStatic` values; each value is compiled into the styles that read it, so the package adds nothing to the bundle
   - Feat: a definition read by name through a namespace import, such as `tokens.blue[500]` after `import * as tokens from './tokens'`, compiles as it does through `import { blue }`; a string key, destructuring, a rest element or the namespace passed as a whole still stops the build and asks for a named import
   - Fix: an import whose names are all compiled away, such as a `css.createStatic` import read only inside `css.create`, is removed from the output, so the bundler no longer resolves or loads that module; an import still read at runtime, rendered as a component or re-exported is kept
   - Fix: reading a module's exports before the first project scan, as `resolveExport` and `resolveExportValue` can, no longer leaves that module out of the scan
@@ -82,7 +82,7 @@
 ### Patch Changes
 
 - Updated dependencies [fb82771]
-  - @plumeria/compiler@21.2.0
+  - @typedcss/compiler@21.2.0
 
 ## 21.1.8
 
@@ -90,7 +90,7 @@
 
 - de2791a: Bump version to 21.1.8
 - Updated dependencies [de2791a]
-  - @plumeria/compiler@21.1.8
+  - @typedcss/compiler@21.1.8
 
 ## 21.1.7
 
@@ -99,7 +99,7 @@
 - 0f80855: - Fix: `no-unused-keys` treats any non-literal bracket key, such as `styles[item.kind]`, as dynamic access instead of reporting every key as unused
   - Fix: `no-unused-keys` recognizes dynamic access that appears before the `css.create` call, such as inside a hoisted function
 - Updated dependencies [0f80855]
-  - @plumeria/compiler@21.1.7
+  - @typedcss/compiler@21.1.7
 
 ## 21.1.6
 
@@ -107,7 +107,7 @@
 
 - b94dcc8: - Fix: a dynamic style parameter inside a color, filter or scale function, such as `hsl()`, `brightness()` or `scaleX()`, no longer gets a `px` unit
 - Updated dependencies [b94dcc8]
-  - @plumeria/compiler@21.1.6
+  - @typedcss/compiler@21.1.6
 
 ## 21.1.5
 
@@ -117,7 +117,7 @@
   - Fix: `expand-border-shorthands` writes the longhands in the order `sort-properties` expects, so a single `oxlint --fix` pass settles both rules
   - Fix: `sort-properties` keeps the trailing comma and moves each property's comments with it when it reorders an object
 - Updated dependencies [17a242d]
-  - @plumeria/compiler@21.1.5
+  - @typedcss/compiler@21.1.5
 
 ## 21.1.4
 
@@ -125,7 +125,7 @@
 
 - f26493b: Bump version to 21.1.4
 - Updated dependencies [f26493b]
-  - @plumeria/compiler@21.1.4
+  - @typedcss/compiler@21.1.4
 
 ## 21.1.3
 
@@ -133,20 +133,20 @@
 
 - 2bf6c80: - Update: Move repository links to the zss-labs organization
 - Updated dependencies [2bf6c80]
-  - @plumeria/compiler@21.1.3
+  - @typedcss/compiler@21.1.3
 
 ## 21.1.2
 
 ### Patch Changes
 
-- f8bd21e: - Fix: a received style can be composed onto a component the build never scans, such as a `@plumeria/headlessui` part, with `classStyle={[styles.base, classStyle]}` instead of failing the build
+- f8bd21e: - Fix: a received style can be composed onto a component the build never scans, such as a `@typedcss/headlessui` part, with `classStyle={[styles.base, classStyle]}` instead of failing the build
   - Fix: passing a received style to a component that declares the style prop fails the build at that attribute, even when the same style is also applied to an element, instead of the style being silently dropped
   - Fix: `no-style-prop-relay` reports a received style passed to a component that declares the style prop, the same case the build stops at, including a component imported from another file
   - Fix: `no-order-dependent-overlap` no longer reports selectors that cannot match at the same time: the same attribute with different values, `:not([attr])` with `[attr=...]`, `:user-valid` with `:user-invalid`, `:playing` with `:paused`, `:dir(ltr)` with `:dir(rtl)`, and odd with even `:nth-*()`
   - Fix: `no-style-prop-relay` reports a file the editor opens under a path that differs from the real one, such as a different letter case on macOS
-  - Update: Next.js in `@plumeria/next-plugin` devDependencies to 16.4.2
+  - Update: Next.js in `@typedcss/next-plugin` devDependencies to 16.4.2
 - Updated dependencies [f8bd21e]
-  - @plumeria/compiler@21.1.2
+  - @typedcss/compiler@21.1.2
 
 ## 21.1.1
 
@@ -154,7 +154,7 @@
 
 - bc7f0f9: Bump version to 21.1.1
 - Updated dependencies [bc7f0f9]
-  - @plumeria/compiler@21.1.1
+  - @typedcss/compiler@21.1.1
 
 ## 21.1.0
 
@@ -165,7 +165,7 @@
 ### Patch Changes
 
 - Updated dependencies [8dba130]
-  - @plumeria/compiler@21.1.0
+  - @typedcss/compiler@21.1.0
 
 ## 21.0.0
 
@@ -175,13 +175,13 @@
   - Feat: a `css.viewTransitionClass` is emitted when it is used in one of those `<ViewTransition>` props, including both sides of a condition and the values of a type map, as well as when it is used in `css.create`
   - Update: a name from `css.keyframes`, `css.viewTransitionClass`, `css.positionTry` or `css.varType` is written where it is read, and its declaration is dropped as with `css.createTheme`, so no definition is left in the bundle
   - Feat: reading a Plumeria definition through a namespace import, by member, string key, destructuring, a rest element or the namespace as a whole, is a compile error that asks for a named import
-  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @plumeria/codemod rename-api viewTransition viewTransitionClass`
+  - Feat: the `rename-api` codemod renames an API across a codebase, as in `npx @typedcss/codemod rename-api viewTransition viewTransitionClass`
   - Update: the ESLint rules that read `css.viewTransition` read `css.viewTransitionClass`
 
 ### Patch Changes
 
 - Updated dependencies [f462d48]
-  - @plumeria/compiler@21.0.0
+  - @typedcss/compiler@21.0.0
 
 ## 20.0.0
 
@@ -198,7 +198,7 @@
 ### Patch Changes
 
 - Updated dependencies [1bf429a]
-  - @plumeria/compiler@20.0.0
+  - @typedcss/compiler@20.0.0
 
 ## 19.15.0
 
@@ -212,7 +212,7 @@
 ### Patch Changes
 
 - Updated dependencies [2a4673f]
-  - @plumeria/compiler@19.15.0
+  - @typedcss/compiler@19.15.0
 
 ## 19.14.4
 
@@ -220,7 +220,7 @@
 
 - 1e59337: Bump version to 19.14.4
 - Updated dependencies [1e59337]
-  - @plumeria/compiler@19.14.4
+  - @typedcss/compiler@19.14.4
 
 ## 19.14.3
 
@@ -228,7 +228,7 @@
 
 - e3f505f: Bump version to 19.14.3
 - Updated dependencies [6e9ed5d]
-  - @plumeria/compiler@19.14.3
+  - @typedcss/compiler@19.14.3
 
 ## 19.14.2
 
@@ -236,7 +236,7 @@
 
 - df92992: Bump version to 19.14.2
 - Updated dependencies [57dfbc9]
-  - @plumeria/compiler@19.14.2
+  - @typedcss/compiler@19.14.2
 
 ## 19.14.1
 
@@ -244,7 +244,7 @@
 
 - 28cb676: Bump version to 19.14.1
 - Updated dependencies [8c70c05]
-  - @plumeria/compiler@19.14.1
+  - @typedcss/compiler@19.14.1
 
 ## 19.14.0
 
@@ -259,7 +259,7 @@
 ### Patch Changes
 
 - Updated dependencies [4ef2f4d]
-  - @plumeria/compiler@19.14.0
+  - @typedcss/compiler@19.14.0
 
 ## 19.13.0
 
@@ -270,7 +270,7 @@
 ### Patch Changes
 
 - Updated dependencies [ba9260a]
-  - @plumeria/compiler@19.13.0
+  - @typedcss/compiler@19.13.0
 
 ## 19.12.1
 
@@ -286,7 +286,7 @@
   - Fix: `validate-values` accepts numbers written without the leading zero, such as `.5px`, `-.5rem` and `cubic-bezier(.4, 0, .2, 1)`
   - Update: README.md
 - Updated dependencies [8b7fc9e]
-  - @plumeria/compiler@19.12.1
+  - @typedcss/compiler@19.12.1
 
 ## 19.12.0
 
@@ -302,20 +302,20 @@
 ### Patch Changes
 
 - Updated dependencies [e784644]
-  - @plumeria/compiler@19.12.0
+  - @typedcss/compiler@19.12.0
 
 ## 19.11.0
 
 ### Minor Changes
 
 - 21c541a: - Rename the CLI from `plumerialint` to `plumeria-lint`; `plumerialint` prints that it has been renamed and exits with code 1
-  - `@plumeria/init` writes `plumeria-lint` into the build script and renames an existing `plumerialint`
+  - `@typedcss/init` writes `plumeria-lint` into the build script and renames an existing `plumerialint`
   - The build lint keeps a compile cache in `node_modules/.cache/plumeria-lint`, so oxlint and the rules load faster from the second build
 
 ### Patch Changes
 
 - Updated dependencies [21c541a]
-  - @plumeria/compiler@19.11.0
+  - @typedcss/compiler@19.11.0
 
 ## 19.10.4
 
@@ -323,7 +323,7 @@
 
 - 2079db2: - `no-unknown-css-properties` adds the shipped properties missing from known-css-properties to its known list, such as `cornerShape`, `interestDelay`, `viewTransitionScope` and `textDecorationInset`
 - Updated dependencies [2079db2]
-  - @plumeria/compiler@19.10.4
+  - @typedcss/compiler@19.10.4
 
 ## 19.10.3
 
@@ -332,7 +332,7 @@
 - 0a9c2d8: - The build lint and `plumerialint` run oxlint at the lowest CPU priority, so the build keeps the CPU when both compete for it
   - The build lint and `plumerialint` run oxlint on 2 threads, and `plumerialint` keeps a `--threads` you pass
 - Updated dependencies [0a9c2d8]
-  - @plumeria/compiler@19.10.3
+  - @typedcss/compiler@19.10.3
 
 ## 19.10.2
 
@@ -340,39 +340,39 @@
 
 - 50858a7: - The build lint reads the styling prop from `styleProp`, so `no-mixed-styling-props`, `no-inline-object`, `no-style-prop-relay`, `no-unresolved-composition` and `custom-props-require-import` check the prop the compiler transforms instead of `classStyle`
   - `plumerialint` takes the styling prop with `--style-prop`, or reads `settings.plumeria.styleProp` from the ESLint config when ESLint is installed
-  - `@plumeria/init` writes `--style-prop` into the build script it guards with `plumerialint` when the styling prop is renamed
-  - `@plumeria/init` writes a renamed styling prop into the ESLint config as `settings.plumeria.styleProp`, so the editor checks the same prop the compiler transforms
-  - `@plumeria/eslint-plugin/guard` exports `lintOverrides` in place of `spellingRules`
+  - `@typedcss/init` writes `--style-prop` into the build script it guards with `plumerialint` when the styling prop is renamed
+  - `@typedcss/init` writes a renamed styling prop into the ESLint config as `settings.plumeria.styleProp`, so the editor checks the same prop the compiler transforms
+  - `@typedcss/eslint-plugin/guard` exports `lintOverrides` in place of `spellingRules`
 - Updated dependencies [50858a7]
-  - @plumeria/compiler@19.10.2
+  - @typedcss/compiler@19.10.2
 
 ## 19.10.1
 
 ### Patch Changes
 
-- 107a11a: - `@plumeria/next-plugin` starts the build lint only when the running bin is `next`, not when any path holds a `next` directory
-  - `@plumeria/eslint-plugin/guard` no longer exports `GUARD_ENV` and `SpellingOptions`
+- 107a11a: - `@typedcss/next-plugin` starts the build lint only when the running bin is `next`, not when any path holds a `next` directory
+  - `@typedcss/eslint-plugin/guard` no longer exports `GUARD_ENV` and `SpellingOptions`
 - Updated dependencies [107a11a]
-  - @plumeria/compiler@19.10.1
+  - @typedcss/compiler@19.10.1
 
 ## 19.10.0
 
 ### Minor Changes
 
-- db560c7: - `@plumeria/next-plugin` and `@plumeria/unplugin` run `@plumeria/eslint-plugin` through oxlint alongside a production build and stop it on any error or warning, so no build script is needed
-  - `@plumeria/unplugin` lints on Vite, webpack, Rspack, Rollup, Rolldown and Farm
+- db560c7: - `@typedcss/next-plugin` and `@typedcss/unplugin` run `@typedcss/eslint-plugin` through oxlint alongside a production build and stop it on any error or warning, so no build script is needed
+  - `@typedcss/unplugin` lints on Vite, webpack, Rspack, Rollup, Rolldown and Farm
   - `withoutLogicalProperties` and `withoutPhysicalProperties` turn on the matching lint rule in that lint
-  - Add the `lint` option to `@plumeria/next-plugin` and `@plumeria/unplugin` to build without the lint
+  - Add the `lint` option to `@typedcss/next-plugin` and `@typedcss/unplugin` to build without the lint
   - `expand-border-shorthands` joins the recommended rules as a warning
-  - `plumerialint` runs the oxlint that `@plumeria/eslint-plugin` depends on, so oxlint needs no separate install
+  - `plumerialint` runs the oxlint that `@typedcss/eslint-plugin` depends on, so oxlint needs no separate install
   - The lint runs the Plumeria rules only, not oxlint's own default rules, and passes when there is no file to lint
-  - `@plumeria/eslint-plugin` depends on oxlint 1.87.0
-  - `@plumeria/init` prefixes the build script with `plumerialint --` only on esbuild and Bun, and no longer installs oxlint or asks about border shorthands
+  - `@typedcss/eslint-plugin` depends on oxlint 1.87.0
+  - `@typedcss/init` prefixes the build script with `plumerialint --` only on esbuild and Bun, and no longer installs oxlint or asks about border shorthands
 
 ### Patch Changes
 
 - Updated dependencies [db560c7]
-  - @plumeria/compiler@19.10.0
+  - @typedcss/compiler@19.10.0
 
 ## 19.9.1
 
@@ -380,7 +380,7 @@
 
 - f51e812: - `no-unknown-css-properties` adds a hint to an unknown key that holds an object in `css.create`: nested selectors start with `:`, `[` or `@`
 - Updated dependencies [f51e812]
-  - @plumeria/compiler@19.9.1
+  - @typedcss/compiler@19.9.1
 
 ## 19.9.0
 
@@ -391,17 +391,17 @@
 ### Patch Changes
 
 - Updated dependencies [353ffb0]
-  - @plumeria/compiler@19.9.0
+  - @typedcss/compiler@19.9.0
 
 ## 19.8.2
 
 ### Patch Changes
 
 - def91c1: - Remove the `funding` field from package.json
-  - Move the test-only devDependencies of `@plumeria/compiler` to the workspace root
-  - Update the `next` devDependency of `@plumeria/next-plugin` to 16.3.8
+  - Move the test-only devDependencies of `@typedcss/compiler` to the workspace root
+  - Update the `next` devDependency of `@typedcss/next-plugin` to 16.3.8
 - Updated dependencies [def91c1]
-  - @plumeria/compiler@19.8.2
+  - @typedcss/compiler@19.8.2
 
 ## 19.8.1
 
@@ -411,7 +411,7 @@
   - Count escaped pseudo-class names such as `:\69s()` and `:nth-chil\64()`
   - Count type selectors that start with a non-ASCII character
 - Updated dependencies [2dbd3fc]
-  - @plumeria/compiler@19.8.1
+  - @typedcss/compiler@19.8.1
 
 ## 19.8.0
 
@@ -425,7 +425,7 @@
 ### Patch Changes
 
 - Updated dependencies [2cdf7b8]
-  - @plumeria/compiler@19.8.0
+  - @typedcss/compiler@19.8.0
 
 ## 19.7.0
 
@@ -439,7 +439,7 @@
 ### Patch Changes
 
 - Updated dependencies [6f4fa61]
-  - @plumeria/compiler@19.7.0
+  - @typedcss/compiler@19.7.0
 
 ## 19.6.2
 
@@ -450,7 +450,7 @@
   - Add `no-style-prop-relay`, enabled as an error in `recommended` and plumerialint, which reports a style prop that a component only passes on
   - Report function keys passed to `css.use()` in `no-unresolved-composition`
 - Updated dependencies [82de66e]
-  - @plumeria/compiler@19.6.2
+  - @typedcss/compiler@19.6.2
 
 ## 19.6.1
 
@@ -458,7 +458,7 @@
 
 - aed69d7: - Shorten the `no-unresolved-composition` section of the README and place it in alphabetical order
 - Updated dependencies [aed69d7]
-  - @plumeria/compiler@19.6.1
+  - @typedcss/compiler@19.6.1
 
 ## 19.6.0
 
@@ -470,7 +470,7 @@
 ### Patch Changes
 
 - Updated dependencies [32a9dba]
-  - @plumeria/compiler@19.6.0
+  - @typedcss/compiler@19.6.0
 
 ## 19.5.2
 
@@ -479,30 +479,30 @@
 - 674b065: - Scan a project whose imports go through a module that re-exports many names without slowing down as the project grows. Every import resolved through such a module copied its whole export list, so editing that module, a cold scan and the scan behind each transform cost more than linear time: in a project of 4,000 files around one barrel, a rescan after editing the barrel took about 300 ms and now takes about 55 ms, and a cold scan went from about 390 ms to about 110 ms. The scan now reads only the name it resolves
   - Read the files a scan has to parse again in parallel once there are 512 or more of them, as the scan already does for their timestamps
 - Updated dependencies [674b065]
-  - @plumeria/compiler@19.5.2
+  - @typedcss/compiler@19.5.2
 
 ## 19.5.1
 
 ### Patch Changes
 
-- 037b7d9: - Compile a project that sits inside another Git repository whose `.gitignore` ignores it. The file walk behind `compileCSS` and the project scan applied every `.gitignore` from the repository root down, so a parent `.gitignore` such as `*` in a home directory hid every source file: development styles appeared, but the production stylesheet came out empty. When a parent `.gitignore` ignores the project directory itself, the walk now leaves out every `.gitignore` above the project and still honors the ones inside it. A repository `.gitignore` keeps applying to an app inside a monorepo. `@plumeria/utils` 19.4 and earlier behaved the same way
-  - `@plumeria/turbopack-loader` and `@plumeria/unplugin` run the optimizer only where its result is used, and call the synchronous compiler functions without `await`. The output does not change
+- 037b7d9: - Compile a project that sits inside another Git repository whose `.gitignore` ignores it. The file walk behind `compileCSS` and the project scan applied every `.gitignore` from the repository root down, so a parent `.gitignore` such as `*` in a home directory hid every source file: development styles appeared, but the production stylesheet came out empty. When a parent `.gitignore` ignores the project directory itself, the walk now leaves out every `.gitignore` above the project and still honors the ones inside it. A repository `.gitignore` keeps applying to an app inside a monorepo. `@typedcss/utils` 19.4 and earlier behaved the same way
+  - `@typedcss/turbopack-loader` and `@typedcss/unplugin` run the optimizer only where its result is used, and call the synchronous compiler functions without `await`. The output does not change
 - Updated dependencies [037b7d9]
-  - @plumeria/compiler@19.5.1
+  - @typedcss/compiler@19.5.1
 
 ## 19.5.0
 
 ### Minor Changes
 
-- 0f3ea0f: - `@plumeria/compiler` is now written in Rust with napi-rs. One native module scans the project, transforms each file, compiles the production sheet and minifies it with lightningcss, and replaces the TypeScript compiler built on `@swc/core`, `@rust-gear/glob`, `zss-engine`, `postcss` and `lightningcss`. Prebuilt binaries ship for macOS, Linux (glibc, musl and armv7), Windows, Android, FreeBSD and `wasm32-wasi`, and the package requires Node.js 20 or later
-  - `@plumeria/turbopack-loader`, `@plumeria/unplugin` and `@plumeria/eslint-plugin` scan, transform and resolve through `@plumeria/compiler` instead of `@plumeria/utils`
-  - `@plumeria/compiler` also exports `transformSource`, `scanAll`, `optimizer`, `needsCompile`, `resolvePropertyPolicy`, `resolveImportPath`, `resolveExport`, `resolveExportValue`, `getStyleRecords`, `themeHashOf`, `createTheme` and `DEFAULT_STYLE_PROP`
-  - `@plumeria/utils` keeps the TypeScript implementation and adds `compileCSS`, the previous `@plumeria/compiler` entry point
+- 0f3ea0f: - `@typedcss/compiler` is now written in Rust with napi-rs. One native module scans the project, transforms each file, compiles the production sheet and minifies it with lightningcss, and replaces the TypeScript compiler built on `@swc/core`, `@rust-gear/glob`, `zss-engine`, `postcss` and `lightningcss`. Prebuilt binaries ship for macOS, Linux (glibc, musl and armv7), Windows, Android, FreeBSD and `wasm32-wasi`, and the package requires Node.js 20 or later
+  - `@typedcss/turbopack-loader`, `@typedcss/unplugin` and `@typedcss/eslint-plugin` scan, transform and resolve through `@typedcss/compiler` instead of `@typedcss/utils`
+  - `@typedcss/compiler` also exports `transformSource`, `scanAll`, `optimizer`, `needsCompile`, `resolvePropertyPolicy`, `resolveImportPath`, `resolveExport`, `resolveExportValue`, `getStyleRecords`, `themeHashOf`, `createTheme` and `DEFAULT_STYLE_PROP`
+  - `@typedcss/utils` keeps the TypeScript implementation and adds `compileCSS`, the previous `@typedcss/compiler` entry point
 
 ### Patch Changes
 
 - Updated dependencies [0f3ea0f]
-  - @plumeria/compiler@19.5.0
+  - @typedcss/compiler@19.5.0
 
 ## 19.4.0
 
@@ -510,25 +510,25 @@
 
 - f97cb91: - `no-invalid-selector`, `validate-pseudos` and `validate-at-rules` resolve a computed key by following it back to where it is declared instead of asking the TypeScript type checker, so they check the same keys under ESLint and `plumerialint` and no longer need `projectService`. A key resolves when it is a `const` string, a member of a `const` object or a `css.createStatic` object, or an import of one of these; `as const`, `satisfies` and type annotations make no difference
   - `validate-pseudos` and `validate-at-rules` report as warnings, like `validate-values`. `plumerialint` still stops the build on them
-  - `@typescript-eslint/utils` is no longer a dependency of `@plumeria/eslint-plugin`
-  - `@plumeria/utils` adds `resolveExportValue`, which reads the value an export holds, following re-exports, imports and `createStatic` objects
+  - `@typescript-eslint/utils` is no longer a dependency of `@typedcss/eslint-plugin`
+  - `@typedcss/utils` adds `resolveExportValue`, which reads the value an export holds, following re-exports, imports and `createStatic` objects
 
 ### Patch Changes
 
 - Updated dependencies [f97cb91]
-  - @plumeria/utils@19.4.0
+  - @typedcss/utils@19.4.0
 
 ## 19.3.0
 
 ### Minor Changes
 
-- aa5fc25: - Compile a file that writes the styling prop without importing `@plumeria/core`. The scan, the Turbopack and unplugin transforms, and the file condition `withPlumeria` hands to Turbopack used to skip every file that did not mention `@plumeria/core`, so a component handed `classStyle={styles.a}` from such a file received an empty class. They now also compile a file that writes the styling prop as a JSX attribute, and a lightweight reader keeps a mention in a comment, a string or JSX text from pulling a file in
-  - `props-require-import` is renamed to `custom-props-require-import` and no longer reports the styling prop. It now reports a file without the `@plumeria/core` import that passes a `css.create` style to a component through any other prop, following the import to the file that defines the style, and its fix adds the import
+- aa5fc25: - Compile a file that writes the styling prop without importing `@typedcss/core`. The scan, the Turbopack and unplugin transforms, and the file condition `withPlumeria` hands to Turbopack used to skip every file that did not mention `@typedcss/core`, so a component handed `classStyle={styles.a}` from such a file received an empty class. They now also compile a file that writes the styling prop as a JSX attribute, and a lightweight reader keeps a mention in a comment, a string or JSX text from pulling a file in
+  - `props-require-import` is renamed to `custom-props-require-import` and no longer reports the styling prop. It now reports a file without the `@typedcss/core` import that passes a `css.create` style to a component through any other prop, following the import to the file that defines the style, and its fix adds the import
 
 ### Patch Changes
 
 - Updated dependencies [aa5fc25]
-  - @plumeria/utils@19.3.0
+  - @typedcss/utils@19.3.0
 
 ## 19.2.16
 
@@ -1035,7 +1035,7 @@
 ### Patch Changes
 
 - 79cf605: - Fix: `no-order-dependent-overlap` also reports two conditions in one style where one provably matches a subset of the other and the narrower one is written first. Only a single numeric `min-` or `max-` range on one axis is compared; the swap is offered as a suggestion.
-- 65e086a: - Fix: `@plumeria/utils` places a conditional at-rule after every condition that contains it while optimizing, so the narrower condition wins everywhere both apply.
+- 65e086a: - Fix: `@typedcss/utils` places a conditional at-rule after every condition that contains it while optimizing, so the narrower condition wins everywhere both apply.
   - Fix: `zss-engine@2.5.0` reads a condition as the interval it matches, so implication is recognized across `min-`/`max-` prefixes, comparison and two-sided forms, and `and` chains, on `width`, `height`, `inline-size` and `block-size`, for `@container` alongside `@media`.
 
   Note: two conditions that overlap without either containing the other, such as `600px`–`900px` against `700px`–`1000px`, are still decided by source order.
@@ -1044,20 +1044,20 @@
 
 ### Patch Changes
 
-- 05ec58a: - Feat: `@plumeria/eslint-plugin` adds `expand-border-shorthands`, a fixable rule that expands the eleven border bundles (`border`, `borderTop`, `borderBlock`, …) into their width, style and color declarations, writing each component's initial value where one was omitted. A value that cannot be split, such as `var(--edge)` or `inherit`, is reported without a fix. Not part of `recommended`.
+- 05ec58a: - Feat: `@typedcss/eslint-plugin` adds `expand-border-shorthands`, a fixable rule that expands the eleven border bundles (`border`, `borderTop`, `borderBlock`, …) into their width, style and color declarations, writing each component's initial value where one was omitted. A value that cannot be split, such as `var(--edge)` or `inherit`, is reported without a fix. Not part of `recommended`.
 
 ## 18.2.9
 
 ### Patch Changes
 
-- cacc782: - Fix: `@plumeria/compiler` sorts the file list it globs, so the stylesheet is emitted in the same order on every machine. The scan pass is sorted as well.
-  - Feat: `@plumeria/eslint-plugin` adds `no-physical-properties` and `no-logical-properties`, which keep a project on one spelling of the properties that carry both a logical and a physical name. `{ sizes }`, `false` by default, extends them to `width`, `height`, their `min`/`max` forms, `overflow-x` and `overflow-y`. Neither is part of `recommended`.
+- cacc782: - Fix: `@typedcss/compiler` sorts the file list it globs, so the stylesheet is emitted in the same order on every machine. The scan pass is sorted as well.
+  - Feat: `@typedcss/eslint-plugin` adds `no-physical-properties` and `no-logical-properties`, which keep a project on one spelling of the properties that carry both a logical and a physical name. `{ sizes }`, `false` by default, extends them to `width`, `height`, their `min`/`max` forms, `overflow-x` and `overflow-y`. Neither is part of `recommended`.
 
 ## 18.2.8
 
 ### Patch Changes
 
-- 3f0f14b: - Feat: `@plumeria/eslint-plugin` adds `no-order-dependent-overlap`, which reports two properties written in one style that overlap while neither one outranks the other: one property under its logical and its physical name, or two shorthands that cross, such as `borderTop` beside `borderBlockWidth`. Suggestions only, no autofix. `warn` in `recommended`.
+- 3f0f14b: - Feat: `@typedcss/eslint-plugin` adds `no-order-dependent-overlap`, which reports two properties written in one style that overlap while neither one outranks the other: one property under its logical and its physical name, or two shorthands that cross, such as `borderTop` beside `borderBlockWidth`. Suggestions only, no autofix. `warn` in `recommended`.
   - Fix: `zss-engine@2.4.3` registers `corner-shape` and the eight corner longhands it sets, which carried no depth at all, and exports the shorthand graph the rule ranks pairs from.
 
   Note: the corner longhands now receive one `:not(#\#)` where they received none. Class names are unaffected.
@@ -1181,12 +1181,12 @@
 ### Major Changes
 
 - 7664aa1: Bump version to 18.0.0
-  - feat: add @plumeria/codemod for renaming the styling prop across a codebase
+  - feat: add @typedcss/codemod for renaming the styling prop across a codebase
   - fix: read styleProp in no-inline-object, it matched styleName only
   - fix: name the configured prop in the css.use() dynamic style error
   - break: rename the default styling prop from styleName to classStyle
-  - break: rename the @plumeria/core/style-name subpath to @plumeria/core/class-style
-  - break: rename the styleName prop on @plumeria/headlessui components to classStyle
+  - break: rename the @typedcss/core/style-name subpath to @typedcss/core/class-style
+  - break: rename the styleName prop on @typedcss/headlessui components to classStyle
   - break: rename the no-inline-object messageId to noInlineObjectInStyleProp
 
 ## 17.0.1
@@ -1208,9 +1208,9 @@
   - fix: stop collecting prop styles from host elements
   - perf: apply Turbopack rule conditions on Next.js 16 and above
   - perf: skip discarded conversions in the first scanning pass
-  - break: @plumeria/core no longer declares a styling prop, reference @plumeria/core/style-name
+  - break: @typedcss/core no longer declares a styling prop, reference @typedcss/core/style-name
   - break: rename the StyleName type to Style
-  - break: remove @plumeria/postcss-plugin
+  - break: remove @typedcss/postcss-plugin
 
 ## 16.5.0
 
@@ -2721,7 +2721,7 @@
 
 ### Minor Changes
 
-- 9515bc7: feat(defineTheme defineVars): Now compatible with @plumeria0.9.x.
+- 9515bc7: feat(defineTheme defineVars): Now compatible with @typedcss0.9.x.
 
 ## 0.1.1
 
