@@ -30,7 +30,8 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
       styleProp: DEFAULT_STYLE_PROP,
       propertyPolicy: undefined,
       isDev: false,
-      addDependency: (dependency) => options.dependencies?.push(dependency),
+      addDependency: (dependency: string) =>
+        options.dependencies?.push(dependency),
     });
   };
 
