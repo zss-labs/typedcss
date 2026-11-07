@@ -101,7 +101,7 @@ function main() {
           ([key, packages]) =>
             `${key}\n\n${packages.map((p) => `- ${p}`).join('\n')}`,
         );
-      return `## @plumeria@${version}\n\n${blocks.join('\n\n')}`;
+      return `## @typedcsss@${version}\n\n${blocks.join('\n\n')}`;
     });
 
   process.stdout.write(
