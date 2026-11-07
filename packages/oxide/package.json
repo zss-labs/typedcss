@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/oxide",
-  "version": "21.1.2",
-  "description": "Native typedcss compiler for bundler loaders.",
+  "version": "22.0.0",
+  "description": "TypedCSS native compiler",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
