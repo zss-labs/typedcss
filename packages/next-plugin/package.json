@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/next-plugin",
-  "version": "21.1.2",
-  "description": "Next.js integration for typedcss.",
+  "version": "22.0.1",
+  "description": "TypedCSS Next.js plugin",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
@@ -38,20 +38,16 @@
     "build": "rimraf dist && pnpm cjs",
     "cjs": "tsc --project tsconfig.cjs.json"
   },
-  "peerDependencies": {
-    "@typedcss/css": "workspace:^",
-    "@typedcss/oxide": "workspace:^",
-    "next": ">=16"
-  },
   "devDependencies": {
-    "@typedcss/oxide": "workspace:^",
     "next": "catalog:"
   },
-  "engines": {
-    "node": ">=22.17"
-  },
   "dependencies": {
-    "@typedcss/eslint-plugin": "workspace:^",
+    "@typedcss/eslint-plugin": "workspace:*",
+    "@typedcss/oxide": "workspace:*",
     "zss-engine": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
