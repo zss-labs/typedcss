@@ -1,3 +1,65 @@
+// Compiled style maps (including $$w) are immutable. Cache by their sequence.
+const cache = { next: new WeakMap(), value: undefined };
+
+function flatten(styles, result = []) {
+  for (const style of styles) {
+    if (Array.isArray(style)) flatten(style, result);
+    else result.push(style);
+  }
+  return result;
+}
+
+function cachedMerge(styles) {
+  if (styles.length === 1) {
+    const hit = cache.next.get(styles[0]);
+    if (hit && hit.value !== undefined) return hit.value;
+  }
+  let node = cache;
+  let weighted = false;
+  for (let i = 0; i < styles.length; i++) {
+    const style = styles[i];
+    if (style == null || style === false) continue;
+    // Flatten current contents, never cache by a mutable array's identity.
+    if (Array.isArray(style)) return cachedMerge(flatten(styles));
+    if (style.$$css == null) return merge(styles);
+    if (style.$$w) weighted = true;
+    const children = (node.next ??= new WeakMap());
+    let next = children.get(style);
+    if (!next) {
+      next = { next: undefined, value: undefined };
+      children.set(style, next);
+    }
+    node = next;
+  }
+  if (node.value === undefined) {
+    node.value = weighted ? merge(styles) : mergeCompiled(styles);
+  }
+  return node.value;
+}
+
+// Without weight metadata, resolve properties directly into the class string.
+function mergeCompiled(styles) {
+  const defined = [];
+  let definedSet;
+  let className = '';
+  for (let i = styles.length - 1; i >= 0; i--) {
+    const style = styles[i];
+    if (style == null || style === false) continue;
+    for (const prop in style) {
+      if (prop === '$$css' || prop === '$$w') continue;
+      if (definedSet ? definedSet.has(prop) : defined.includes(prop)) continue;
+      if (definedSet) definedSet.add(prop);
+      else {
+        defined.push(prop);
+        if (defined.length === 32) definedSet = new Set(defined);
+      }
+      const value = style[prop];
+      if (typeof value === 'string') className = className ? value + ' ' + className : value;
+    }
+  }
+  return [className, null];
+}
+
 function compare(a, b) {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
@@ -7,21 +69,18 @@ function conflicts(a, b) {
 }
 
 function repair(atoms) {
-  for (let round = 0; round < atoms.length; round++) {
-    let repaired = false;
-    for (const a of atoms) {
-      for (const b of atoms) {
-        if (a === b || a.target !== b.target || !conflicts(a, b)) continue;
-        if (compare(a.base, b.base) <= 0) continue;
-        const post = [a.base[0] + a.weight, a.base[1], a.base[2]];
-        const rival = [b.base[0] + b.weight, b.base[1], b.base[2]];
-        if (compare(post, rival) > 0) continue;
-        const outranks = compare([0, post[1], post[2]], [0, rival[1], rival[2]]) > 0;
-        a.weight += rival[0] - post[0] + (outranks ? 0 : 1);
-        repaired = true;
-      }
+  // A weight depends only on strictly lower base specificity, so resolve those first.
+  if (atoms.length === 2) {
+    if (compare(atoms[0].base, atoms[1].base) > 0) [atoms[0], atoms[1]] = [atoms[1], atoms[0]];
+  } else atoms.sort((a, b) => compare(a.base, b.base));
+  for (let i = 1; i < atoms.length; i++) {
+    const a = atoms[i];
+    for (let j = 0; j < i; j++) {
+      const b = atoms[j];
+      if (a.target !== b.target || compare(a.base, b.base) === 0 || !conflicts(a, b)) continue;
+      const outranks = a.base[1] > b.base[1] || (a.base[1] === b.base[1] && a.base[2] > b.base[2]);
+      a.weight = Math.max(a.weight, b.base[0] + b.weight - a.base[0] + (outranks ? 0 : 1));
     }
-    if (!repaired) break;
   }
 }
 
@@ -29,7 +88,7 @@ function merge(styles) {
   const defined = new Set();
   const winners = [];
   let inline = null;
-  const stack = styles.slice();
+  const stack = styles;
   let order = 0;
   while (stack.length > 0) {
     const style = stack.pop();
@@ -62,7 +121,8 @@ function merge(styles) {
     }
   }
   const atoms = [];
-  const groups = new Map();
+  let groups;
+  let weighted = false;
   for (const winner of winners) {
     const state = winner.state;
     if (!state) continue;
@@ -77,15 +137,22 @@ function merge(styles) {
       covers: covers || [],
     };
     atoms.push(atom);
-    let orders = groups.get(group);
-    if (!orders) groups.set(group, (orders = []));
-    if (!orders.includes(winner.order)) orders.push(winner.order);
+    groups ??= new Map();
+    let entry = groups.get(group);
+    if (!entry) {
+      entry = { order: winner.order, weight: 0 };
+      groups.set(group, entry);
+    } else if (entry.order !== winner.order) {
+      entry.order = winner.order;
+      entry.weight++;
+      weighted = true;
+    }
+    atom.weight = entry.weight;
   }
-  for (const atom of atoms) {
-    const orders = groups.get(atom.group);
-    atom.weight = orders.length > 1 ? orders.filter((other) => other > atom.winner.order).length : 0;
+  if (weighted) {
+    for (const atom of atoms) atom.weight = groups.get(atom.group).weight - atom.weight;
+    repair(atoms);
   }
-  if (atoms.some((atom) => atom.weight > 0)) repair(atoms);
   for (const atom of atoms) {
     if (atom.weight > 0) atom.winner.value = `${atom.winner.value}-w${atom.weight}`;
   }
@@ -98,7 +165,7 @@ function merge(styles) {
 }
 
 export function props(...styles) {
-  const [className, style] = merge(styles);
+  const [className, style] = cachedMerge(styles);
   const result = {};
   if (className) result.className = className;
   if (style) result.style = style;
@@ -106,7 +173,7 @@ export function props(...styles) {
 }
 
 export function classProps(...styles) {
-  const [className, style] = merge(styles);
+  const [className, style] = cachedMerge(styles);
   const result = {};
   if (className) result.class = className;
   if (style) result.style = style;
