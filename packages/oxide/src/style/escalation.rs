@@ -6,7 +6,7 @@ use crate::engine::shorthand::{direct_longhands, get_property_depth};
 use crate::engine::specificity::{get_pseudo_element, get_specificity};
 use crate::engine::{NOT_NORMALIZE, camel_to_kebab_case, is_at_rule};
 use crate::js::{Object, Value};
-use crate::style::records::style_records;
+use crate::style::records::StyleRecord;
 
 #[derive(Clone, Debug)]
 pub struct StateAtom {
@@ -85,16 +85,20 @@ pub fn state_atoms(style: &Object) -> Vec<StateAtom> {
     atoms
 }
 
-pub fn weighted_sheets(style: &Object) -> Vec<WeightedSheet> {
+// `records` are the unweighted style_records of `style`.
+pub fn weighted_sheets_of(style: &Object, records: &[StyleRecord]) -> Vec<WeightedSheet> {
     let atoms = state_atoms(style);
-    style_records(style, None)
-        .into_iter()
+    if atoms.is_empty() {
+        return Vec::new();
+    }
+    records
+        .iter()
         .filter_map(|record| {
             let atom = atoms.iter().find(|atom| atom.key == record.key)?;
             Some(WeightedSheet {
                 atom: atom.clone(),
-                hash: record.hash,
-                sheet: record.sheet,
+                hash: record.hash.clone(),
+                sheet: record.sheet.clone(),
             })
         })
         .collect()
