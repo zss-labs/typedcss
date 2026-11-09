@@ -203,7 +203,7 @@ import * as barrel from './barrel';
 const s = css.create({ a: { color: 'red' } });
 export const A = () => <div sx={s.a} data-b={barrel} />;`,
       });
-      expect(code).toContain(`import * as barrel from './barrel';`);
+      expect(code).toContain('import * as barrel from "./barrel";');
       expect(render(code, {}, () => ({})).className).toBe(RED);
     });
 
@@ -215,7 +215,7 @@ import * as ns from './styles';
 const s = css.create({ a: { color: 'red' } });
 export const A = () => <div sx={s.a} data-n={ns} />;`,
       });
-      expect(code).toContain(`import * as ns from './styles';`);
+      expect(code).toContain('import * as ns from "./styles";');
       expect(render(code, {}, () => ({})).className).toBe(RED);
     });
   });
