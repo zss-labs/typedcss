@@ -168,7 +168,7 @@ describe.each(implementations)('$name', ({ transformSource, compileCSS }) => {
     const { code } = await transform(cwd);
     return {
       code: code.replace(
-        /^import .* from '(\.\/tokens|\.\/barrel|theme-pkg)';$/gm,
+        /^import .* from "(\.\/tokens|\.\/barrel|theme-pkg)";$/gm,
         '',
       ),
       sheet: compileCSS({ cwd, include: ['app.tsx'], exclude: [] }),
@@ -252,7 +252,7 @@ const s = css.create({ a: { color: t.blue[500] } });
 export const A = () => <p sx={s.a}>{String(t.n)}</p>;
 `);
     const { code } = await transform(cwd);
-    expect(code).toContain(`import * as t from './tokens';`);
+    expect(code).toContain('import * as t from "./tokens";');
     expect(code).toContain('{String(t.n)}');
     expect(code).not.toContain('t$');
   });
@@ -275,9 +275,9 @@ ${touch}
 `);
     const { code } = await transform(cwd);
     const flat = (text: string) => text.replace(/\s+/g, '');
-    expect(code).toContain(`import * as t from './tokens';`);
-    expect(flat(code)).toContain(flat(touch));
-    expect(code).toContain("{t.label('y')}");
+    expect(code).toContain('import * as t from "./tokens";');
+    expect(flat(code)).toContain(flat(touch).replace(/'/g, '"'));
+    expect(code).toContain('{t.label("y")}');
     expect(code).not.toContain('t$');
   });
 
