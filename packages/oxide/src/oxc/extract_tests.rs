@@ -1,8 +1,8 @@
 // Each file is extracted on its own, without reading any other file; `link` then
 // joins the results and replaces the cross-file placeholders.
 
-use crate::swc::extract::extract_source;
-use crate::swc::link::{FileStyles, LinkOptions, VALUE_PREFIX, link};
+use crate::oxc::extract::extract_source;
+use crate::oxc::link::{FileStyles, LinkOptions, VALUE_PREFIX, link};
 
 fn options() -> LinkOptions {
     LinkOptions {
