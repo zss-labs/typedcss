@@ -219,7 +219,7 @@ describe.each(implementations)('$name', ({ transformSource }) => {
       await transformSource(env(dir, 'definitions.ts'));
       const { code } = await transformSource(env(dir, 'reader.ts'));
       expect(code).toContain(
-        "console.log(defs.plain, defs['plain'], defs[`plain`], plain, other);",
+        'console.log(defs.plain, defs["plain"], defs[`plain`], plain, other);',
       );
     });
   });
