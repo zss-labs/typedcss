@@ -1,12 +1,12 @@
-use swc_core::ecma::ast::*;
-use swc_core::ecma::visit::{Visit, VisitWith};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{Visit, walk};
 
 use crate::engine::logical_physical::{Spelling, counterpart_of, spelling_of};
 use crate::engine::{camel_to_kebab_case, kebab_to_camel_case};
 use crate::fs::path::basename;
 use crate::policy::PropertyPolicy;
-use crate::swc::syntax::expr::str_value;
-use crate::swc::syntax::module::{Aliases, CORE, add_core_aliases, plumeria_method};
+use crate::oxc::syntax::expr::{Key, argument_expression, as_key_value, str_value};
+use crate::oxc::syntax::module::{Aliases, CORE, add_core_aliases, plumeria_method};
 
 fn message(reject: Spelling, name: &str, counterpart: &str) -> String {
     match reject {
@@ -19,37 +19,24 @@ fn message(reject: Spelling, name: &str, counterpart: &str) -> String {
     }
 }
 
-fn style_object_of(node: &Expr) -> Option<&ObjectLit> {
+fn style_object_of<'b>(node: &'b Expression<'b>) -> Option<&'b ObjectExpression<'b>> {
     match node {
-        Expr::Object(object) => Some(object),
-        Expr::Arrow(arrow) => match &*arrow.body {
-            ArrowFunctionBody::Expr(expr) => match &**expr {
-                Expr::Object(object) => Some(object),
-                Expr::Paren(paren) => style_object_of(&paren.expr),
-                _ => None,
-            },
+        Expression::ObjectExpression(object) => Some(object),
+        Expression::ArrowFunctionExpression(arrow) => match &arrow.body {
+            ArrowFunctionBody::ObjectExpression(object) => Some(object),
+            ArrowFunctionBody::ParenthesizedExpression(paren) => style_object_of(&paren.expression),
             _ => None,
         },
         _ => None,
     }
 }
 
-fn key_name(prop: &KeyValueProp) -> String {
-    match &prop.key {
-        PropName::Ident(ident) => ident.sym.to_string(),
-        PropName::Str(value) => str_value(value),
-        _ => String::new(),
-    }
+fn key_name(prop: &ObjectProperty) -> String {
+    Key::of(prop).name().unwrap_or_default()
 }
 
-fn key_values(object: &ObjectLit) -> impl Iterator<Item = &KeyValueProp> {
-    object.props.iter().filter_map(|prop| match prop {
-        PropOrSpread::Prop(prop) => match &**prop {
-            Prop::KeyValue(pair) => Some(pair),
-            _ => None,
-        },
-        _ => None,
-    })
+fn key_values<'b>(object: &'b ObjectExpression<'b>) -> impl Iterator<Item = &'b ObjectProperty<'b>> {
+    object.properties.iter().filter_map(as_key_value)
 }
 
 struct Check<'p> {
@@ -60,7 +47,7 @@ struct Check<'p> {
 }
 
 impl Check<'_> {
-    fn check(&mut self, node: &ObjectLit) {
+    fn check(&mut self, node: &ObjectExpression) {
         for prop in key_values(node) {
             if self.error.is_some() {
                 return;
@@ -87,26 +74,23 @@ impl Check<'_> {
     }
 }
 
-impl Visit for Check<'_> {
-    fn visit_import_decl(&mut self, it: &ImportDecl) {
-        if str_value(&it.src) == CORE {
+impl<'a> Visit<'a> for Check<'_> {
+    fn visit_import_declaration(&mut self, it: &ImportDeclaration<'a>) {
+        if str_value(&it.source) == CORE {
             add_core_aliases(it, &mut self.aliases);
         }
     }
 
-    fn visit_call_expr(&mut self, it: &CallExpr) {
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         if self.error.is_some() {
             return;
         }
-        let api = match &it.callee {
-            Callee::Expr(callee) => plumeria_method(callee, &self.aliases).map(str::to_string),
-            _ => None,
-        };
+        let api = plumeria_method(&it.callee, &self.aliases).map(str::to_string);
         if let Some(api) = api
             && ["create", "keyframes", "viewTransitionClass", "positionTry"].contains(&api.as_str())
         {
-            for argument in &it.args {
-                let Expr::Object(object) = &*argument.expr else {
+            for argument in &it.arguments {
+                let Expression::ObjectExpression(object) = argument_expression(argument) else {
                     continue;
                 };
                 if api == "positionTry" {
@@ -126,12 +110,12 @@ impl Visit for Check<'_> {
                 }
             }
         }
-        it.visit_children_with(self);
+        walk::walk_call_expression(self, it);
     }
 }
 
 pub fn assert_property_policy(
-    module: &Module,
+    program: &Program,
     policy: Option<PropertyPolicy>,
     resource: &str,
 ) -> Result<(), String> {
@@ -142,12 +126,12 @@ pub fn assert_property_policy(
         aliases: Aliases::default(),
         error: None,
     };
-    for item in &module.body {
-        if let ModuleItem::ModuleDecl(ModuleDecl::Import(decl)) = item {
-            check.visit_import_decl(decl);
+    for item in &program.body {
+        if let Statement::ImportDeclaration(decl) = item {
+            check.visit_import_declaration(decl);
         }
     }
-    module.visit_with(&mut check);
+    check.visit_program(program);
     match check.error {
         Some(error) => Err(error),
         None => Ok(()),
