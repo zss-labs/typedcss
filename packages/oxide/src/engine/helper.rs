@@ -104,10 +104,10 @@ fn is_word_byte(byte: u8) -> bool {
 }
 
 fn convert_hex_to_color_name(value: &str) -> String {
-    if value.contains('"') || value.contains('\'') || value.to_ascii_lowercase().contains("url(") {
+    if !value.contains('#') {
         return value.to_string();
     }
-    if !value.contains('#') {
+    if value.contains('"') || value.contains('\'') || value.to_ascii_lowercase().contains("url(") {
         return value.to_string();
     }
     let bytes = value.as_bytes();
@@ -161,6 +161,14 @@ pub fn apply_css_value(value: &Value, css_prop: &str) -> String {
 
 pub fn camel_to_kebab_case(property: &str) -> String {
     if property.starts_with("--") {
+        return property.to_string();
+    }
+    // Already kebab case: nothing below would change it.
+    if !property.starts_with("ms")
+        && property
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+    {
         return property.to_string();
     }
     let prefixed;
