@@ -19,9 +19,7 @@ function cachedMerge(styles) {
   for (let i = 0; i < styles.length; i++) {
     const style = styles[i];
     if (style == null || style === false) continue;
-    // Flatten current contents, never cache by a mutable array's identity.
-    if (Array.isArray(style)) return cachedMerge(flatten(styles));
-    if (style.$$css == null) return merge(styles);
+    if (Array.isArray(style) || style.$$css == null) return flatMerge(styles);
     if (style.$$w) weighted = true;
     const children = (node.next ??= new WeakMap());
     let next = children.get(style);
@@ -32,32 +30,51 @@ function cachedMerge(styles) {
     node = next;
   }
   if (node.value === undefined) {
-    node.value = weighted ? merge(styles) : mergeCompiled(styles);
+    node.value = weighted ? merge(styles) : mergeFlat(styles);
   }
   return node.value;
 }
 
-// Without weight metadata, resolve properties directly into the class string.
-function mergeCompiled(styles) {
+// Flatten current contents, never cache by a mutable array's identity. Dynamic styles return
+// a fresh compiled map next to their inline variables, so calls with inline styles skip the cache.
+function flatMerge(styles) {
+  const flat = flatten(styles);
+  for (let i = 0; i < flat.length; i++) {
+    const style = flat[i];
+    if (style != null && style !== false && style.$$css == null) return mergeFlat(flat) ?? merge(flat);
+  }
+  return cachedMerge(flat);
+}
+
+// Without weight metadata, resolve properties directly into the class string and inline style.
+// Returns undefined when a style carries weights.
+function mergeFlat(styles) {
   const defined = [];
   let definedSet;
   let className = '';
+  let inline = null;
   for (let i = styles.length - 1; i >= 0; i--) {
     const style = styles[i];
     if (style == null || style === false) continue;
+    if (style.$$w) return undefined;
+    const compiled = style.$$css != null;
+    let sub = null;
     for (const prop in style) {
-      if (prop === '$$css' || prop === '$$w') continue;
+      const value = style[prop];
+      if (compiled ? prop === '$$css' : value === undefined) continue;
       if (definedSet ? definedSet.has(prop) : defined.includes(prop)) continue;
       if (definedSet) definedSet.add(prop);
       else {
         defined.push(prop);
         if (defined.length === 32) definedSet = new Set(defined);
       }
-      const value = style[prop];
-      if (typeof value === 'string') className = className ? value + ' ' + className : value;
+      if (!compiled) {
+        if (value != null) (sub ??= {})[prop] = value;
+      } else if (typeof value === 'string') className = className ? value + ' ' + className : value;
     }
+    if (sub != null) inline = Object.assign(sub, inline);
   }
-  return [className, null];
+  return [className, inline];
 }
 
 function compare(a, b) {
@@ -84,19 +101,15 @@ function repair(atoms) {
   }
 }
 
+// Callers pass flattened styles.
 function merge(styles) {
   const defined = new Set();
   const winners = [];
   let inline = null;
-  const stack = styles;
   let order = 0;
-  while (stack.length > 0) {
-    const style = stack.pop();
+  for (let i = styles.length - 1; i >= 0; i--) {
+    const style = styles[i];
     if (style == null || style === false) continue;
-    if (Array.isArray(style)) {
-      for (let i = 0; i < style.length; i++) stack.push(style[i]);
-      continue;
-    }
     order++;
     if (style.$$css != null) {
       const groups = style.$$w;
