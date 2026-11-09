@@ -161,12 +161,40 @@ fn strip_trailing_commas(text: &str) -> String {
     out
 }
 
-fn read_config(path: &Path) -> Option<serde_json::Map<String, Json>> {
+type Config = std::sync::Arc<serde_json::Map<String, Json>>;
+
+// Every import and every transform reads the same few manifests. Keep each parsed
+// one until its stamp changes, the way source::read keeps file text.
+fn read_config(path: &Path) -> Option<Config> {
+    use std::sync::{Mutex, OnceLock};
+    type Cache = rustc_hash::FxHashMap<PathBuf, (super::source::SourceStamp, Config)>;
+    static CONFIGS: OnceLock<Mutex<Cache>> = OnceLock::new();
+    let configs = CONFIGS.get_or_init(Default::default);
+
+    let Ok(stamp) = super::source::stamp(&path.to_string_lossy()) else {
+        configs.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).remove(path);
+        return None;
+    };
+    if let Some((previous, config)) = configs.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).get(path)
+        && *previous == stamp
+    {
+        return Some(config.clone());
+    }
+    let config = parse_config(path)?;
+    let mut cache = configs.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    if cache.len() >= 4096 {
+        cache.clear();
+    }
+    cache.insert(path.to_path_buf(), (stamp, config.clone()));
+    Some(config)
+}
+
+fn parse_config(path: &Path) -> Option<Config> {
     let text = std::fs::read_to_string(path).ok()?;
     let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
     let parsed: Json = serde_json::from_str(&strip_trailing_commas(&strip_comments(text))).ok()?;
     match parsed {
-        Json::Object(map) => Some(map),
+        Json::Object(map) => Some(std::sync::Arc::new(map)),
         _ => None,
     }
 }
