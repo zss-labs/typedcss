@@ -41,7 +41,7 @@ describe('@typedcss/css API', () => {
 
     expect(output).toContain('width: "xeycn8ow"');
     expect(output).toContain(
-      '"--x9wh76a0-width": (typeof (width) === "number" ? (width) + "px" : (width))',
+      '"--x9wh76a0-width": typeof width === "number" ? width + "px" : width',
     );
     expect(css.trim()).toBe('.xeycn8ow { width: var(--x9wh76a0-width); }');
   });
@@ -54,10 +54,10 @@ describe('@typedcss/css API', () => {
     expect(compile(input)).toMatchInlineSnapshot(`
       {
         "css": "",
-        "output": "import * as css from '@typedcss/css';
+        "output": "import * as css from "@typedcss/css";
       export const values = {
-          gap: 8,
-          color: "red"
+      	gap: 8,
+      	color: "red"
       };
       ",
       }
@@ -79,10 +79,8 @@ describe('@typedcss/css API', () => {
       .dark {
         --x2etbn17-color: white;
       }",
-        "output": "import * as css from '@typedcss/css';
-      export const theme = {
-          color: "var(--x2etbn17-color)"
-      };
+        "output": "import * as css from "@typedcss/css";
+      export const theme = { color: "var(--x2etbn17-color)" };
       ",
       }
     `);
@@ -107,11 +105,9 @@ describe('@typedcss/css API', () => {
           opacity: 1;
         }
       }",
-        "output": "import * as css from '@typedcss/css';
+        "output": "import * as css from "@typedcss/css";
       export const fade = "kf-x34h9adh";
-      export const names = [
-          fade
-      ];
+      export const names = [fade];
       ",
       }
     `);
@@ -134,11 +130,9 @@ describe('@typedcss/css API', () => {
       ::view-transition-new(*.vt-xg6n8ks7) {
         opacity: 1;
       }",
-        "output": "import * as css from '@typedcss/css';
+        "output": "import * as css from "@typedcss/css";
       export const transition = "vt-xg6n8ks7";
-      export const names = [
-          transition
-      ];
+      export const names = [transition];
       ",
       }
     `);
@@ -155,11 +149,9 @@ describe('@typedcss/css API', () => {
         "css": "@position-try --pt-xl7pn6d9 {
         position-area: top;
       }",
-        "output": "import * as css from '@typedcss/css';
+        "output": "import * as css from "@typedcss/css";
       export const position = "--pt-xl7pn6d9";
-      export const names = [
-          position
-      ];
+      export const names = [position];
       ",
       }
     `);
@@ -178,11 +170,9 @@ describe('@typedcss/css API', () => {
         inherits: false;
         initial-value: 0deg;
       }",
-        "output": "import * as css from '@typedcss/css';
+        "output": "import * as css from "@typedcss/css";
       export const angle = "--pr-xy9ywt9x";
-      export const names = [
-          angle
-      ];
+      export const names = [angle];
       ",
       }
     `);
@@ -202,26 +192,21 @@ describe('@typedcss/css API', () => {
       {
         "css": ".x5a0fsd8:hover { --x1f9k2q1-card-hover: 1; }
       @container style(--x1f9k2q1-card-hover: 1) { .xt6727og:not(#\\#) { color: red; } }",
-        "output": "import * as css from '@typedcss/css';
+        "output": "import * as css from "@typedcss/css";
       export const styles = {
-          parent: {
-              ":hover:--x1f9k2q1-card-hover": "x5a0fsd8",
-              $$w: {
-                  ":hover:--x1f9k2q1-card-hover": [
-                      "||0,1,0|--x1f9k2q1-card-hover",
-                      [
-                          0,
-                          2,
-                          0
-                      ]
-                  ]
-              },
-              $$css: true
-          },
-          child: {
-              "@container style(--x1f9k2q1-card-hover: 1):color": "xt6727og",
-              $$css: true
-          }
+      	parent: {
+      		":hover:--x1f9k2q1-card-hover": "x5a0fsd8",
+      		$$w: { ":hover:--x1f9k2q1-card-hover": ["||0,1,0|--x1f9k2q1-card-hover", [
+      			0,
+      			2,
+      			0
+      		]] },
+      		$$css: true
+      	},
+      	child: {
+      		"@container style(--x1f9k2q1-card-hover: 1):color": "xt6727og",
+      		$$css: true
+      	}
       };
       ",
       }
@@ -237,14 +222,12 @@ describe('@typedcss/css API', () => {
     expect(compile(input)).toMatchInlineSnapshot(`
       {
         "css": ".xq96bg3w { color: red; }",
-        "output": "import * as css from '@typedcss/css';
-      const styles = {
-          text: {
-              color: "xq96bg3w",
-              $$css: true
-          }
-      };
-      export const App = ()=><div {...css.props(styles.text)}/>;
+        "output": "import * as css from "@typedcss/css";
+      const styles = { text: {
+      	color: "xq96bg3w",
+      	$$css: true
+      } };
+      export const App = () => <div {...css.props(styles.text)} />;
       ",
       }
     `);
