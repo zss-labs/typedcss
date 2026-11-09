@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 
-use crate::swc::extract::extract_source;
-use crate::swc::link::{FileStyles, LinkOptions, link};
+use crate::oxc::extract::extract_source;
+use crate::oxc::link::{FileStyles, LinkOptions, link};
 
 struct Cached {
     source: u64,
