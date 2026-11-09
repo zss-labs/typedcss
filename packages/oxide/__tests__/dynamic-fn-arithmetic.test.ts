@@ -60,9 +60,18 @@ export const A = (p: any) => <div sx={${call}} />;`;
   const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   // typedcss computes the variable inside the function key, where the
-  // argument is the parameter, so p.n reads as n and quotes are double.
+  // argument is the parameter, so p.n reads as n. The output is printed
+  // again, so it keeps only the parentheses precedence needs and double quotes.
   const asParameter = (value: string) =>
-    value.replace(/\bp\.(\w+)/g, '$1').replace(/'/g, '"');
+    transformSync(
+      `x = ${value.replace(/\bp\.(\w+)/g, '$1').replace(/'/g, '"')};`,
+      {
+        jsc: { parser: { syntax: 'typescript' }, target: 'esnext' },
+        isModule: true,
+      },
+    )
+      .code.replace(/^x = /, '')
+      .replace(/;\n$/, '');
 
   const sets = (name: string, value: string) =>
     new RegExp(
