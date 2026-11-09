@@ -174,10 +174,11 @@ fn process_selector_style(
     }
 }
 
-pub fn atom_map(style: &Object) -> Object {
+// `records` are the unweighted style_records of a style.
+pub fn atom_map_of(records: &[StyleRecord]) -> Object {
     let mut map = Object::new();
-    for record in style_records(style, None) {
-        map.insert(record.key, Value::Str(record.hash));
+    for record in records {
+        map.insert(record.key.clone(), Value::Str(record.hash.clone()));
     }
     map
 }
