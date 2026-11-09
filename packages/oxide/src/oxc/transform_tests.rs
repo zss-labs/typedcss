@@ -1,10 +1,11 @@
 // The JS output is checked against the CSS extracted from the same file, so that
 // every class name and CSS variable the runtime will use has a rule behind it.
 
-use crate::swc::extract::extract_source;
-use crate::swc::link::{LinkOptions, link};
-use crate::swc::syntax::parse::parse_program;
-use crate::swc::transform::{TransformOptions, transform_source};
+use crate::oxc::extract::extract_source;
+use crate::oxc::link::{LinkOptions, link};
+use crate::oxc::syntax::parse::parse_program;
+use oxc_allocator::Allocator;
+use crate::oxc::transform::{TransformOptions, transform_source};
 
 fn options() -> TransformOptions {
     TransformOptions {
@@ -66,16 +67,16 @@ fn class_names_match_the_documented_output() {
 #[test]
 fn compiles_definitions_to_runtime_values() {
     let out = transform(PAGE);
-    assert!(out.starts_with("'use client';\n"), "{out}");
-    assert!(out.contains("import * as css from '@typedcss/css';\nimport { props as __typedcss_props } from \"@typedcss/css\";"), "{out}");
-    assert!(out.contains("import * as css from '@typedcss/css';"), "{out}");
+    assert!(out.starts_with("\"use client\";\n"), "{out}");
+    assert!(out.contains("import * as css from \"@typedcss/css\";\nimport { props as __typedcss_props } from \"@typedcss/css\";"), "{out}");
+    assert!(out.contains("import * as css from \"@typedcss/css\";"), "{out}");
     assert!(out.contains("const pulse = \"kf-"), "{out}");
-    assert!(out.contains("export const dark = {\n    ink: \"var(--"), "{out}");
+    assert!(out.contains("export const dark = { ink: \"var(--"), "{out}");
     assert!(out.contains("md: \"@media (min-width: 768px)\""), "{out}");
     assert!(out.contains("\"$$css\": true") || out.contains("$$css: true"), "{out}");
     assert!(out.contains("\":hover:color\":"), "{out}");
-    assert!(out.contains("scale: (value)=>["), "{out}");
-    assert!(out.contains("box: ({ width, height: h } = {})=>["), "{out}");
+    assert!(out.contains("scale: (value) => ["), "{out}");
+    assert!(out.contains("box: ({ width, height: h } = {}) => ["), "{out}");
     assert!(!out.contains("css.create("), "{out}");
     assert!(!out.contains("css.keyframes("), "{out}");
 }
@@ -87,12 +88,13 @@ fn class_style_becomes_a_props_spread_on_elements_only() {
         out.contains("<main {...__typedcss_props(styles.text, on && styles.motion, styles.scale(v))}>"),
         "{out}"
     );
-    assert!(out.contains("<Child sx={styles.text}/>"), "{out}");
+    assert!(out.contains("<Child sx={styles.text} />"), "{out}");
 }
 
 #[test]
 fn output_parses_again() {
-    parse_program(&transform(PAGE)).unwrap();
+    let out = transform(PAGE);
+    parse_program(&Allocator::default(), &out).unwrap();
 }
 
 #[test]
@@ -121,10 +123,10 @@ fn dynamic_values_carry_units_and_defaults() {
     // scale takes no unit, so its value is passed through as it is
     assert!(out.contains("\"--xfuma1qq-value\": value"), "{out}");
     assert!(
-        out.contains("\"--xylgo0zz-width\": (typeof (width) === \"number\" ? (width) + \"px\" : (width))"),
+        out.contains("\"--xylgo0zz-width\": typeof width === \"number\" ? width + \"px\" : width"),
         "{out}"
     );
-    assert!(out.contains("((width) * 2) + \"px\""), "{out}");
+    assert!(out.contains("width * 2 + \"px\""), "{out}");
     let css = css_of(PAGE);
     assert!(css.contains(", 10px)"), "{css}");
 }
@@ -146,7 +148,7 @@ fn files_without_plumeria_are_left_as_they_are() {
     let text = "export const a = 1;\nconst B = () => <div className=\"x\" />;\n";
     let out = transform(text);
     assert!(!out.contains("__typedcss_props"), "{out}");
-    assert!(out.contains("<div className=\"x\"/>"), "{out}");
+    assert!(out.contains("<div className=\"x\" />"), "{out}");
 }
 
 #[test]
@@ -172,9 +174,9 @@ fn derived_values_keep_defaults_and_signs() {
         "import * as css from '@typedcss/css';\nconst s = css.create({ a: (size = 4) => ({ margin: -size, padding: size / 2 + 1 }) });",
     );
     // a default falls back inside the derived value, and a sign stays an operator
-    assert!(out.contains("(size) === undefined ? 4 : (size)"), "{out}");
+    assert!(out.contains("(size === undefined ? 4 : size)"), "{out}");
     assert!(out.contains("-("), "{out}");
-    parse_program(&out).unwrap();
+    parse_program(&Allocator::default(), &out).unwrap();
 }
 
 
