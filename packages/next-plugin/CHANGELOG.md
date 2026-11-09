@@ -1,5 +1,15 @@
 # @typedcss/next-plugin
 
+## 22.0.5
+
+### Patch Changes
+
+- 33ec629: Perf: css improvement cache in props.mjs
+  Fix: next-plugin watch sources before compiling the stylesheet in css.ts
+- Updated dependencies [33ec629]
+  - @typedcss/eslint-plugin@22.0.5
+  - @typedcss/oxide@22.0.5
+
 ## 22.0.4
 
 ### Patch Changes
