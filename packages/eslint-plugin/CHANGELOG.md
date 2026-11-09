@@ -1,3 +1,11 @@
+## 22.0.7
+
+### Patch Changes
+
+- 93f641e: Fix: scrollBehavior spelling in propertyGroups.ts
+- Updated dependencies [93f641e]
+  - @typedcss/oxide@22.0.7
+
 ## 22.0.6
 
 ### Patch Changes
