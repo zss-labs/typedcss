@@ -1,9 +1,10 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { implementations } from './implementations';
 
 describe.each(implementations)('$name', ({ resolveExportValue }) => {
-  const DIR = fs.mkdtempSync(path.join(__dirname, 'fixture-const-value-'));
+  const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'typedcss-const-value-'));
   afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
   const write = (name: string, source: string) => {
