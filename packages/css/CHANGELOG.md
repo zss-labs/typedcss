@@ -1,5 +1,11 @@
 # @typedcss/core
 
+## 22.0.7
+
+### Patch Changes
+
+- 93f641e: Bump version to 22.0.7
+
 ## 22.0.6
 
 ### Patch Changes
