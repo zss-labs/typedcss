@@ -49,8 +49,8 @@ const styles = css.create({ main: { color: tokens.navy } });
 export const App = () => <div sx={[styles.main, collection.card]} />;
 `);
     // typedcss merges sx at runtime, so collection is still read.
-    expect(code).toContain("from './collection'");
-    expect(code).not.toContain("from './tokens'");
+    expect(code).toContain('from "./collection"');
+    expect(code).not.toContain('from "./tokens"');
   });
 
   it('keeps an import whose binding is still read at runtime', async () => {
@@ -59,7 +59,7 @@ import { tokens, label } from './tokens';
 const styles = css.create({ main: { color: tokens.navy } });
 export const App = () => <p sx={styles.main}>{label}</p>;
 `);
-    expect(code).toContain("import { tokens, label } from './tokens';");
+    expect(code).toContain('import { tokens, label } from "./tokens";');
   });
 
   it('keeps side-effect imports and imports the source never used', async () => {
@@ -69,10 +69,10 @@ import { unused } from './tokens';
 import { collection } from './collection';
 export const App = () => <div sx={collection.card} />;
 `);
-    expect(code).toContain("import './global.css';");
-    expect(code).toContain("import { unused } from './tokens';");
+    expect(code).toContain('import "./global.css";');
+    expect(code).toContain('import { unused } from "./tokens";');
     // typedcss merges sx at runtime, so collection is still read.
-    expect(code).toContain("from './collection'");
+    expect(code).toContain('from "./collection"');
   });
 
   it('keeps an import still rendered as a component', async () => {
@@ -82,8 +82,8 @@ import { tokens } from './tokens';
 const styles = css.create({ main: { color: tokens.navy } });
 export const App = () => <Card sx={styles.main} />;
 `);
-    expect(code).toContain("import { Card } from './Card';");
-    expect(code).not.toContain("from './tokens'");
+    expect(code).toContain('import { Card } from "./Card";');
+    expect(code).not.toContain('from "./tokens"');
   });
 
   it('keeps an import that is re-exported', async () => {
@@ -93,7 +93,7 @@ const styles = css.create({ main: { color: tokens.navy } });
 export const App = () => <div sx={styles.main} />;
 export { tokens };
 `);
-    expect(code).toContain("import { tokens } from './tokens';");
+    expect(code).toContain('import { tokens } from "./tokens";');
   });
 
   it('removes an import whose name is only shadowed by a runtime local', async () => {
@@ -104,7 +104,7 @@ export const App = ({ tokens }: { tokens: string }) => (
   <p sx={styles.main}>{tokens}</p>
 );
 `);
-    expect(code).not.toContain("from './tokens'");
+    expect(code).not.toContain('from "./tokens"');
   });
 
   it('keeps type-only imports untouched', async () => {
@@ -115,8 +115,8 @@ const styles = css.create({ main: { color: tokens.navy } });
 export const box: Properties = {};
 export const App = () => <div sx={styles.main} />;
 `);
-    expect(code).toContain("import type { Properties } from 'csstype';");
-    expect(code).not.toContain("from './tokens'");
+    expect(code).toContain('import type { Properties } from "csstype";');
+    expect(code).not.toContain('from "./tokens"');
   });
 
   it('removes an import that shares its name with an intrinsic tag', async () => {
@@ -125,6 +125,6 @@ import { tokens as div } from './tokens';
 const styles = css.create({ main: { color: div.navy } });
 export const App = () => <div sx={styles.main} />;
 `);
-    expect(code).not.toContain("from './tokens'");
+    expect(code).not.toContain('from "./tokens"');
   });
 });
