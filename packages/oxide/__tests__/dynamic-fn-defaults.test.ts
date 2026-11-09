@@ -168,7 +168,7 @@ export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
         'st.fn(p.n)',
       );
       // The function key computes the variable from its own parameter.
-      expect(code).toContain(`(typeof (n) === "number" ? (n) + "px" : (n))`);
+      expect(code).toContain(`typeof n === "number" ? n + "px" : n`);
       expect(compile('(n, flag = DEFAULT)', '{ width: n }', 'st.fn(p.n)')).toBe(
         css,
       );
@@ -181,7 +181,7 @@ export const A = (p: any) => <Card cardStyle={st.fn(p.n)} />;`),
         'st.fn(p.n)',
       );
       // The function key computes the variable from its own parameter.
-      expect(code).toContain(`(typeof (n) === "number" ? (n) + "px" : (n))`);
+      expect(code).toContain(`typeof n === "number" ? n + "px" : n`);
       expect(css).toMatch(/\{ width: var\(--[a-z0-9]+-n\); \}/);
     });
   });
