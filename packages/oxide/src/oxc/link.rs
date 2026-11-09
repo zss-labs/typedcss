@@ -5,7 +5,7 @@ use crate::engine::{apply_css_value, is_at_rule};
 use crate::engine::hash::hash_str;
 use crate::js::Value;
 use crate::js::number::number_to_string;
-use crate::swc::eval::Imports;
+use crate::oxc::eval::Imports;
 
 pub const VALUE_PREFIX: &str = "--plumeria-link-";
 pub const AT_RULE_PREFIX: &str = "@media --plumeria-link-";
