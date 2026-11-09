@@ -1,5 +1,12 @@
 # @typedcss/core
 
+## 22.0.5
+
+### Patch Changes
+
+- 33ec629: Perf: css improvement cache in props.mjs
+  Fix: next-plugin watch sources before compiling the stylesheet in css.ts
+
 ## 22.0.4
 
 ### Patch Changes

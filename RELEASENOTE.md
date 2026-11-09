@@ -1,5 +1,9 @@
 # Release Notes
 
+## 22.0.5 (Nov 9, 2026)
+
+Perf: css improvement cache in props.mjs Fix: next-plugin watch sources before compiling the stylesheet in css.ts
+
 ## 22.0.4 (Nov 7, 2026)
 
 Update: readme
