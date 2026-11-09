@@ -1,24 +1,25 @@
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
-use swc_core::common::{DUMMY_SP, Span, Spanned};
-use swc_core::ecma::ast::*;
-use swc_core::ecma::visit::{Visit, VisitWith};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{Visit, walk};
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::engine::hash::hash_object;
 use crate::engine::is_at_rule;
 use crate::js::{Object, Value};
 use crate::style::theme::{checked_var_type_hash, theme_atomic_map, theme_hash_of};
-use crate::swc::eval::consts::collect_local_consts;
-use crate::swc::eval::functions::{
+use crate::oxc::eval::consts::collect_local_consts;
+use crate::oxc::eval::functions::{
     Derived, Literal, NamedParam, StyleFunctions, resolve_dynamic_style, style_functions_of,
 };
-use crate::swc::eval::{Env, Evaluator, NOTHING, resolve_theme_selector};
-use crate::swc::link::{Alias, ImportEntry, ImportTable, LinkOptions, canonical_path, link_key, link_token, resolve_specifier};
-use crate::swc::syntax::expr::{Call, E, K, str_value, unwrap};
-use crate::swc::syntax::module::{Aliases, CORE, SpecKind, add_core_aliases, import_specs, module_export_name, plumeria_method};
-use crate::swc::dropped::Context;
-use crate::swc::eval::consts::collect_local_const_nodes;
-use crate::swc::syntax::parse::Base;
+use crate::oxc::eval::{Env, Evaluator, NOTHING, resolve_theme_selector};
+use crate::oxc::link::{Alias, ImportEntry, ImportTable, LinkOptions, canonical_path, link_key, link_token, resolve_specifier};
+use crate::oxc::syntax::expr::{BinaryOp, Call, E, K, Key, UnaryOp, as_key_value, str_value, unwrap};
+use crate::oxc::syntax::module::{Aliases, CORE, SpecKind, add_core_aliases, import_specs, module_export_name, plumeria_method};
+use crate::oxc::dropped::Context;
+use crate::oxc::eval::consts::collect_local_const_nodes;
+use crate::oxc::syntax::parse::Base;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Method {
@@ -69,13 +70,26 @@ pub struct Definition<'b> {
     pub name: String,
     pub method: Method,
     pub call: Call<'b>,
-    pub init: &'b Expr,
+    pub init: &'b Expression<'b>,
+}
+
+/// The JS that computes a dynamic CSS variable from the style function's
+/// parameters, built into the output by the transform.
+#[derive(Clone, Debug)]
+pub enum Code {
+    Ident(String),
+    Str(String),
+    Num(f64),
+    Paren(Box<Code>),
+    Binary(Box<Code>, BinaryOp, Box<Code>),
+    Unary(UnaryOp, Box<Code>),
+    Cond(Box<Code>, Box<Code>, Box<Code>),
 }
 
 #[derive(Clone, Debug)]
 pub struct DynamicVar {
     pub css_var: String,
-    pub value: Expr,
+    pub value: Code,
 }
 
 #[derive(Clone, Debug)]
@@ -159,20 +173,20 @@ impl<'s> Source<'s> {
 }
 
 fn collect_imports(
-    module: &Module,
+    program: &Program,
     options: &LinkOptions,
     file: &str,
 ) -> (Aliases, ImportTable) {
     let mut aliases = Aliases::default();
     let mut imports = ImportTable::default();
-    for item in &module.body {
-        let ModuleItem::ModuleDecl(ModuleDecl::Import(decl)) = item else {
+    for item in &program.body {
+        let Statement::ImportDeclaration(decl) = item else {
             continue;
         };
-        if decl.type_only {
+        if decl.import_kind.is_type() {
             continue;
         }
-        let source = str_value(&decl.src);
+        let source = str_value(&decl.source);
         if source == CORE {
             add_core_aliases(decl, &mut aliases);
             continue;
@@ -201,11 +215,11 @@ fn collect_imports(
     (aliases, imports)
 }
 
-fn top_level_definitions<'b>(module: &'b Module, aliases: &Aliases) -> Vec<Definition<'b>> {
+fn top_level_definitions<'b>(program: &'b Program<'b>, aliases: &Aliases) -> Vec<Definition<'b>> {
     let mut definitions = Vec::new();
-    for item in &module.body {
-        if let ModuleItem::Stmt(Stmt::Expr(statement)) = item
-            && let Some(call) = unwrap(E::new(&statement.expr)).call()
+    for item in &program.body {
+        if let Statement::ExpressionStatement(statement) = item
+            && let Some(call) = unwrap(E::new(&statement.expression)).call()
             && let Some(method) = call
                 .callee
                 .and_then(|callee| plumeria_method(callee, aliases))
@@ -213,26 +227,26 @@ fn top_level_definitions<'b>(module: &'b Module, aliases: &Aliases) -> Vec<Defin
             && !method.must_be_named()
         {
             definitions.push(Definition {
-                name: format!("#{}", statement.span.lo.0),
+                name: format!("#{}", statement.span.start),
                 method,
                 call,
-                init: &statement.expr,
+                init: &statement.expression,
             });
             continue;
         }
         let decl = match item {
-            ModuleItem::Stmt(Stmt::Decl(Decl::Var(decl))) => &**decl,
-            ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => match &export.decl {
-                Decl::Var(decl) => &**decl,
+            Statement::VariableDeclaration(decl) => &**decl,
+            Statement::ExportDeclaration(export) => match &export.declaration {
+                Declaration::VariableDeclaration(decl) => &**decl,
                 _ => continue,
             },
             _ => continue,
         };
-        for declarator in &decl.decls {
-            let Pat::Ident(name) = &declarator.name else {
+        for declarator in &decl.declarations {
+            let BindingPattern::BindingIdentifier(name) = &declarator.id else {
                 continue;
             };
-            let Some(init) = declarator.init.as_deref() else {
+            let Some(init) = declarator.init.as_ref() else {
                 continue;
             };
             let Some(call) = unwrap(E::new(init)).call() else {
@@ -246,7 +260,7 @@ fn top_level_definitions<'b>(module: &'b Module, aliases: &Aliases) -> Vec<Defin
                 continue;
             };
             definitions.push(Definition {
-                name: name.id.sym.to_string(),
+                name: name.name.to_string(),
                 method,
                 call,
                 init,
@@ -264,90 +278,79 @@ struct StrayCalls<'a> {
 }
 
 impl StrayCalls<'_> {
-    fn nested<T: VisitWith<Self>>(&mut self, node: &T) {
+    fn nested(&mut self, walk: impl FnOnce(&mut Self)) {
         self.depth += 1;
-        node.visit_children_with(self);
+        walk(self);
         self.depth -= 1;
     }
 }
 
-impl Visit for StrayCalls<'_> {
-    fn visit_call_expr(&mut self, it: &CallExpr) {
+impl<'a> Visit<'a> for StrayCalls<'_> {
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         if self.found.is_some() {
             return;
         }
-        if let Callee::Expr(callee) = &it.callee
-            && let Some(method) = plumeria_method(callee, self.aliases).and_then(Method::of)
+        if let Some(method) = plumeria_method(&it.callee, self.aliases).and_then(Method::of)
             && method.must_be_named()
-            && !self.registered.contains(&it.span.lo.0)
+            && !self.registered.contains(&it.span.start)
         {
             self.found = Some((method, it.span, self.depth > 0));
             return;
         }
-        it.visit_children_with(self);
+        walk::walk_call_expression(self, it);
     }
 
-    fn visit_function(&mut self, it: &Function) {
-        self.nested(it);
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        self.nested(|this| walk::walk_function(this, it, flags));
     }
 
-    fn visit_arrow_expr(&mut self, it: &ArrowExpr) {
-        self.nested(it);
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
+        self.nested(|this| walk::walk_arrow_function_expression(this, it));
     }
 
-    fn visit_block_stmt(&mut self, it: &BlockStmt) {
-        self.nested(it);
+    fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
+        self.nested(|this| walk::walk_block_statement(this, it));
     }
 
-    fn visit_class(&mut self, it: &Class) {
-        self.nested(it);
+    fn visit_class(&mut self, it: &Class<'a>) {
+        self.nested(|this| walk::walk_class(this, it));
     }
 }
 
-fn exported_names(module: &Module, path: &str, options: &LinkOptions, file: &str) -> (Vec<(String, String)>, Vec<Alias>) {
+fn exported_names(program: &Program, path: &str, options: &LinkOptions, file: &str) -> (Vec<(String, String)>, Vec<Alias>) {
     let mut exports = Vec::new();
     let mut reexports = Vec::new();
-    for item in &module.body {
+    let named = |specifiers: &[ExportSpecifier]| {
+        specifiers
+            .iter()
+            .filter(|spec| !spec.export_kind.is_type())
+            .map(|spec| (module_export_name(&spec.exported), module_export_name(&spec.local)))
+            .collect::<Vec<_>>()
+    };
+    for item in &program.body {
         match item {
-            ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => {
-                if let Decl::Var(decl) = &export.decl {
-                    for declarator in &decl.decls {
-                        if let Pat::Ident(name) = &declarator.name {
-                            exports.push((name.id.sym.to_string(), name.id.sym.to_string()));
+            Statement::ExportDeclaration(export) => {
+                if let Declaration::VariableDeclaration(decl) = &export.declaration {
+                    for declarator in &decl.declarations {
+                        if let BindingPattern::BindingIdentifier(name) = &declarator.id {
+                            exports.push((name.name.to_string(), name.name.to_string()));
                         }
                     }
                 }
             }
-            ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(named)) => {
-                let target = named
-                    .src
-                    .as_ref()
-                    .map(|src| resolve_specifier(options, file, &str_value(src)));
-                for spec in &named.specifiers {
-                    let ExportSpecifier::Named(spec) = spec else {
-                        continue;
-                    };
-                    if spec.is_type_only {
-                        continue;
-                    }
-                    let local = module_export_name(&spec.orig);
-                    let exported = spec
-                        .exported
-                        .as_ref()
-                        .map(module_export_name)
-                        .unwrap_or_else(|| local.clone());
-                    match &target {
-                        None => exports.push((exported, local)),
-                        Some(Some(target)) => reexports.push(Alias {
+            Statement::ExportNamedDeclaration(export) => exports.extend(named(&export.specifiers)),
+            Statement::ExportFromDeclaration(export) => {
+                if let Some(target) = resolve_specifier(options, file, &str_value(&export.source)) {
+                    for (exported, local) in named(&export.specifiers) {
+                        reexports.push(Alias {
                             from: link_key(path, &exported, None),
-                            to: link_key(target, &local, None),
-                        }),
-                        Some(None) => {}
+                            to: link_key(&target, &local, None),
+                        });
                     }
                 }
             }
-            ModuleItem::ModuleDecl(ModuleDecl::ExportAll(all)) => {
-                if let Some(target) = resolve_specifier(options, file, &str_value(&all.src)) {
+            Statement::ExportAllDeclaration(all) if all.exported.is_none() => {
+                if let Some(target) = resolve_specifier(options, file, &str_value(&all.source)) {
                     reexports.push(Alias {
                         from: link_key(path, "*", None),
                         to: link_key(&target, "*", None),
@@ -360,66 +363,46 @@ fn exported_names(module: &Module, path: &str, options: &LinkOptions, file: &str
     (exports, reexports)
 }
 
-fn paren(expr: Expr) -> Expr {
-    Expr::Paren(ParenExpr {
-        span: DUMMY_SP,
-        expr: Box::new(expr),
-    })
+fn paren(code: Code) -> Code {
+    Code::Paren(Box::new(code))
 }
 
-fn binary(left: Expr, op: BinaryOp, right: Expr) -> Expr {
-    Expr::Bin(BinExpr {
-        span: DUMMY_SP,
-        op,
-        left: Box::new(left),
-        right: Box::new(right),
-    })
+fn binary(left: Code, op: BinaryOp, right: Code) -> Code {
+    Code::Binary(Box::new(left), op, Box::new(right))
 }
 
-fn unary(op: UnaryOp, arg: Expr) -> Expr {
-    Expr::Unary(UnaryExpr {
-        span: DUMMY_SP,
-        op,
-        arg: Box::new(arg),
-    })
+fn unary(op: UnaryOp, arg: Code) -> Code {
+    Code::Unary(op, Box::new(arg))
 }
 
-fn identifier(name: &str) -> Expr {
-    Expr::Ident(Ident::new_no_ctxt(name.into(), DUMMY_SP))
+fn identifier(name: &str) -> Code {
+    Code::Ident(name.to_string())
 }
 
-fn string(text: &str) -> Expr {
-    Expr::Lit(Lit::Str(Str {
-        span: DUMMY_SP,
-        value: text.into(),
-        raw: None,
-    }))
+fn string(text: &str) -> Code {
+    Code::Str(text.to_string())
 }
 
-fn literal_expr(literal: &Literal) -> Expr {
+fn conditional(test: Code, cons: Code, alt: Code) -> Code {
+    Code::Cond(Box::new(test), Box::new(cons), Box::new(alt))
+}
+
+fn literal_expr(literal: &Literal) -> Code {
     match literal {
         Literal::Str(text) => string(text),
-        Literal::Num(number) if *number < 0.0 => paren(unary(
-            UnaryOp::Minus,
-            Expr::Lit(Lit::Num(Number::from(-number))),
-        )),
-        Literal::Num(number) => Expr::Lit(Lit::Num(Number::from(*number))),
+        Literal::Num(number) if *number < 0.0 => paren(unary(UnaryOp::Minus, Code::Num(-number))),
+        Literal::Num(number) => Code::Num(*number),
     }
 }
 
-fn derived_expr(derived: &Derived) -> Expr {
+fn derived_expr(derived: &Derived) -> Code {
     match derived {
         Derived::Param(name, None) => paren(identifier(name)),
-        Derived::Param(name, Some(fallback)) => paren(Expr::Cond(CondExpr {
-            span: DUMMY_SP,
-            test: Box::new(binary(
-                paren(identifier(name)),
-                BinaryOp::EqEqEq,
-                identifier("undefined"),
-            )),
-            cons: Box::new(literal_expr(fallback)),
-            alt: Box::new(paren(identifier(name))),
-        })),
+        Derived::Param(name, Some(fallback)) => paren(conditional(
+            binary(paren(identifier(name)), BinaryOp::EqEqEq, identifier("undefined")),
+            literal_expr(fallback),
+            paren(identifier(name)),
+        )),
         Derived::Literal(literal) => literal_expr(literal),
         Derived::Binary(left, op, right) => {
             paren(binary(derived_expr(left), *op, derived_expr(right)))
@@ -428,20 +411,19 @@ fn derived_expr(derived: &Derived) -> Expr {
     }
 }
 
-fn dynamic_value(source: &Expr, unit: &str, written: bool) -> Expr {
+fn dynamic_value(source: &Code, unit: &str, written: bool) -> Code {
     if written {
         paren(binary(paren(source.clone()), BinaryOp::Add, string(unit)))
     } else if !unit.is_empty() {
-        paren(Expr::Cond(CondExpr {
-            span: DUMMY_SP,
-            test: Box::new(binary(
+        paren(conditional(
+            binary(
                 unary(UnaryOp::TypeOf, paren(source.clone())),
                 BinaryOp::EqEqEq,
                 string("number"),
-            )),
-            cons: Box::new(binary(paren(source.clone()), BinaryOp::Add, string(unit))),
-            alt: Box::new(paren(source.clone())),
-        }))
+            ),
+            binary(paren(source.clone()), BinaryOp::Add, string(unit)),
+            paren(source.clone()),
+        ))
     } else {
         source.clone()
     }
@@ -492,11 +474,11 @@ fn object_argument<'b>(
     definition: &Definition<'b>,
     index: usize,
     source: &Source,
-    const_nodes: &crate::swc::eval::consts::ConstNodes<'b>,
-) -> Result<&'b ObjectLit, String> {
+    const_nodes: &crate::oxc::eval::consts::ConstNodes<'b>,
+) -> Result<&'b ObjectExpression<'b>, String> {
     let argument = definition.call.arg(index).map(unwrap);
     let named = argument.and_then(|arg| match arg.kind() {
-        K::Ident(ident) => const_nodes.get(ident.sym.as_str()).map(|expr| unwrap(E::new(expr))),
+        K::Ident(ident) => const_nodes.get(ident.name.as_str()).map(|expr| unwrap(E::new(expr))),
         _ => None,
     });
     match named.or(argument).map(|arg| arg.kind()) {
@@ -519,23 +501,23 @@ fn link_value(value: &Value) -> Option<String> {
 }
 
 pub fn analyze<'b>(
-    module: &'b Module,
+    program: &'b Program<'b>,
     source: &Source,
     options: &LinkOptions,
 ) -> Result<Model<'b>, String> {
-    crate::swc::policy::assert_property_policy(module, options.policy, source.file)?;
+    crate::oxc::policy::assert_property_policy(program, options.policy, source.file)?;
     let path = canonical_path(options, source.file).unwrap_or_else(|| source.file.to_string());
-    let (aliases, imports) = collect_imports(module, options, source.file);
-    let definitions = top_level_definitions(module, &aliases);
+    let (aliases, imports) = collect_imports(program, options, source.file);
+    let definitions = top_level_definitions(program, &aliases);
 
-    let registered: FxHashSet<u32> = definitions.iter().map(|d| d.call.span.lo.0).collect();
+    let registered: FxHashSet<u32> = definitions.iter().map(|d| d.call.span.start).collect();
     let mut stray = StrayCalls {
         aliases: &aliases,
         registered: &registered,
         found: None,
         depth: 0,
     };
-    module.visit_with(&mut stray);
+    stray.visit_program(program);
     if let Some((method, span, nested)) = stray.found {
         let message = if nested {
             format!(
@@ -551,8 +533,8 @@ pub fn analyze<'b>(
         return Err(source.fail(message, span));
     }
 
-    let consts = collect_local_consts(module, Some(&imports));
-    let const_nodes = collect_local_const_nodes(module);
+    let consts = collect_local_consts(program, Some(&imports));
+    let const_nodes = collect_local_const_nodes(program);
     let mut tables = Tables::new();
     let mut globals: IndexMap<String, Global, FxBuildHasher> = IndexMap::default();
     let mut theme_maps: FxHashMap<String, Object> = FxHashMap::default();
@@ -560,7 +542,7 @@ pub fn analyze<'b>(
 
     for definition in &definitions {
         let fail = |message: String| source.fail(message, definition.call.span);
-        let evaluate = |object: &ObjectLit, tables: &Tables| {
+        let evaluate = |object: &ObjectExpression, tables: &Tables| {
             let evaluator = Evaluator::new(tables.env(&consts)).importing(&imports);
             let obj = evaluator.object(object).map_err(fail)?;
             Context {
@@ -657,26 +639,16 @@ pub fn analyze<'b>(
     }
 
     let mut creates: IndexMap<String, CreateStyles, FxBuildHasher> = IndexMap::default();
+    // What a create can read of the definitions before it: each earlier create's
+    // static styles, added as it is compiled, and every theme, which wins a name
+    // it shares with a create.
+    let mut local_objects: FxHashMap<String, Value> = theme_maps
+        .iter()
+        .map(|(name, map)| (name.clone(), Value::obj(map.clone())))
+        .collect();
     for definition in definitions.iter().filter(|d| d.method == Method::Create) {
         let fail = |message: String| source.fail(message, definition.call.span);
         let object = object_argument(definition, 0, source, &const_nodes)?;
-        let local_objects: FxHashMap<String, Value> = creates
-            .iter()
-            .map(|(name, styles)| {
-                let mut object = Object::new();
-                for (key, entry) in &styles.entries {
-                    if let Entry::Static(style) = entry {
-                        object.insert(key, Value::obj(style.clone()));
-                    }
-                }
-                (name.clone(), Value::obj(object))
-            })
-            .chain(
-                theme_maps
-                    .iter()
-                    .map(|(name, map)| (name.clone(), Value::obj(map.clone()))),
-            )
-            .collect();
         let resolver = |key: &str| local_objects.get(key).cloned();
         let evaluator = Evaluator::with_resolver(tables.env(&consts), &resolver).importing(&imports);
         let evaluated = evaluator.object(object).map_err(fail)?;
@@ -710,7 +682,7 @@ pub fn analyze<'b>(
                 Some(&imports),
             )
             .map_err(fail)?;
-            let mut sources: Vec<(String, Expr)> = runtime
+            let mut sources: Vec<(String, Code)> = runtime
                 .iter()
                 .map(|param| (param.clone(), identifier(param)))
                 .collect();
@@ -744,23 +716,27 @@ pub fn analyze<'b>(
             );
         }
         let mut ordered: IndexMap<String, Entry, FxBuildHasher> = IndexMap::default();
-        for prop in &object.props {
-            let PropOrSpread::Prop(prop) = prop else {
+        for prop in &object.properties {
+            let Some(pair) = as_key_value(prop) else {
                 continue;
             };
-            let Prop::KeyValue(pair) = &**prop else {
+            let Some(key) = Key::of(pair).name() else {
                 continue;
-            };
-            let key = match &pair.key {
-                PropName::Ident(ident) => ident.sym.to_string(),
-                PropName::Str(value) => str_value(value),
-                _ => continue,
             };
             if let Some(entry) = entries.shift_remove(&key) {
                 ordered.insert(key, entry);
             }
         }
         ordered.extend(entries);
+        if !theme_maps.contains_key(&definition.name) {
+            let mut statics = Object::new();
+            for (key, entry) in &ordered {
+                if let Entry::Static(style) = entry {
+                    statics.insert(key, Value::obj(style.clone()));
+                }
+            }
+            local_objects.insert(definition.name.clone(), Value::obj(statics));
+        }
         creates.insert(
             definition.name.clone(),
             CreateStyles {
@@ -788,7 +764,7 @@ pub fn analyze<'b>(
         runtime_values.insert(name.clone(), Value::obj(object.clone()));
     }
 
-    let (exports, reexports) = exported_names(module, &path, options, source.file);
+    let (exports, reexports) = exported_names(program, &path, options, source.file);
     let mut link_values = Vec::new();
     for (exported, local) in &exports {
         let key = |member: Option<&str>| link_key(&path, exported, member);
@@ -836,10 +812,10 @@ pub fn analyze<'b>(
 
     let skipped: FxHashSet<(u32, u32)> = definitions
         .iter()
-        .map(|definition| (definition.init.span().lo.0, definition.init.span().hi.0))
+        .map(|definition| (definition.init.span().start, definition.init.span().end))
         .collect();
     let mut uses = Vec::new();
-    for read in crate::swc::reads::runtime_reads(module, &skipped) {
+    for read in crate::oxc::reads::runtime_reads(program, &skipped) {
         if let Some(name) = globals.get(&read.local).and_then(definition_name) {
             uses.push(name);
             continue;
