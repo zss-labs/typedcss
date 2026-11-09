@@ -2,10 +2,7 @@ pub mod consts;
 pub mod env;
 pub mod functions;
 
-use swc_core::ecma::ast::{
-    BinaryOp, Expr, ExprOrSpread, GetterProp, MethodProp, ObjectLit, Prop as AstProp, PropName, PropOrSpread,
-    SetterProp, Tpl, UnaryOp,
-};
+use oxc_ast::ast::{Argument, ObjectExpression, ObjectPropertyKind, PropertyKind, TemplateLiteral};
 
 pub use env::{Env, Layer, Lookup, NOTHING, Single};
 
@@ -16,8 +13,9 @@ use crate::engine::specificity::{
 use crate::js::number::{number_to_string, to_int32, to_uint32};
 use crate::js::{Object, Value};
 use crate::style::theme::theme_var_reference;
-use crate::swc::syntax::expr::{
-    BinOp, Call, E, K, Prop, expression_label, member_prop, root_identifier, str_value, unwrap,
+use crate::oxc::syntax::expr::{
+    BinOp, BinaryOp, Call, E, K, Key, Prop, UnaryOp, argument_expression, expression_label, member_prop,
+    root_identifier, str_value, unwrap,
 };
 
 pub type EvalResult<T> = Result<T, String>;
@@ -35,13 +33,13 @@ pub trait Imports {
     fn key_used(&self, _token: &str, _label: &str) {}
 }
 
-pub fn argument_expr(argument: &ExprOrSpread) -> E<'_> {
-    E::new(&argument.expr)
+pub fn argument_expr<'b>(argument: &'b Argument<'b>) -> E<'b> {
+    E::new(argument_expression(argument))
 }
 
 pub fn span_key(e: E) -> (u32, u32) {
     let span = e.span();
-    (span.lo.0, span.hi.0)
+    (span.start, span.end)
 }
 
 #[derive(Clone, Copy)]
@@ -90,7 +88,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         }
     }
 
-    pub fn plain_property_into(&self, prop: &PropOrSpread, obj: &mut Object) -> EvalResult<()> {
+    pub fn plain_property_into(&self, prop: &ObjectPropertyKind, obj: &mut Object) -> EvalResult<()> {
         self.plain().property_into(prop, obj)
     }
 
@@ -98,13 +96,13 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         self.plain().property_value(value)
     }
 
-    pub fn object(&self, node: &ObjectLit) -> EvalResult<Object> {
-        self.properties(node.props.iter())
+    pub fn object(&self, node: &ObjectExpression) -> EvalResult<Object> {
+        self.properties(node.properties.iter())
     }
 
     pub fn properties<'b>(
         &self,
-        properties: impl Iterator<Item = &'b PropOrSpread>,
+        properties: impl Iterator<Item = &'b ObjectPropertyKind<'b>>,
     ) -> EvalResult<Object> {
         let mut obj = Object::new();
         for prop in properties {
@@ -113,10 +111,10 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         Ok(obj)
     }
 
-    pub fn property_into(&self, prop: &PropOrSpread, obj: &mut Object) -> EvalResult<()> {
+    pub fn property_into(&self, prop: &ObjectPropertyKind, obj: &mut Object) -> EvalResult<()> {
         let prop = match prop {
-            PropOrSpread::Spread(spread) => {
-                let argument = E::new(&spread.expr);
+            ObjectPropertyKind::SpreadProperty(spread) => {
+                let argument = E::new(&spread.argument);
                 match self.plain().expression(argument)? {
                     Value::Obj(spread_obj) => {
                         for (key, value) in spread_obj.iter() {
@@ -133,25 +131,31 @@ impl<'e, 'r> Evaluator<'e, 'r> {
                 }
                 return Ok(());
             }
-            PropOrSpread::Prop(prop) => &**prop,
+            ObjectPropertyKind::ObjectProperty(prop) => &**prop,
         };
-        match prop {
-            AstProp::Shorthand(ident) => {
-                let key = ident.sym.as_str();
+        if prop.kind != PropertyKind::Init || prop.method {
+            return Err(format!(
+                "[typedcss] Cannot read the method or accessor \"{}\" at build time. Write it as a plain property.",
+                Key::of(prop).name().unwrap_or_default()
+            ));
+        }
+        match &prop.value {
+            oxc_ast::ast::Expression::Identifier(ident) if prop.shorthand => {
+                let key = ident.name.as_str();
                 if let Some(resolve) = self.resolve_variable
                     && let Some(resolved) = resolve(key)
                 {
                     obj.insert(key, resolved);
                     return Ok(());
                 }
-                let value = Expr::Ident(ident.clone());
-                if let Some(value) = self.property_value(E::new(&value))? {
+                if let Some(value) = self.property_value(E::ident(ident))? {
                     obj.insert(key, value);
                 }
                 Ok(())
             }
-            AstProp::KeyValue(prop) => {
-                let key = self.property_key(&prop.key)?;
+            _ if prop.shorthand => Ok(()),
+            _ => {
+                let key = self.property_key(Key::of(prop))?;
                 if !key.truthy() {
                     return Ok(());
                 }
@@ -161,7 +165,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
                 } else {
                     key
                 };
-                let key = match crate::swc::link::at_rule_token(&key) {
+                let key = match crate::oxc::link::at_rule_token(&key) {
                     Some(at_rule) if matches!(unwrap(E::new(&prop.value)).kind(), K::Object(_)) => {
                         at_rule
                     }
@@ -192,17 +196,6 @@ impl<'e, 'r> Evaluator<'e, 'r> {
                 }
                 Ok(())
             }
-            AstProp::Method(MethodProp { key, .. })
-            | AstProp::Getter(GetterProp { key, .. })
-            | AstProp::Setter(SetterProp { key, .. }) => Err(format!(
-                "[typedcss] Cannot read the method or accessor \"{}\" at build time. Write it as a plain property.",
-                match key {
-                    PropName::Ident(ident) => ident.sym.to_string(),
-                    PropName::Str(value) => str_value(value),
-                    _ => String::new(),
-                }
-            )),
-            _ => Ok(()),
         }
     }
 
@@ -265,11 +258,11 @@ impl<'e, 'r> Evaluator<'e, 'r> {
             K::Member(_) => Ok(resolve_static_member(val, statics)),
             K::Ident(ident) => {
                 if let Some(resolve) = self.resolve_variable
-                    && let Some(resolved) = resolve(ident.sym.as_str())
+                    && let Some(resolved) = resolve(ident.name.as_str())
                 {
                     return Ok(Some(resolved));
                 }
-                Ok(statics.lookup(ident.sym.as_str()))
+                Ok(statics.lookup(ident.name.as_str()))
             }
             _ => Ok(None),
         }
@@ -277,34 +270,34 @@ impl<'e, 'r> Evaluator<'e, 'r> {
 
     fn note_key(&self, text: &str, expr: E) {
         if let Some(imports) = self.imports
-            && text.starts_with(crate::swc::link::VALUE_PREFIX)
+            && text.starts_with(crate::oxc::link::VALUE_PREFIX)
         {
             imports.key_used(text, &expression_label(expr));
         }
     }
 
-    pub fn property_key(&self, key: &PropName) -> EvalResult<Value> {
+    pub fn property_key(&self, key: Key) -> EvalResult<Value> {
         let expr = match key {
-            PropName::Ident(ident) => return Ok(Value::str(ident.sym.as_str())),
-            PropName::Str(value) => return Ok(Value::Str(str_value(value))),
-            PropName::Num(value) => {
-                let text = number_to_string(value.value);
+            Key::Ident(name) => return Ok(Value::str(name)),
+            Key::Str(value) => return Ok(Value::Str(str_value(value))),
+            Key::Num(value) => {
+                let text = number_to_string(value);
                 return Err(format!(
                     "[typedcss] The style key {text} is a number. Style keys have to be names — quote it as '{text}' or rename it."
                 ));
             }
-            PropName::Computed(computed) => E::new(&computed.expr),
-            _ => return Ok(Value::str("")),
+            Key::Computed(computed) => E::new(computed),
+            Key::Other => return Ok(Value::str("")),
         };
         match expr.kind() {
             K::Str(value) => return Ok(Value::Str(str_value(value))),
             K::Ident(ident) => {
-                if let Some(Value::Str(text)) = self.env.statics.lookup(ident.sym.as_str())
+                if let Some(Value::Str(text)) = self.env.statics.lookup(ident.name.as_str())
                     && !text.is_empty()
                 {
                     return Ok(Value::Str(text));
                 }
-                if let Some(hash) = self.env.var_types.lookup(ident.sym.as_str()) {
+                if let Some(hash) = self.env.var_types.lookup(ident.name.as_str()) {
                     return Ok(Value::Str(format!("--pr-{hash}")));
                 }
                 if let Some(Value::Str(text)) = self.imported(expr) {
@@ -344,14 +337,14 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         }
     }
 
-    pub fn template(&self, node: &Tpl) -> EvalResult<String> {
+    pub fn template(&self, node: &TemplateLiteral) -> EvalResult<String> {
         let mut result = String::new();
         for (index, quasi) in node.quasis.iter().enumerate() {
-            match &quasi.cooked {
-                Some(cooked) if !cooked.is_empty() => result.push_str(&cooked.to_string_lossy()),
-                _ => result.push_str(quasi.raw.as_str()),
+            match quasi.value.cooked {
+                Some(cooked) if !cooked.as_bytes().is_empty() => result.push_str(&cooked.display().to_string()),
+                _ => result.push_str(quasi.value.raw.as_str()),
             }
-            if let Some(expr) = node.exprs.get(index) {
+            if let Some(expr) = node.expressions.get(index) {
                 let value = self.expression(E::new(expr))?;
                 if matches!(value, Value::Null | Value::Obj(_)) {
                     return Err(format!(
@@ -458,7 +451,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         };
         let callee = E::new(callee);
         let method = match callee.kind() {
-            K::Ident(ident) => Some(ident.sym.as_str()),
+            K::Ident(ident) => Some(ident.name.as_str()),
             K::Member(_) => match callee.prop() {
                 Some(Prop::Name(name)) => Some(name),
                 _ => None,
@@ -501,7 +494,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
             K::Bool(value) => Ok(Value::Bool(value)),
             K::Null => Ok(Value::Null),
             K::Ident(ident) => {
-                let name = ident.sym.as_str();
+                let name = ident.name.as_str();
                 if let Some(value) = self.env.statics.lookup(name) {
                     return Ok(value);
                 }
@@ -550,7 +543,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
             K::Binary(left, op, right) => self.binary(left, op, right),
             K::Template(template) => self.template(template).map(Value::Str),
             K::Unary(unary) => {
-                let value = self.expression(E::new(&unary.arg))?;
+                let value = self.expression(E::new(unary.arg))?;
                 if unary.op == UnaryOp::Bang {
                     return Ok(Value::Bool(!value.truthy()));
                 }
@@ -565,10 +558,10 @@ impl<'e, 'r> Evaluator<'e, 'r> {
                 Err(format!(
                     "[typedcss] Unsupported unary operand for {}: {} must resolve to a number at build time.",
                     unary.op.as_str(),
-                    expression_label(E::new(&unary.arg))
+                    expression_label(E::new(unary.arg))
                 ))
             }
-            K::Paren(paren) => self.expression(E::new(&paren.expr)),
+            K::Paren(inner) => self.expression(E::new(inner)),
             _ => Err(format!(
                 "[typedcss] Unsupported expression type: {}. Style values must be literals, consts, or arithmetic and template expressions of them.",
                 expression_label(node)
@@ -579,7 +572,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
     fn imported(&self, node: E) -> Option<Value> {
         let imports = self.imports?;
         match node.kind() {
-            K::Ident(ident) => imports.name(ident.sym.as_str()),
+            K::Ident(ident) => imports.name(ident.name.as_str()),
             K::Member(_) => {
                 let object = unwrap(node.object()?);
                 let key = member_key(node, Some(self.env.statics))?;
@@ -601,7 +594,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
 
     fn keyframes_member(&self, node: E) -> Option<String> {
         match node.kind() {
-            K::Ident(ident) => self.env.keyframes.lookup(ident.sym.as_str()),
+            K::Ident(ident) => self.env.keyframes.lookup(ident.name.as_str()),
             K::Member(_) => node
                 .object()?
                 .ident_name()
@@ -620,7 +613,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
 
     fn view_transition_member(&self, node: E) -> Option<String> {
         match node.kind() {
-            K::Ident(ident) => self.env.view_transitions.lookup(ident.sym.as_str()),
+            K::Ident(ident) => self.env.view_transitions.lookup(ident.name.as_str()),
             K::Member(_) => node
                 .object()?
                 .ident_name()
@@ -663,7 +656,7 @@ fn member_key(node: E, statics: Option<&dyn Lookup<Value>>) -> Option<String> {
             match inner.kind() {
                 K::Str(value) => Some(str_value(value)),
                 K::Num(value) => Some(number_to_string(value.value)),
-                K::Ident(ident) => match statics?.lookup(ident.sym.as_str()) {
+                K::Ident(ident) => match statics?.lookup(ident.name.as_str()) {
                     Some(Value::Str(text)) => Some(text),
                     Some(Value::Num(number)) => Some(number_to_string(number)),
                     _ => None,
@@ -693,7 +686,7 @@ pub fn resolve_static_member(node: E, statics: &dyn Lookup<Value>) -> Option<Val
                 match inner.kind() {
                     K::Str(value) => Some(str_value(value)),
                     K::Num(value) => Some(number_to_string(value.value)),
-                    K::Ident(ident) => match statics.lookup(ident.sym.as_str()) {
+                    K::Ident(ident) => match statics.lookup(ident.name.as_str()) {
                         Some(Value::Str(text)) => Some(text),
                         Some(Value::Num(number)) => Some(number_to_string(number)),
                         _ => None,
