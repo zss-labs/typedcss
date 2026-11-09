@@ -1,3 +1,11 @@
+## 22.0.6
+
+### Patch Changes
+
+- d8a3ed1: Bump versino to 22.0.6
+- Updated dependencies [d8a3ed1]
+  - @typedcss/oxide@22.0.6
+
 ## 22.0.5
 
 ### Patch Changes

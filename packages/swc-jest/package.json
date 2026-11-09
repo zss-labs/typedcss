@@ -1,6 +1,6 @@
 {
   "name": "@typedcss/swc-jest",
-  "version": "22.0.5",
+  "version": "22.0.6",
   "description": "TypedCSS Jest transformer on @swc/jest",
   "author": "Refirst 11",
   "license": "MIT",

@@ -1,5 +1,11 @@
 # @typedcss/oxide
 
+## 22.0.6
+
+### Patch Changes
+
+- d8a3ed1: Update: SWC to OXC and improvement optimize
+
 ## 22.0.5
 
 ### Patch Changes

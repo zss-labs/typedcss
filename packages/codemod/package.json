@@ -1,6 +1,6 @@
 {
   "name": "@typedcss/codemod",
-  "version": "22.0.5",
+  "version": "22.0.6",
   "description": "Codemods for TypedCSS: rename the styling prop or an API",
   "author": "Refirst 11",
   "license": "MIT",
