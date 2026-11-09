@@ -115,27 +115,37 @@ function modified(file: string): number | undefined {
   }
 }
 
-function collect({ cwd, root, include, exclude, styleProp }: ResolvedOptions) {
-  const files: StyleFile[] = [];
-  const found = new Set<string>();
+export function sourceFilesOf({
+  cwd,
+  root,
+  include,
+  exclude,
+}: ResolvedOptions): Set<string> {
   const scanned = new Set(
     oxide
       .globFiles(include, cwd, exclude)
       .map((relative) => path.join(cwd, relative)),
   );
   for (const file of sourcePackageFiles(root, exclude)) scanned.add(file);
-  for (const file of scanned) {
+  return scanned;
+}
+
+function collect(options: ResolvedOptions, fresh: boolean) {
+  const files: StyleFile[] = [];
+  const found = new Set<string>();
+  for (const file of sourceFilesOf(options)) {
     const mtime = modified(file);
     if (mtime === undefined) continue;
     found.add(file);
     const previous = seen.get(file);
-    if (previous && previous.mtime === mtime) {
+    if (!fresh && previous && previous.mtime === mtime) {
       if (previous.relevant) files.push({ path: file });
       continue;
     }
     const source = fs.readFileSync(file, 'utf8');
     const relevant =
-      REEXPORT.test(source) || oxide.needsCompile(source, styleProp, file);
+      REEXPORT.test(source) ||
+      oxide.needsCompile(source, options.styleProp, file);
     seen.set(file, { mtime, relevant });
     if (relevant) files.push({ path: file, source });
   }
@@ -145,8 +155,9 @@ function collect({ cwd, root, include, exclude, styleProp }: ResolvedOptions) {
   return { files, found };
 }
 
-export function compileStylesheet(options: ResolvedOptions) {
-  const { files, found } = collect(options);
+// A fresh compile reads every file again instead of trusting a cached mtime.
+export function compileStylesheet(options: ResolvedOptions, fresh = false) {
+  const { files, found } = collect(options, fresh);
   try {
     return {
       css: oxide.compileCss({
