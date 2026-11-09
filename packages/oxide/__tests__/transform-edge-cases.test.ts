@@ -129,7 +129,7 @@ const s = css.create({
         'app.tsx': `import type { Style } from '@typedcss/css';
 export const A = ({ x }: { x?: Style }) => <div sx={x} />;`,
       });
-      expect(code).toContain(`import type { Style } from '@typedcss/css';`);
+      expect(code).toContain('import type { Style } from "@typedcss/css";');
       expect(classOf(code)).toBe('');
       expect(css).toBe('');
     });
@@ -165,7 +165,7 @@ export const A = () => <div sx={st.a} />;`,
 const o = other.create({ a: { color: 'blue' } });
 export const A = () => <div sx={s.a} />;`,
       );
-      expect(code).toMatch(/other\.create\(\{\s*a: \{\s*color: 'blue'/);
+      expect(code).toMatch(/other\.create\(\{\s*a: \{\s*color: "blue"/);
       expect(classOf(code)).toBe(`${RED}`);
     });
   });
