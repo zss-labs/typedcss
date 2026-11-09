@@ -2,37 +2,37 @@ use std::cell::RefCell;
 
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
-use swc_core::ecma::ast::*;
+use oxc_ast::ast::*;
 
 use super::{Env, Evaluator, Imports, Lookup};
 use crate::js::{Object, Value};
-use crate::swc::syntax::expr::{E, K, str_value, unwrap};
+use crate::oxc::syntax::expr::{E, K, str_value, unwrap};
 
-pub type ConstNodes<'b> = IndexMap<&'b str, &'b Expr, FxBuildHasher>;
+pub type ConstNodes<'b> = IndexMap<&'b str, &'b Expression<'b>, FxBuildHasher>;
 
-pub fn top_level_variable_declarations(module: &Module) -> impl Iterator<Item = &VarDecl> {
-    module.body.iter().filter_map(|item| match item {
-        ModuleItem::Stmt(Stmt::Decl(Decl::Var(declaration))) => Some(&**declaration),
-        ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => match &export.decl {
-            Decl::Var(declaration) => Some(&**declaration),
+pub fn top_level_variable_declarations<'b>(program: &'b Program<'b>) -> impl Iterator<Item = &'b VariableDeclaration<'b>> {
+    program.body.iter().filter_map(|item| match item {
+        Statement::VariableDeclaration(declaration) => Some(&**declaration),
+        Statement::ExportDeclaration(export) => match &export.declaration {
+            Declaration::VariableDeclaration(declaration) => Some(&**declaration),
             _ => None,
         },
         _ => None,
     })
 }
 
-pub fn binding_name(pattern: &Pat) -> Option<&str> {
+pub fn binding_name<'b>(pattern: &'b BindingPattern<'b>) -> Option<&'b str> {
     match pattern {
-        Pat::Ident(ident) => Some(ident.id.sym.as_str()),
+        BindingPattern::BindingIdentifier(ident) => Some(ident.name.as_str()),
         _ => None,
     }
 }
 
-pub fn collect_local_const_nodes(module: &Module) -> ConstNodes<'_> {
+pub fn collect_local_const_nodes<'b>(program: &'b Program<'b>) -> ConstNodes<'b> {
     let mut nodes = ConstNodes::default();
-    for declaration in top_level_variable_declarations(module) {
-        for declarator in &declaration.decls {
-            if let (Some(name), Some(init)) = (binding_name(&declarator.name), &declarator.init) {
+    for declaration in top_level_variable_declarations(program) {
+        for declarator in &declaration.declarations {
+            if let (Some(name), Some(init)) = (binding_name(&declarator.id), &declarator.init) {
                 nodes.insert(name, init);
             }
         }
@@ -72,7 +72,7 @@ impl Consts<'_, '_> {
             K::Str(value) => Some(Value::Str(str_value(value))),
             K::Num(value) => Some(Value::Num(value.value)),
             K::Bool(value) => Some(Value::Bool(value)),
-            K::Ident(ident) => self.resolve(ident.sym.as_str()),
+            K::Ident(ident) => self.resolve(ident.name.as_str()),
             K::Object(object) => {
                 let resolver = |key: &str| self.resolve(key);
                 let evaluator = Evaluator::with_resolver(env, &resolver);
@@ -103,9 +103,9 @@ impl Consts<'_, '_> {
     }
 }
 
-pub fn collect_local_consts(module: &Module, imports: Option<&dyn Imports>) -> Object {
+pub fn collect_local_consts(program: &Program, imports: Option<&dyn Imports>) -> Object {
     let consts = Consts {
-        decls: collect_local_const_nodes(module),
+        decls: collect_local_const_nodes(program),
         values: RefCell::new(Object::new()),
         visiting: RefCell::new(FxHashSet::default()),
         imports,
