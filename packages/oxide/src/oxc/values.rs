@@ -1,17 +1,18 @@
 use std::sync::{Mutex, OnceLock};
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use swc_core::ecma::ast::*;
+use oxc_allocator::Allocator;
+use oxc_ast::ast::*;
 
-use crate::swc::eval::Env;
+use crate::oxc::eval::Env;
 use crate::fs::resolver::Resolver;
 use crate::fs::source::{SourceStamp, stamp};
 use crate::js::{Object, Value};
-use crate::swc::eval::consts::{collect_local_const_nodes, collect_local_consts};
-use crate::swc::eval::{Evaluator, argument_expr};
-use crate::swc::syntax::expr::{E, K, Prop, str_value, unwrap};
-use crate::swc::syntax::module::{CORE, SpecKind, import_source, import_specs, module_export_name};
-use crate::swc::syntax::parse::parse_program;
+use crate::oxc::eval::consts::{collect_local_const_nodes, collect_local_consts};
+use crate::oxc::eval::{Evaluator, argument_expr};
+use crate::oxc::syntax::expr::{E, K, Prop, str_value, unwrap};
+use crate::oxc::syntax::module::{CORE, SpecKind, import_source, import_specs, module_export_name};
+use crate::oxc::syntax::parse::parse_program;
 
 #[derive(Clone)]
 struct Import {
@@ -45,7 +46,7 @@ fn project() -> std::sync::MutexGuard<'static, Project> {
 
 fn is_create_static(callee: E, names: &FxHashSet<String>, namespaces: &FxHashSet<String>) -> bool {
     match callee.kind() {
-        K::Ident(ident) => names.contains(ident.sym.as_str()),
+        K::Ident(ident) => names.contains(ident.name.as_str()),
         K::Member(_) => {
             callee
                 .object()
@@ -59,9 +60,10 @@ fn is_create_static(callee: E, names: &FxHashSet<String>, namespaces: &FxHashSet
 
 fn read_const_file(path: &str, stamp: SourceStamp) -> Option<ConstFile> {
     let source = crate::fs::source::read(path).ok()?;
-    let parsed = parse_program(&source).ok()?;
-    let module = &parsed.module;
-    let mut values = collect_local_consts(module, None);
+    let allocator = Allocator::default();
+    let parsed = parse_program(&allocator, &source).ok()?;
+    let program = &parsed.program;
+    let mut values = collect_local_consts(program, None);
     let mut imports = FxHashMap::default();
     let mut exports = FxHashMap::default();
     let mut reexports = FxHashMap::default();
@@ -69,10 +71,27 @@ fn read_const_file(path: &str, stamp: SourceStamp) -> Option<ConstFile> {
     let mut create_static = FxHashSet::default();
     let mut namespaces = FxHashSet::default();
 
-    for item in &module.body {
-        let ModuleItem::ModuleDecl(decl) = item else { continue };
-        match decl {
-            ModuleDecl::Import(import) => {
+    let named_exports = |specifiers: &[ExportSpecifier], source: Option<String>, exports: &mut FxHashMap<String, String>, reexports: &mut FxHashMap<String, Import>| {
+        for spec in specifiers {
+            if spec.export_kind.is_type() {
+                continue;
+            }
+            let local = module_export_name(&spec.local);
+            let exported = module_export_name(&spec.exported);
+            match &source {
+                Some(source) => {
+                    reexports.insert(exported, Import { source: source.clone(), name: local });
+                }
+                None => {
+                    exports.insert(exported, local);
+                }
+            }
+        }
+    };
+
+    for item in &program.body {
+        match item {
+            Statement::ImportDeclaration(import) => {
                 let source = import_source(import);
                 for spec in import_specs(import) {
                     let name = match spec.kind {
@@ -90,49 +109,37 @@ fn read_const_file(path: &str, stamp: SourceStamp) -> Option<ConstFile> {
                     imports.insert(spec.local.to_string(), Import { source: source.clone(), name });
                 }
             }
-            ModuleDecl::ExportDecl(export) => {
-                if let Decl::Var(var) = &export.decl {
-                    for declarator in &var.decls {
-                        if let Pat::Ident(name) = &declarator.name {
-                            let name = name.id.sym.to_string();
+            Statement::ExportDeclaration(export) => {
+                if let Declaration::VariableDeclaration(var) = &export.declaration {
+                    for declarator in &var.declarations {
+                        if let BindingPattern::BindingIdentifier(name) = &declarator.id {
+                            let name = name.name.to_string();
                             exports.insert(name.clone(), name);
                         }
                     }
                 }
             }
-            ModuleDecl::ExportNamed(named) => {
-                let source = named.src.as_ref().map(|src| str_value(src));
-                for spec in &named.specifiers {
-                    let ExportSpecifier::Named(spec) = spec else { continue };
-                    if spec.is_type_only {
-                        continue;
+            Statement::ExportNamedDeclaration(named) => named_exports(&named.specifiers, None, &mut exports, &mut reexports),
+            Statement::ExportFromDeclaration(named) => {
+                named_exports(&named.specifiers, Some(str_value(&named.source)), &mut exports, &mut reexports)
+            }
+            Statement::ExportAllDeclaration(all) if all.exported.is_none() => star_reexports.push(str_value(&all.source)),
+            Statement::ExportDefaultDeclaration(export) => {
+                let Some(expr) = export.declaration.as_expression() else { continue };
+                match unwrap(E::new(expr)).kind() {
+                    K::Str(value) => values.insert("default", Value::str(str_value(value))),
+                    K::Num(value) => values.insert("default", Value::Num(value.value)),
+                    K::Ident(ident) => {
+                        exports.insert("default".to_string(), ident.name.to_string());
                     }
-                    let local = module_export_name(&spec.orig);
-                    let exported = spec.exported.as_ref().map(module_export_name).unwrap_or_else(|| local.clone());
-                    match &source {
-                        Some(source) => {
-                            reexports.insert(exported, Import { source: source.clone(), name: local });
-                        }
-                        None => {
-                            exports.insert(exported, local);
-                        }
-                    }
+                    _ => {}
                 }
             }
-            ModuleDecl::ExportAll(all) => star_reexports.push(str_value(&all.src)),
-            ModuleDecl::ExportDefaultExpr(export) => match unwrap(E::new(&export.expr)).kind() {
-                K::Str(value) => values.insert("default", Value::str(str_value(value))),
-                K::Num(value) => values.insert("default", Value::Num(value.value)),
-                K::Ident(ident) => {
-                    exports.insert("default".to_string(), ident.sym.to_string());
-                }
-                _ => {}
-            },
             _ => {}
         }
     }
 
-    for (name, node) in collect_local_const_nodes(module) {
+    for (name, node) in collect_local_const_nodes(program) {
         let K::Call(call) = unwrap(E::new(node)).kind() else { continue };
         let Some(callee) = call.callee else { continue };
         if !is_create_static(unwrap(E::new(callee)), &create_static, &namespaces) {
