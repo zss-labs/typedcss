@@ -125,12 +125,12 @@ pub fn source_packages(root: String) -> Vec<SourcePackage> {
 
 #[napi(js_name = "resolveImportPath")]
 pub fn resolve_import_path(import_path: String, importer: String) -> Option<String> {
-    crate::swc::values::resolve_import_path(&import_path, &importer)
+    crate::oxc::values::resolve_import_path(&import_path, &importer)
 }
 
 #[napi(js_name = "resolveExportValue", ts_return_type = "unknown")]
 pub fn resolve_export_value(file_path: String, export_name: String) -> Either<Value, Undefined> {
-    crate::swc::values::resolve_export_value(&file_path, &export_name)
+    crate::oxc::values::resolve_export_value(&file_path, &export_name)
         .map(|value| to_json(&value))
         .into()
 }
