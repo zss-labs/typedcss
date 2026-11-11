@@ -6,10 +6,12 @@ use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
 use oxc_codegen::Codegen;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::JSStr;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::js::{Object, Value};
 use crate::style::records::{StyleRecord, atom_map_of};
 use crate::oxc::extract::{entry_records, file_styles_with};
+use crate::oxc::fold::StaticStyles;
 use crate::oxc::link::{FileStyles, LinkOptions};
 use crate::oxc::model::{Code, Entry, Method, Source, analyze};
 use crate::oxc::syntax::module::CORE;
@@ -17,6 +19,7 @@ use crate::oxc::syntax::parse::parse_program;
 
 pub const DEFAULT_STYLE_PROP: &str = "sx";
 pub const PROPS_LOCAL: &str = "__typedcss_props";
+const MAP_LOCAL: &str = "__typedcss_map";
 pub const CSS_MARKER: &str = "$$css";
 pub const WEIGHT_MARKER: &str = "$$w";
 
@@ -236,7 +239,15 @@ impl<'a> Build<'a> {
             None => params.iter().map(|param| self.param(self.binding(param), None)).collect(),
         };
         let var_props = vars.iter().map(|var| self.pair(&var.css_var, self.code_expr(&var.value)));
-        let body = self.array_expr([self.class_map(style, records), self.object_expr(var_props)]);
+        let body = self.array_expr([self.ident_expr(MAP_LOCAL), self.object_expr(var_props)]);
+        let function = self.arrow(params, body);
+        let outer = self.arrow(vec![self.param(self.binding(MAP_LOCAL), None)], function);
+        let map = Argument::from(self.class_map(style, records));
+        Expression::new_call_expression(SPAN, outer, None, ArenaVec::from_array_in([map], ast), false, ast)
+    }
+
+    fn arrow(&self, params: Vec<FormalParameter<'a>>, body: Expression<'a>) -> Expression<'a> {
+        let ast = &self.ast;
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
@@ -302,6 +313,9 @@ fn attr_name<'b>(attr: &'b JSXAttributeItem<'b>) -> Option<&'b str> {
 struct StyleProp<'s, 'a> {
     build: &'s Build<'a>,
     style_prop: &'s str,
+    class_prop: &'s str,
+    static_styles: &'s StaticStyles,
+    functions: u32,
     source: &'s Source<'s>,
     used: bool,
     error: Option<String>,
@@ -333,6 +347,16 @@ impl<'a> StyleProp<'_, 'a> {
         }
     }
 
+    fn class_attribute(&self, class_prop: &str, class_name: &str) -> JSXAttributeItem<'a> {
+        let ast = &self.build.ast;
+        JSXAttributeItem::new_attribute(
+            SPAN,
+            JSXAttributeName::new_identifier(SPAN, self.build.ident(class_prop), ast),
+            Some(JSXAttributeValue::new_string_literal(SPAN, JSStr::from_str_in(class_name, ast), None, ast)),
+            ast,
+        )
+    }
+
     fn function_in(&self, attr: &JSXAttributeItem<'a>) -> Option<String> {
         let JSXAttributeItem::Attribute(attr) = attr else {
             return None;
@@ -340,7 +364,10 @@ impl<'a> StyleProp<'_, 'a> {
         let Some(JSXAttributeValue::ExpressionContainer(container)) = &attr.value else {
             return None;
         };
-        let mut pending = vec![container.expression.as_expression()?];
+        self.uncompiled_in(vec![container.expression.as_expression()?], true)
+    }
+
+    fn uncompiled_in(&self, mut pending: Vec<&Expression<'a>>, functions: bool) -> Option<String> {
         while let Some(expr) = pending.pop() {
             match expr {
                 Expression::ParenthesizedExpression(paren) => pending.push(&paren.expression),
@@ -353,7 +380,10 @@ impl<'a> StyleProp<'_, 'a> {
                 })),
                 Expression::ConditionalExpression(cond) => pending.extend([&cond.consequent, &cond.alternate]),
                 Expression::LogicalExpression(logical) => pending.push(&logical.right),
-                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+                Expression::ObjectExpression(_) => {
+                    return Some(self.source.fail("[typedcss] Inline style objects are not accepted.".to_string(), expr.span()));
+                }
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) if functions => {
                     let text = self.source.text.map(|text| self.source.base.text(text, expr.span())).unwrap_or_default();
                     return Some(self.source.fail(
                         format!("[typedcss] Dynamic or unresolvable style object \"{text}\" is not supported."),
@@ -368,10 +398,50 @@ impl<'a> StyleProp<'_, 'a> {
 }
 
 impl<'a> VisitMut<'a> for StyleProp<'_, 'a> {
+    fn visit_call_expression(&mut self, it: &mut CallExpression<'a>) {
+        if self.error.is_none() && self.static_styles.props_callee(&it.callee).is_some() {
+            let arguments = it.arguments.iter().filter_map(|argument| match argument {
+                Argument::SpreadElement(spread) => Some(&spread.argument),
+                argument => argument.as_expression(),
+            });
+            self.error = self.uncompiled_in(arguments.collect(), false);
+        }
+        walk_mut::walk_call_expression(self, it);
+    }
+
+    fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
+        self.functions += 1;
+        walk_mut::walk_function(self, it, flags);
+        self.functions -= 1;
+    }
+
+    fn visit_arrow_function_expression(&mut self, it: &mut ArrowFunctionExpression<'a>) {
+        self.functions += 1;
+        walk_mut::walk_arrow_function_expression(self, it);
+        self.functions -= 1;
+    }
+
     fn visit_jsx_opening_element(&mut self, it: &mut JSXOpeningElement<'a>) {
         walk_mut::walk_jsx_opening_element(self, it);
         if self.error.is_some() {
             return;
+        }
+        let deferred = self.functions > 0;
+        let mut index = 0;
+        while index < it.attributes.len() {
+            let folded = match &it.attributes[index] {
+                JSXAttributeItem::SpreadAttribute(spread) => self.static_styles.spread_class_name(&spread.argument, deferred),
+                JSXAttributeItem::Attribute(_) => None,
+            };
+            match folded {
+                Some((class_name, _)) if class_name.is_empty() => {
+                    it.attributes.remove(index);
+                    continue;
+                }
+                Some((class_name, class_prop)) => it.attributes[index] = self.class_attribute(class_prop, &class_name),
+                None => {}
+            }
+            index += 1;
         }
         let JSXElementName::Identifier(name) = &it.name else {
             return;
@@ -407,6 +477,16 @@ impl<'a> VisitMut<'a> for StyleProp<'_, 'a> {
             self.error = Some(function);
             return;
         }
+        if let JSXAttributeItem::Attribute(attr) = &it.attributes[index]
+            && let Some(class_name) = attr.value.as_ref().and_then(|value| self.static_styles.class_name(value, self.functions > 0))
+        {
+            if class_name.is_empty() {
+                it.attributes.remove(index);
+            } else {
+                it.attributes[index] = self.class_attribute(self.class_prop, &class_name);
+            }
+            return;
+        }
         let JSXAttributeItem::Attribute(attr) = it.attributes.remove(index) else {
             unreachable!()
         };
@@ -437,7 +517,7 @@ pub fn transform_module<'a>(
     };
     let before = crate::oxc::elide::referenced(program);
     let mut plan: FxHashMap<(u32, u32), Expression<'a>> = FxHashMap::default();
-    let styles = {
+    let (styles, static_styles) = {
         let model = analyze(program, source, &options.link)?;
         let records = entry_records(&model);
         for definition in &model.definitions {
@@ -461,7 +541,7 @@ pub fn transform_module<'a>(
             };
             plan.insert(span_key(definition.init.span()), replacement);
         }
-        file_styles_with(&model, &records)
+        (file_styles_with(&model, &records), StaticStyles::new(program, &model, &records))
     };
     program.body.retain(|item| match item {
         Statement::ExpressionStatement(statement) => plan.remove(&span_key(statement.expression.span())).is_none(),
@@ -472,6 +552,9 @@ pub fn transform_module<'a>(
     let mut style_prop = StyleProp {
         build: &build,
         style_prop: &options.style_prop,
+        class_prop: &options.class_prop,
+        static_styles: &static_styles,
+        functions: 0,
         source,
         used: false,
         error: None,
@@ -480,6 +563,7 @@ pub fn transform_module<'a>(
     if let Some(error) = style_prop.error {
         return Err(error);
     }
+    static_styles.remove_unused(program);
     crate::oxc::elide::elide_imports(program, &before, CORE);
     if style_prop.used {
         let at = import_end(program);
