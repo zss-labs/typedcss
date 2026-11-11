@@ -1,5 +1,9 @@
 # Release Notes
 
+## 22.0.8 (Nov 11, 2026)
+
+Update: css readme and init remove rimraf
+
 ## 22.0.7 (Nov 9, 2026)
 
 Fix: scrollBehavior spelling in propertyGroups.ts

@@ -1,5 +1,11 @@
 # @typedcss/core
 
+## 22.0.8
+
+### Patch Changes
+
+- 39b4089: Update: css readme and init remove rimraf
+
 ## 22.0.7
 
 ### Patch Changes
