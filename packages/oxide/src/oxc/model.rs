@@ -652,14 +652,13 @@ pub fn analyze<'b>(
         let resolver = |key: &str| local_objects.get(key).cloned();
         let evaluator = Evaluator::with_resolver(tables.env(&consts), &resolver).importing(&imports);
         let evaluated = evaluator.object(object).map_err(fail)?;
-        Context {
+        let context = Context {
             evaluator,
             const_nodes: &const_nodes,
             source: source.text.unwrap_or_default(),
             base: source.base,
-        }
-        .assert_no_dropped_values(object, &evaluated, None)
-        .map_err(fail)?;
+        };
+        context.assert_no_dropped_values(object, &evaluated, None).map_err(fail)?;
         let functions: StyleFunctions = style_functions_of(object);
         let mut entries: IndexMap<String, Entry, FxBuildHasher> = IndexMap::default();
         for (key, value) in evaluated.iter() {
@@ -682,6 +681,7 @@ pub fn analyze<'b>(
                 Some(&imports),
             )
             .map_err(fail)?;
+            context.assert_no_dropped_dynamic_values(func.body, &resolved.style).map_err(fail)?;
             let mut sources: Vec<(String, Code)> = runtime
                 .iter()
                 .map(|param| (param.clone(), identifier(param)))
