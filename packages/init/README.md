@@ -13,11 +13,10 @@ writes. Nothing is installed or patched before you say so.
 ```
 ✔ detected  next  pnpm  typescript
 
-  ➡︎ install  @typedcss/css @typedcss/next-plugin @typedcss/eslint-plugin rimraf
+  ➡︎ install  @typedcss/css @typedcss/next-plugin @typedcss/eslint-plugin
   + write    typedcss.d.ts     sx
   ~ patch    next.config.ts    withTypedCSS(...)
   ~ patch    eslint.config.ts  typedcss.configs.recommended
-  ~ patch    package.json      predev: rimraf .next, prebuild: rimraf .next
 ```
 
 ## What it detects
@@ -64,10 +63,7 @@ the `build` script is prefixed with `typedcss-lint --` instead.
 - `eslint.config.ts` — `typedcss.configs.recommended` plus the rules that were
   asked for, and `settings.typedcss.styleProp` when the styling prop was renamed. An existing flat config is extended rather than replaced.
 - `package.json` — on esbuild and Bun, `typedcss-lint --` in front of the `build`
-  script, with `--style-prop` when the styling prop was renamed, and on Next.js `rimraf .next` before `dev` and before `build`, so a version change is
-  not read as a compile error. A `pre` script is added only for a script the
-  project actually has, and one it already wrote is left alone. Clearing the
-  cache is a Next.js concern rather than a lint one, so `--no-eslint` keeps it.
+  script, with `--style-prop` when the styling prop was renamed.
 
 What counts as already set up is the plugin being *called*, not merely imported.
 A bare `typedcss.version`, and a call inside a comment, a string or a regex
