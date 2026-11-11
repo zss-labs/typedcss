@@ -2,6 +2,7 @@ pub mod dropped;
 pub mod elide;
 pub mod eval;
 pub mod extract;
+mod fold;
 pub mod link;
 pub mod model;
 pub mod policy;
