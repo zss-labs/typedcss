@@ -5,7 +5,7 @@ use crate::oxc::extract::extract_source;
 use crate::oxc::link::{LinkOptions, link};
 use crate::oxc::syntax::parse::parse_program;
 use oxc_allocator::Allocator;
-use crate::oxc::transform::{TransformOptions, transform_source};
+use crate::oxc::transform::{PROPS_LOCAL, TransformOptions, transform_source};
 
 fn options() -> TransformOptions {
     TransformOptions {
@@ -75,8 +75,8 @@ fn compiles_definitions_to_runtime_values() {
     assert!(out.contains("md: \"@media (min-width: 768px)\""), "{out}");
     assert!(out.contains("\"$$css\": true") || out.contains("$$css: true"), "{out}");
     assert!(out.contains("\":hover:color\":"), "{out}");
-    assert!(out.contains("scale: (value) => ["), "{out}");
-    assert!(out.contains("box: ({ width, height: h } = {}) => ["), "{out}");
+    assert!(out.contains("scale: ((__typedcss_map) => (value) => [__typedcss_map, {"), "{out}");
+    assert!(out.contains("box: ((__typedcss_map) => ({ width, height: h } = {}) => [__typedcss_map, {"), "{out}");
     assert!(!out.contains("css.create("), "{out}");
     assert!(!out.contains("css.keyframes("), "{out}");
 }
@@ -183,7 +183,7 @@ fn derived_values_keep_defaults_and_signs() {
 // Solid sets classes through `class`, so the sx spread has to carry that key.
 #[test]
 fn imports_class_props_when_the_class_prop_is_class() {
-    let source = "import * as css from '@typedcss/css';\nconst s = css.create({ a: { color: 'red' } });\nexport const A = () => <div sx={s.a} />;\n";
+    let source = "import * as css from '@typedcss/css';\nconst s = css.create({ a: { color: 'red' } });\nexport const A = ({ extra }) => <div sx={[s.a, extra]} />;\n";
     let solid = TransformOptions {
         class_prop: "class".to_string(),
         ..options()
@@ -192,4 +192,110 @@ fn imports_class_props_when_the_class_prop_is_class() {
     assert!(out.contains("classProps as __typedcss_props"), "{out}");
     assert!(transform(source).contains("props as __typedcss_props"));
     assert!(!transform(source).contains("classProps"));
+}
+
+
+#[test]
+fn folds_static_local_styles_at_the_sx_position() {
+    let source = "import * as css from '@typedcss/css'; const s = css.create({ a: { color: 'red' }, b: { color: 'blue' } }); export const A = () => <div {...before} sx={[s.a, [s.b]]} {...after} />;";
+    let out = transform(source);
+    assert!(!out.contains(PROPS_LOCAL), "{out}");
+    assert!(out.contains("<div {...before} className=\"x"), "{out}");
+    assert!(out.contains("\" {...after} />"), "{out}");
+    let out = transform_source(source, "/app/src/page.tsx", &TransformOptions { class_prop: "class".into(), ..options() }).unwrap();
+    assert!(out.contains("<div {...before} class=\"x"), "{out}");
+    assert!(!out.contains(PROPS_LOCAL), "{out}");
+}
+
+#[test]
+fn empty_static_styles_do_not_override_an_earlier_spread() {
+    let out = transform("import * as css from '@typedcss/css'; const s = css.create({ empty: {} }); const A = () => <div {...before} sx={[s.empty, null, false]} />;");
+    assert!(out.contains("<div {...before} />"), "{out}");
+    assert!(!out.contains(PROPS_LOCAL), "{out}");
+}
+
+#[test]
+fn unsupported_compositions_keep_the_entire_runtime_merge() {
+    for expression in ["[s.a, extra]", "[s.a, on && s.a]", "s[key]", "alias", "[s.a, ...items]", "s.dynamic(2)", "imported.a"] {
+        let source = format!("import * as css from '@typedcss/css'; import {{ imported }} from './other'; const s = css.create({{ a: {{ color: 'red' }}, dynamic: (n) => ({{ padding: n }}) }}); const alias = s.a; const A = ({{ extra, on, key, items }}) => <div sx={{{expression}}} />;");
+        let out = transform(&source);
+        assert!(out.contains("{...__typedcss_props("), "{expression}: {out}");
+    }
+}
+
+#[test]
+fn shadowed_and_non_const_definitions_are_not_folded() {
+    for source in [
+        "const s = css.create({ a: { color: 'red' } }); const A = ({ s }) => <div sx={s.a} />;",
+        "const s = css.create({ a: { color: 'red' } }); function A() { try {} catch (s) { return <div sx={s.a} />; } }",
+        "const s = css.create({ a: { color: 'red' } }); function A() { for (let s of items) { return <div sx={s.a} />; } }",
+        "const s = css.create({ a: { color: 'red' } }); const A = function s() { return <div sx={s.a} />; };",
+        "let s = css.create({ a: { color: 'red' } }); const A = () => <div sx={s.a} />;",
+        "const A = <div sx={s.a} />; const s = css.create({ a: { color: 'red' } });",
+    ] {
+        let out = transform(&format!("import * as css from '@typedcss/css'; {source}"));
+        assert!(out.contains("{...__typedcss_props(s.a)}"), "{out}");
+    }
+}
+
+#[test]
+fn preserves_maps_used_by_exports_components_or_runtime_merges() {
+    let out = transform("import * as css from '@typedcss/css'; export const s = css.create({ a: { color: 'red' } }); export const A = () => <><div sx={s.a} /><Child sx={s.a} /></>; export const B = ({ extra }) => <div sx={[s.a, extra]} />;");
+    assert!(out.contains("export const s ="), "{out}");
+    assert!(out.contains("<div className=\"x"), "{out}");
+    assert!(out.contains("<Child sx={s.a} />"), "{out}");
+    assert!(out.contains("{...__typedcss_props(s.a, extra)}"), "{out}");
+}
+
+#[test]
+fn removes_unused_local_maps_after_folding() {
+    let out = transform("import * as css from '@typedcss/css'; const s = css.create({ a: { color: 'red' } }); export const A = () => <div sx={s.a} />;");
+    assert!(!out.contains("const s ="), "{out}");
+    assert!(out.contains("className=\"x"), "{out}");
+}
+
+#[test]
+fn folds_spread_props_calls_and_removes_the_map() {
+    for (import, create, call, class_prop) in [
+        ("import * as css from '@typedcss/css';", "css.create", "css.props(s.a, [s.b])", "className"),
+        ("import { create, props } from '@typedcss/css';", "create", "props(s.a, [s.b])", "className"),
+        ("import * as css from '@typedcss/css';", "css.create", "css.classProps(s.a, [s.b])", "class"),
+    ] {
+        let out = transform(&format!("{import} export const A = () => <div {{...before}} {{...{call}}} />; const s = {create}({{ a: {{ color: 'red' }}, b: {{ padding: 4 }} }});"));
+        assert!(out.contains(&format!("<div {{...before}} {class_prop}=\"x")), "{out}");
+        assert!(!out.contains("const s ="), "{out}");
+    }
+    let out = transform("import * as css from '@typedcss/css'; const s = css.create({ a: { color: 'red' } }); export const A = ({ extra, css }) => <><div {...css.props(s.a)} /><p {...other.props(s.a)} /></>; export const B = ({ extra }) => <div {...css.props(s.a, extra)} />;");
+    assert!(out.contains("{...css.props(s.a)}") && out.contains("{...other.props(s.a)}") && out.contains("{...css.props(s.a, extra)}"), "{out}");
+}
+
+#[test]
+fn inline_objects_in_the_style_prop_are_rejected() {
+    for expression in ["{ color: c }", "[s.a, { color: c }]", "[s.a, on && { color: c }]"] {
+        let source = format!("import * as css from '@typedcss/css'; const s = css.create({{ a: {{ color: 'red' }} }}); const A = ({{ c, on }}) => <div sx={{{expression}}} />;");
+        let error = transform_source(&source, "/app/src/page.tsx", &options()).unwrap_err();
+        assert!(error.contains("Inline style objects are not accepted."), "{error}");
+    }
+}
+
+#[test]
+fn dynamic_values_no_variable_can_carry_are_rejected() {
+    for body in ["{ padding: n, color: on ? 'red' : 'blue' }", "{ color: on ? 'red' : 'blue' }", "{ ':hover': { color: on && 'red' } }"] {
+        let source = format!("import * as css from '@typedcss/css'; const s = css.create({{ d: (n, on) => ({body}) }}); const A = ({{ n, on }}) => <div sx={{s.d(n, on)}} />;");
+        let error = transform_source(&source, "/app/src/page.tsx", &options()).unwrap_err();
+        assert!(error.contains("Cannot resolve the value of \"color\"") && error.contains("choose where it is applied"), "{error}");
+    }
+}
+
+#[test]
+fn inline_objects_in_css_props_are_rejected() {
+    for (import, call) in [
+        ("import * as css from '@typedcss/css';", "css.props(s.a, { color: c })"),
+        ("import * as css from '@typedcss/css';", "css.props([s.a, on && { color: c }])"),
+        ("import * as css from '@typedcss/css'; import { props } from '@typedcss/css';", "props({ color: c })"),
+    ] {
+        let source = format!("{import} const s = css.create({{ a: {{ color: 'red' }} }}); export const p = ({{ c, on }}) => {call};");
+        let error = transform_source(&source, "/app/src/page.tsx", &options()).unwrap_err();
+        assert!(error.contains("Inline style objects are not accepted."), "{error}");
+    }
 }
