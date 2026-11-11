@@ -11,6 +11,9 @@ use crate::oxc::syntax::expr::{E, Key, as_key_value, as_shorthand, type_name};
 use crate::oxc::syntax::parse::Base;
 use crate::oxc::syntax::visit::expression_has_identifier;
 
+const STATIC_HINT: &str = "Values in css.create must be statically known; pass a runtime value through the function form, css.create({ name: (value) => ({ ... }) }).";
+const DYNAMIC_HINT: &str = "A dynamic style hands its parameters to CSS variables and cannot choose between values; write each choice as a static style and choose where it is applied, [on ? styles.a : styles.b].";
+
 #[derive(Clone, PartialEq)]
 enum KeyVal {
     Str(String),
@@ -82,9 +85,14 @@ impl<'b> Context<'_, '_, '_, 'b> {
 
     fn unresolvable(&self, key: &str, span: Span) -> String {
         format!(
-            "[typedcss] Cannot resolve the value of \"{key}\" at build time ({}). Values in css.create must be statically known; pass a runtime value through the function form, css.create({{ name: (value) => ({{ ... }}) }}).",
+            "[typedcss] Cannot resolve the value of \"{key}\" at build time ({}). {STATIC_HINT}",
             self.source_of(span)
         )
+    }
+
+    pub fn assert_no_dropped_dynamic_values(&self, body: &'b ObjectExpression<'b>, resolved: &Object) -> Result<(), String> {
+        self.assert_no_dropped_values(body, resolved, None)
+            .map_err(|error| error.replace(STATIC_HINT, DYNAMIC_HINT))
     }
 
     fn overwritten_later(&self, properties: &'b [ObjectPropertyKind<'b>], index: usize, key: &KeyVal) -> bool {
@@ -185,6 +193,9 @@ impl<'b> Context<'_, '_, '_, 'b> {
             }
             let reads = expression_has_identifier(value, &|name| params.contains(name));
             let key_text = key.as_ref().map(KeyVal::text).unwrap_or_default();
+            if reads && !carried(value, params) {
+                return Err(self.unresolvable(&key_text, value.span()).replace(STATIC_HINT, DYNAMIC_HINT));
+            }
             let runtime_only = matches!(
                 type_name(value),
                 "CallExpression" | "NewExpression" | "AwaitExpression" | "TaggedTemplateExpression" | "YieldExpression"
@@ -263,6 +274,35 @@ impl<'b> Context<'_, '_, '_, 'b> {
             }
         }
         Ok(())
+    }
+}
+
+fn carried(expr: &Expression, params: &FxHashSet<String>) -> bool {
+    let part = |expr: &Expression| {
+        !expression_has_identifier(expr, &|name| params.contains(name)) || carried(expr, params)
+    };
+    match unparen(expr) {
+        Expression::Identifier(_) => true,
+        Expression::TemplateLiteral(template) => template.expressions.iter().all(part),
+        Expression::BinaryExpression(binary) => {
+            matches!(
+                binary.operator,
+                BinaryOperator::Addition
+                    | BinaryOperator::Subtraction
+                    | BinaryOperator::Multiplication
+                    | BinaryOperator::Division
+                    | BinaryOperator::Remainder
+                    | BinaryOperator::Exponential
+            ) && part(&binary.left)
+                && part(&binary.right)
+        }
+        Expression::UnaryExpression(unary) => {
+            matches!(unary.operator, UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus) && part(&unary.argument)
+        }
+        Expression::TSAsExpression(cast) => carried(&cast.expression, params),
+        Expression::TSSatisfiesExpression(cast) => carried(&cast.expression, params),
+        Expression::TSNonNullExpression(cast) => carried(&cast.expression, params),
+        _ => false,
     }
 }
 
