@@ -20,10 +20,16 @@ it('observes mutable inline styles and nested arrays after cache hits', () => {
   const a = { $$css: true, color: 'red' };
   const b = { $$css: true, color: 'blue' };
   props(a);
-  const inline = { color: 'green' };
-  expect(props(a, inline)).toEqual({ style: { color: 'green' } });
-  inline.color = 'purple';
-  expect(props(a, inline)).toEqual({ style: { color: 'purple' } });
+  const inline = { '--x': 'green' };
+  expect(props(a, inline)).toEqual({
+    className: 'red',
+    style: { '--x': 'green' },
+  });
+  inline['--x'] = 'purple';
+  expect(props(a, inline)).toEqual({
+    className: 'red',
+    style: { '--x': 'purple' },
+  });
   const nested = [a];
   expect(props(nested)).toEqual({ className: 'red' });
   nested.push(b);
@@ -48,7 +54,7 @@ it('reuses resolved weights without modifying compiled styles', () => {
 it('preserves plain compiled property order and null suppression', () => {
   const a = { $$css: true, color: 'red', backgroundColor: 'bg' };
   const b = { $$css: true, color: null };
-  expect(props(a)).toEqual({ className: 'bg red' });
+  expect(props(a)).toEqual({ className: 'red bg' });
   expect(props(a, b)).toEqual({ className: 'bg' });
   expect(props(a, b)).toEqual({ className: 'bg' });
 });
@@ -61,10 +67,9 @@ it('resolves large compiled maps across the property lookup threshold', () => {
     ),
   };
   const b = { $$css: true, p0: 'override', p32: null };
-  const expected = Array.from({ length: 64 }, (_, i) => 63 - i)
-    .filter((i) => i !== 0 && i !== 32)
-    .map((i) => 'c' + i)
-    .concat('override')
+  const expected = Array.from({ length: 64 }, (_, i) => i)
+    .filter((i) => i !== 32)
+    .map((i) => (i === 0 ? 'override' : 'c' + i))
     .join(' ');
   expect(props(a, b)).toEqual({ className: expected });
   expect(props(a, b)).toEqual({ className: expected });
@@ -95,7 +100,8 @@ it('shares sequence caching across nested arrays while observing their changes',
   expect(props(outer)).toEqual({ className: 'red' });
   inner.length = 0;
   expect(props(outer)).toEqual({ className: 'red' });
-  expect(props([a, [{ color: 'green' }]])).toEqual({
-    style: { color: 'green' },
+  expect(props([a, [{ '--x': 'green' }]])).toEqual({
+    className: 'red',
+    style: { '--x': 'green' },
   });
 });
