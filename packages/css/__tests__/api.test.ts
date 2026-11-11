@@ -24,9 +24,8 @@ describe('@typedcss/css API', () => {
 
     const { output, css } = compile(input);
 
-    expect(output).toContain('color: "xq96bg3w"');
-    expect(output).toContain('padding: "xymmdeuh"');
-    expect(output).toContain('__typedcss_props(styles.text)');
+    expect(output).toContain('className="xq96bg3w xymmdeuh"');
+    expect(output).not.toContain('const styles =');
     expect(css.trim()).toBe(`.xq96bg3w { color: red; }
 .xymmdeuh { padding: 8px; }`);
   });
@@ -223,11 +222,7 @@ describe('@typedcss/css API', () => {
       {
         "css": ".xq96bg3w { color: red; }",
         "output": "import * as css from "@typedcss/css";
-      const styles = { text: {
-      	color: "xq96bg3w",
-      	$$css: true
-      } };
-      export const App = () => <div {...css.props(styles.text)} />;
+      export const App = () => <div className="xq96bg3w" />;
       ",
       }
     `);
