@@ -76,7 +76,7 @@ it('uses the configured class prop', async () => {
   const plugin = createPlugin();
   plugin.__typedcssInternal.setClassProp('class');
   const transformed = await plugin.transform.handler(card('teal'), CARD);
-  expect(transformed.code).toContain('classProps as __typedcss_props');
+  expect(transformed.code).toMatch(/class="x[^"]+"/);
 });
 
 it('permits a compiler no-op', async () => {
@@ -118,13 +118,14 @@ it('skips dependencies, unrelated sources, and excluded files', async () => {
   ).resolves.toBeNull();
 });
 
-it('rewrites sx into a merge call and imports the one stylesheet', async () => {
+it('folds sx into className and imports the one stylesheet', async () => {
   const plugin = createPlugin();
 
   const result = await plugin.transform.handler(card('teal'), `${CARD}?raw`);
 
   expect(result.map).toBeNull();
-  expect(result.code).toContain('__typedcss_props(styles.box)');
+  expect(result.code).toMatch(/className="x[^"]+"/);
+  expect(result.code).not.toContain('__typedcss_props');
   expect(result.code).not.toContain('sx=');
   expect(result.code.endsWith(`\nimport "${CSS_ID}";`)).toBe(true);
   expect(plugin.load(`${CSS_ID}?direct`)).toContain('color: teal');
@@ -136,7 +137,8 @@ it('reads the styling prop the options name', async () => {
 
   const result = await plugin.transform.handler(card('teal', 'css'), CARD);
 
-  expect(result.code).toContain('__typedcss_props(styles.box)');
+  expect(result.code).toMatch(/className="x[^"]+"/);
+  expect(result.code).not.toContain('__typedcss_props');
 });
 
 it('compiles the stylesheet from the source it was handed, not the disk', async () => {
