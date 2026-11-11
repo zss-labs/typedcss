@@ -15,12 +15,18 @@ function cachedMerge(styles) {
     if (hit && hit.value !== undefined) return hit.value;
   }
   let node = cache;
-  let weighted = false;
+  let inline = null;
   for (let i = 0; i < styles.length; i++) {
     const style = styles[i];
     if (style == null || style === false) continue;
-    if (Array.isArray(style) || style.$$css == null) return flatMerge(styles);
-    if (style.$$w) weighted = true;
+    if (Array.isArray(style)) return cachedMerge(flatten(styles));
+    if (style.$$css == null) {
+      for (const prop in style) {
+        const value = style[prop];
+        if (value != null) (inline ??= {})[prop] = value;
+      }
+      continue;
+    }
     const children = (node.next ??= new WeakMap());
     let next = children.get(style);
     if (!next) {
@@ -29,52 +35,61 @@ function cachedMerge(styles) {
     }
     node = next;
   }
-  if (node.value === undefined) {
-    node.value = weighted ? merge(styles) : mergeFlat(styles);
-  }
-  return node.value;
+  if (node.value === undefined) node.value = [merge(styles), null];
+  return inline === null ? node.value : [node.value[0], inline];
 }
 
-// Flatten current contents, never cache by a mutable array's identity. Dynamic styles return
-// a fresh compiled map next to their inline variables, so calls with inline styles skip the cache.
-function flatMerge(styles) {
-  const flat = flatten(styles);
-  for (let i = 0; i < flat.length; i++) {
-    const style = flat[i];
-    if (style != null && style !== false && style.$$css == null) return mergeFlat(flat) ?? merge(flat);
-  }
-  return cachedMerge(flat);
-}
-
-// Without weight metadata, resolve properties directly into the class string and inline style.
-// Returns undefined when a style carries weights.
-function mergeFlat(styles) {
-  const defined = [];
-  let definedSet;
-  let className = '';
-  let inline = null;
-  for (let i = styles.length - 1; i >= 0; i--) {
-    const style = styles[i];
-    if (style == null || style === false) continue;
-    if (style.$$w) return undefined;
-    const compiled = style.$$css != null;
-    let sub = null;
-    for (const prop in style) {
-      const value = style[prop];
-      if (compiled ? prop === '$$css' : value === undefined) continue;
-      if (definedSet ? definedSet.has(prop) : defined.includes(prop)) continue;
-      if (definedSet) definedSet.add(prop);
-      else {
-        defined.push(prop);
-        if (defined.length === 32) definedSet = new Set(defined);
-      }
-      if (!compiled) {
-        if (value != null) (sub ??= {})[prop] = value;
-      } else if (typeof value === 'string') className = className ? value + ' ' + className : value;
+function seat(tree, key, winner) {
+  const first = key.charCodeAt(0);
+  let end = -1;
+  if (first === 64) {
+    for (let i = 1, depth = 0; i < key.length && end < 0; i++) {
+      const code = key.charCodeAt(i);
+      if (code === 40) depth++;
+      else if (code === 41) depth--;
+      else if (code === 58 && depth === 0) end = i;
     }
-    if (sub != null) inline = Object.assign(sub, inline);
+  } else if (first === 58 || first === 91) end = key.lastIndexOf(':');
+  if (end < 0) return tree.set(key, winner);
+  const scope = key.slice(0, end);
+  let inner = tree.get(scope);
+  if (!inner) tree.set(scope, (inner = new Map()));
+  if (first === 64) seat(inner, key.slice(end + 1), winner);
+  else inner.set(key.slice(end + 1), winner);
+}
+
+function collect(keys) {
+  const tree = new Map();
+  for (let slot = 0; slot < keys.length; slot++) seat(tree, keys[slot], slot);
+  const slots = [];
+  let selectors = false;
+  let nested = false;
+  for (const [key, entry] of tree) {
+    if (!(entry instanceof Map)) slots.push(entry);
+    else if (key.charCodeAt(0) !== 64) selectors = true;
+    else {
+      for (const inner of entry.values()) {
+        if (inner instanceof Map) nested = true;
+        else slots.push(inner);
+      }
+    }
   }
-  return [className, inline];
+  if (selectors) {
+    for (const [key, entry] of tree) {
+      if (!(entry instanceof Map) || key.charCodeAt(0) === 64) continue;
+      for (const inner of entry.values()) slots.push(inner);
+    }
+  }
+  if (nested) {
+    for (const [key, entry] of tree) {
+      if (!(entry instanceof Map) || key.charCodeAt(0) !== 64) continue;
+      for (const scope of entry.values()) {
+        if (!(scope instanceof Map)) continue;
+        for (const inner of scope.values()) slots.push(inner);
+      }
+    }
+  }
+  return slots;
 }
 
 function compare(a, b) {
@@ -82,99 +97,111 @@ function compare(a, b) {
 }
 
 function conflicts(a, b) {
-  return a.property === b.property || a.covers.includes(b.property) || b.covers.includes(a.property);
+  return (
+    a.property === b.property ||
+    a.covers.includes(b.property) ||
+    b.covers.includes(a.property)
+  );
 }
 
 function repair(atoms) {
   // A weight depends only on strictly lower base specificity, so resolve those first.
-  if (atoms.length === 2) {
-    if (compare(atoms[0].base, atoms[1].base) > 0) [atoms[0], atoms[1]] = [atoms[1], atoms[0]];
-  } else atoms.sort((a, b) => compare(a.base, b.base));
+  atoms.sort((a, b) => compare(a.base, b.base));
   for (let i = 1; i < atoms.length; i++) {
     const a = atoms[i];
     for (let j = 0; j < i; j++) {
       const b = atoms[j];
-      if (a.target !== b.target || compare(a.base, b.base) === 0 || !conflicts(a, b)) continue;
-      const outranks = a.base[1] > b.base[1] || (a.base[1] === b.base[1] && a.base[2] > b.base[2]);
-      a.weight = Math.max(a.weight, b.base[0] + b.weight - a.base[0] + (outranks ? 0 : 1));
+      if (
+        a.target !== b.target ||
+        compare(a.base, b.base) === 0 ||
+        !conflicts(a, b)
+      )
+        continue;
+      const outranks =
+        a.base[1] > b.base[1] ||
+        (a.base[1] === b.base[1] && a.base[2] > b.base[2]);
+      a.weight = Math.max(
+        a.weight,
+        b.base[0] + b.weight - a.base[0] + (outranks ? 0 : 1),
+      );
     }
   }
 }
 
-// Callers pass flattened styles.
 function merge(styles) {
-  const defined = new Set();
-  const winners = [];
-  let inline = null;
-  let order = 0;
-  for (let i = styles.length - 1; i >= 0; i--) {
+  const keys = [];
+  const classes = [];
+  let owners;
+  let scoped = false;
+  for (let i = 0; i < styles.length; i++) {
     const style = styles[i];
-    if (style == null || style === false) continue;
-    order++;
-    if (style.$$css != null) {
-      const groups = style.$$w;
-      for (const prop in style) {
-        if (prop === '$$css' || prop === '$$w') continue;
-        const value = style[prop];
-        if (defined.has(prop)) continue;
-        defined.add(prop);
-        if (typeof value === 'string') {
-          winners.push({ value, order, state: groups && groups[prop] });
-        }
+    if (style == null || style === false || style.$$css == null) continue;
+    if (style.$$w) owners ??= [];
+    for (const prop in style) {
+      if (prop === '$$css' || prop === '$$w') continue;
+      let slot = keys.indexOf(prop);
+      if (slot < 0) {
+        slot = keys.push(prop) - 1;
+        const first = prop.charCodeAt(0);
+        if (first === 58 || first === 64 || first === 91) scoped = true;
       }
-    } else {
-      let sub = null;
-      for (const prop in style) {
-        const value = style[prop];
-        if (value === undefined || defined.has(prop)) continue;
-        defined.add(prop);
-        if (value != null) (sub ??= {})[prop] = value;
-      }
-      if (sub != null) inline = Object.assign(sub, inline);
+      const value = style[prop];
+      classes[slot] = typeof value === 'string' ? value : null;
+      if (owners) owners[slot] = i;
     }
   }
+  if (owners) escalate(styles, keys, classes, owners);
+  const slots = scoped ? collect(keys) : null;
+  let className = '';
+  for (let i = 0; i < keys.length; i++) {
+    const name = classes[slots ? slots[i] : i];
+    if (name != null) className = className ? className + ' ' + name : name;
+  }
+  return className;
+}
+
+function escalate(styles, keys, classes, owners) {
   const atoms = [];
-  let groups;
-  let weighted = false;
-  for (const winner of winners) {
-    const state = winner.state;
+  for (let slot = 0; slot < keys.length; slot++) {
+    const order = owners[slot];
+    if (order === undefined || classes[slot] == null) continue;
+    const states = styles[order].$$w;
+    const state = states && states[keys[slot]];
     if (!state) continue;
-    const [group, base, covers] = state;
-    const parts = group.split('|');
-    const atom = {
-      winner,
-      group,
+    const parts = state[0].split('|');
+    atoms.push({
+      slot,
+      order,
+      group: state[0],
       target: parts[0] + '|' + parts[1],
       property: parts[parts.length - 1],
-      base,
-      covers: covers || [],
-    };
-    atoms.push(atom);
-    groups ??= new Map();
-    let entry = groups.get(group);
+      base: state[1],
+      covers: state[2] || [],
+      weight: 0,
+    });
+  }
+  atoms.sort((a, b) => b.order - a.order);
+  const groups = new Map();
+  let weighted = false;
+  for (const atom of atoms) {
+    let entry = groups.get(atom.group);
     if (!entry) {
-      entry = { order: winner.order, weight: 0 };
-      groups.set(group, entry);
-    } else if (entry.order !== winner.order) {
-      entry.order = winner.order;
+      entry = { order: atom.order, weight: 0 };
+      groups.set(atom.group, entry);
+    } else if (entry.order !== atom.order) {
+      entry.order = atom.order;
       entry.weight++;
       weighted = true;
     }
     atom.weight = entry.weight;
   }
-  if (weighted) {
-    for (const atom of atoms) atom.weight = groups.get(atom.group).weight - atom.weight;
-    repair(atoms);
-  }
+  if (!weighted) return;
+  for (const atom of atoms)
+    atom.weight = groups.get(atom.group).weight - atom.weight;
+  repair(atoms);
   for (const atom of atoms) {
-    if (atom.weight > 0) atom.winner.value = `${atom.winner.value}-w${atom.weight}`;
+    if (atom.weight > 0) classes[atom.slot] += `-w${atom.weight}`;
   }
-  let className = '';
-  for (let i = winners.length - 1; i >= 0; i--) {
-    const name = winners[i].value;
-    className = className ? `${className} ${name}` : name;
-  }
-  return [className, inline];
 }
 
 export function props(...styles) {
