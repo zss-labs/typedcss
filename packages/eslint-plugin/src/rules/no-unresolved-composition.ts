@@ -6,6 +6,22 @@ import type { Rule } from 'eslint';
 import type { Node } from 'estree';
 import { callsCore, memberName, variableOf } from '../util/coreImport';
 
+type Piece = Node | string;
+
+type State =
+  | 'text'
+  | 'open'
+  | 'skip'
+  | 'declaration'
+  | 'comment'
+  | 'tagName'
+  | 'tag'
+  | 'attribute'
+  | 'afterAttribute'
+  | 'beforeValue'
+  | 'quoted'
+  | 'unquoted';
+
 export const noUnresolvedComposition: Rule.RuleModule = {
   meta: {
     type: 'problem',
@@ -100,7 +116,8 @@ export const noUnresolvedComposition: Rule.RuleModule = {
       return null;
     }
 
-    function meaningful(node: Node): boolean {
+    function meaningful(node: Piece): boolean {
+      if (typeof node === 'string') return node.trim().length > 0;
       if (node.type === 'Literal' && typeof node.value === 'string') {
         return node.value.trim().length > 0;
       }
@@ -125,7 +142,144 @@ export const noUnresolvedComposition: Rule.RuleModule = {
       );
     }
 
-    function uses(node: Node, seen = new Set<Node>()): Node[] {
+    const markups = new WeakMap<Node, Piece[][] | null>();
+
+    function markup(node: Node): Piece[][] | null {
+      if (node.type !== 'TemplateLiteral') return null;
+      if (markups.has(node)) return markups.get(node) as Piece[][] | null;
+      const values: Piece[][] = [];
+      let state: State = 'text';
+      let tagged = false;
+      let name = '';
+      let quote = '';
+      let value: Piece[] | null = null;
+      let text = '';
+      let tail = '';
+      const begin = () => {
+        value = [];
+        text = '';
+      };
+      const end = () => {
+        if (value === null) return;
+        if (text) value.push(text);
+        const attribute = name.toLowerCase();
+        if (attribute === 'class' || attribute === 'classname')
+          values.push(value);
+        value = null;
+      };
+      node.quasis.forEach((quasi, index) => {
+        for (const char of quasi.value.cooked ?? quasi.value.raw) {
+          const space = /\s/.test(char);
+          switch (state) {
+            case 'text':
+              if (char === '<') state = 'open';
+              break;
+            case 'open':
+              if (/[a-z]/i.test(char)) {
+                state = 'tagName';
+                tagged = true;
+              } else if (char === '!') {
+                state = 'declaration';
+                tagged = true;
+                tail = '';
+              } else if (char === '/') {
+                state = 'skip';
+                tagged = true;
+              } else state = 'text';
+              break;
+            case 'declaration':
+              tail += char;
+              if (tail === '--') {
+                state = 'comment';
+                tail = '';
+              } else if (char === '>') state = 'text';
+              else if (!'--'.startsWith(tail)) state = 'skip';
+              break;
+            case 'comment':
+              tail = (tail + char).slice(-3);
+              if (tail === '-->') state = 'text';
+              break;
+            case 'skip':
+              if (char === '>') state = 'text';
+              break;
+            case 'tagName':
+              if (char === '>') state = 'text';
+              else if (space || char === '/') state = 'tag';
+              break;
+            case 'tag':
+              if (char === '>') state = 'text';
+              else if (!space && char !== '/') {
+                state = 'attribute';
+                name = char;
+              }
+              break;
+            case 'attribute':
+              if (char === '=') state = 'beforeValue';
+              else if (char === '>') state = 'text';
+              else if (char === '/') state = 'tag';
+              else if (space) state = 'afterAttribute';
+              else name += char;
+              break;
+            case 'afterAttribute':
+              if (char === '=') state = 'beforeValue';
+              else if (char === '>') state = 'text';
+              else if (char === '/') state = 'tag';
+              else if (!space) {
+                state = 'attribute';
+                name = char;
+              }
+              break;
+            case 'beforeValue':
+              if (char === '"' || char === "'") {
+                state = 'quoted';
+                quote = char;
+                begin();
+              } else if (char === '>') state = 'text';
+              else if (!space) {
+                state = 'unquoted';
+                begin();
+                text = char;
+              }
+              break;
+            case 'quoted':
+              if (char === quote) {
+                end();
+                state = 'tag';
+              } else text += char;
+              break;
+            case 'unquoted':
+              if (space || char === '>') {
+                end();
+                state = char === '>' ? 'text' : 'tag';
+              } else text += char;
+              break;
+          }
+        }
+        const expression = node.expressions[index];
+        if (!expression) return;
+        if (state === 'beforeValue') {
+          state = 'unquoted';
+          begin();
+        }
+        if (state === 'quoted' || state === 'unquoted') {
+          if (text) value!.push(text);
+          text = '';
+          value!.push(expression);
+        } else if (state === 'open') {
+          state = 'tagName';
+          tagged = true;
+        } else if (state === 'attribute' || state === 'afterAttribute') {
+          name = '';
+        }
+      });
+      end();
+      const result = tagged ? values : null;
+      markups.set(node, result);
+      return result;
+    }
+
+    function uses(node: Piece, seen = new Set<Node>()): Node[] {
+      if (typeof node === 'string' || markup(node)) return [];
       if (isResult(node)) return [node];
       if (
         (node.type === 'Identifier' || node.type === 'MemberExpression') &&
@@ -179,7 +333,23 @@ export const noUnresolvedComposition: Rule.RuleModule = {
         context.report({ node, messageId: 'stringified' });
         return;
       }
-      const values = children.flatMap(flatten).filter(meaningful);
+      const attributes = markup(node);
+      if (attributes) {
+        for (const pieces of attributes) {
+          compose(
+            node,
+            pieces.flatMap((piece): Piece[] =>
+              typeof piece === 'string' ? [piece] : flatten(piece),
+            ),
+          );
+        }
+        return;
+      }
+      compose(node, children.flatMap(flatten));
+    }
+
+    function compose(node: Node, pieces: Piece[]) {
+      const values = pieces.filter(meaningful);
       const calls = values.flatMap((value) => uses(value));
       if (values.length < 2 || !calls.some((call) => !reported.has(call)))
         return;
@@ -188,11 +358,13 @@ export const noUnresolvedComposition: Rule.RuleModule = {
         context.report({ node, messageId: 'merge' });
         return;
       }
-      const label = (value: Node) => {
+      const label = (value: Piece) => {
         const text =
-          value.type === 'TemplateElement'
-            ? JSON.stringify((value.value.cooked ?? value.value.raw).trim())
-            : context.sourceCode.getText(value);
+          typeof value === 'string'
+            ? JSON.stringify(value.trim())
+            : value.type === 'TemplateElement'
+              ? JSON.stringify((value.value.cooked ?? value.value.raw).trim())
+              : context.sourceCode.getText(value);
         return text.length > 40 ? `${text.slice(0, 39)}…` : text;
       };
       context.report({
