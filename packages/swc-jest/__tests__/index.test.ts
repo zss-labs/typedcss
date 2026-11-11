@@ -36,8 +36,8 @@ it('exposes createTransformer through the default export', () => {
 it('compiles the styling prop away and emits CommonJS', () => {
   const { code } = run(source);
 
-  expect(code).toMatch(/props\)\(styles\.box\)/);
-  expect(code).toMatch(/\$\$css: true/);
+  expect(code).toMatch(/className: "xqqbxt1d xq96bg3w"/);
+  expect(code).not.toMatch(/const styles =/);
   expect(code).not.toMatch(/\bsx:/);
   expect(code).not.toMatch(/^import /m);
 });
@@ -71,7 +71,7 @@ it('honours a custom styleProp', () => {
     styleProp: 'classStyle',
   });
 
-  expect(code).toMatch(/props\)\(styles\.box\)/);
+  expect(code).toMatch(/className: "xqqbxt1d xq96bg3w"/);
   expect(code).not.toMatch(/\bclassStyle:/);
 });
 
