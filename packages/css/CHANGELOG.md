@@ -1,5 +1,12 @@
 # @typedcss/core
 
+## 22.0.10
+
+### Patch Changes
+
+- 0c4d106: - Fix: Mark @typedcss/css as side-effect free.
+  - Feat: Allow vendor-prefixed pseudo-elements in validate-pseudos.
+
 ## 22.0.9
 
 ### Patch Changes
