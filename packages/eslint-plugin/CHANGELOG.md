@@ -1,3 +1,12 @@
+## 22.0.10
+
+### Patch Changes
+
+- 0c4d106: - Fix: Mark @typedcss/css as side-effect free.
+  - Feat: Allow vendor-prefixed pseudo-elements in validate-pseudos.
+- Updated dependencies [0c4d106]
+  - @typedcss/oxide@22.0.10
+
 ## 22.0.9
 
 ### Patch Changes

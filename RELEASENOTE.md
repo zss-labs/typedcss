@@ -1,5 +1,11 @@
 # Release Notes
 
+## 22.0.10 (Nov 12, 2026)
+
+- Fix: Mark @typedcss/css as side-effect free.
+
+- Feat: Allow vendor-prefixed pseudo-elements in validate-pseudos.
+
 ## 22.0.9 (Nov 12, 2026)
 
 - Fix: Avoid unresolved-composition warnings when embedding a class name in an HTML template.
