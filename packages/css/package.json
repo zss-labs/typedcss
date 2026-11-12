@@ -21,6 +21,7 @@
     "typed",
     "typescript"
   ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./lib/css.d.ts",
