@@ -1,4 +1,5 @@
 {
+  "buildCommand": "pnpm build && pnpm --filter typedcss-docs build",
   "cleanUrls": true,
   "headers": [
     {
