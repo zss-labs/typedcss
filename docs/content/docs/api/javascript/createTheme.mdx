@@ -1,0 +1,111 @@
+---
+title: css.createTheme
+description: 'Themes such as light and dark, switched by a class, an attribute or a media query.'
+stability: Frozen
+---
+
+```ts
+type CreateTheme = {
+  [key: string]: {
+    default: string;
+    theme: string;
+  };
+};
+
+export type createTheme = <const T extends CreateTheme>(themeSelector: CreateThemeSelector, rule: T) => CreateThemeReturnType<T>;
+export const createTheme: createTheme;
+```
+
+`createTheme` defines scoped CSS variables for custom themes.  
+Each generated variable name starts with a unique hash, so it cannot collide with another theme or a global CSS variable.
+
+References between TypedCSS themes are not supported: `default` and `theme` accept strings, not another theme member, and generated CSS variable names are content hashes that can change when the theme changes.
+
+## Example
+
+Toggle the theme by adding a class to the root element.
+    ```ts title="TypeScript"
+    import * as css from '@typedcss/css';
+
+    export const theme = css.createTheme('.dark', {
+      text: {
+        default: '#333',
+        theme: '#eaeaea',
+      },
+    });
+    ```
+    ```css title="CSS"
+    :where(:root) {
+      --xvgqnxo9-text: #333;
+    }
+
+    .dark {
+      --xvgqnxo9-text: #eaeaea;
+    }
+    ```
+## Usage
+
+```ts
+import * as css from '@typedcss/css';
+import { theme } from 'lib/theme';
+
+const styles = css.create({
+  title: {
+    color: theme.text,
+  },
+});
+```
+
+## Selectors
+
+The first argument also takes attribute selectors and nesting-capable conditional at-rules such as `@media`, `@container` and `@supports`.
+
+### Attribute
+
+For attribute-based setups such as next-themes.
+    ```ts title="TypeScript"
+    import * as css from '@typedcss/css';
+
+    export const theme = css.createTheme('[data-theme="dark"]', {
+      text: {
+        default: '#333',
+        theme: '#eaeaea',
+      },
+    });
+    ```
+    ```css title="CSS"
+    :where(:root) {
+      --xipw25nr-text: #333;
+    }
+
+    [data-theme="dark"] {
+      --xipw25nr-text: #eaeaea;
+    }
+    ```
+### Media query
+
+Follows the system setting without any JavaScript.
+    ```ts title="TypeScript"
+    import * as css from '@typedcss/css';
+
+    export const theme = css.createTheme('@media (prefers-color-scheme: dark)', {
+      text: {
+        default: '#333',
+        theme: '#eaeaea',
+      },
+    });
+    ```
+    ```css title="CSS"
+    :where(:root) {
+      --xnof3ra0-text: #333;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :where(:root) {
+        --xnof3ra0-text: #eaeaea;
+      }
+    }
+    ```
+> **Good to know**
+>
+> Like every other definition, a theme emits no CSS until one of its variables is used in a style.

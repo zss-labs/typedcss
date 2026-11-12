@@ -1,0 +1,135 @@
+---
+title: 'Frameworks'
+description: 'Use TypedCSS with Vue, Svelte, Astro, Qwik and other frameworks Vite can build.'
+---
+
+TypedCSS compiles the `css` calls, not the component. Any framework Vite can build reaches it through the same [`@typedcss/unplugin`](/docs/integration/vite) entry — put `typedcss.vite()` in `plugins` beside the framework plugin.
+
+```ts title="vite.config.ts"
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import typedcss from '@typedcss/unplugin';
+
+export default defineConfig({
+  plugins: [vue(), typedcss.vite()],
+});
+```
+
+That file is the whole integration. [`examples/example-vite-vue-ts`](https://github.com/zss-labs/plumeria/tree/main/examples/example-vite-vue-ts), [`examples/example-vite-svelte-ts`](https://github.com/zss-labs/plumeria/tree/main/examples/example-vite-svelte-ts), [`examples/example-vite-solid`](https://github.com/zss-labs/plumeria/tree/main/examples/example-vite-solid), [`examples/example-vite-preact`](https://github.com/zss-labs/plumeria/tree/main/examples/example-vite-preact), [`examples/example-vite-qwik`](https://github.com/zss-labs/plumeria/tree/main/examples/example-vite-qwik), [`examples/example-react-router`](https://github.com/zss-labs/plumeria/tree/main/examples/example-react-router) and [`examples/example-storybook`](https://github.com/zss-labs/plumeria/tree/main/examples/example-storybook) are that file with the framework plugin swapped.
+
+## The styling prop
+
+`@typedcss/css/sx` declares `sx` on React's `HTMLAttributes` and `SVGAttributes`, so anything rendering through the React namespace needs one line, in `src/` when the project has one or at the application root otherwise:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+A framework that keeps its JSX types in its own module cannot be reached that way. Module augmentation resolves the package from the file that writes it, and `@typedcss/css` does not depend on your framework, so the declaration has to live in your project:
+
+```ts title="types.d.ts"
+import 'preact';
+import type { Style } from '@typedcss/css';
+
+declare module 'preact' {
+  namespace JSX {
+    interface HTMLAttributes {
+      sx?: Style;
+    }
+    interface SVGAttributes {
+      sx?: Style;
+    }
+  }
+}
+```
+
+```ts title="types.d.ts"
+import '@builder.io/qwik';
+import type { Style } from '@typedcss/css';
+
+declare module '@builder.io/qwik' {
+  interface HTMLAttributes extends JSX.HTMLAttributes {
+    sx?: Style;
+  }
+  interface SVGAttributes extends JSX.SVGAttributes {
+    sx?: Style;
+  }
+}
+```
+
+Declare `SVGAttributes` even where the framework has it extend `HTMLAttributes` and one interface would do — Qwik's extends `AriaAttributes` instead, and an `<svg sx={...}>` under a declaration that covers only HTML is rejected outright.
+
+The type is `Style`. A name the package does not export is not reported here, so a stale one leaves `sx` accepting anything at all rather than failing.
+
+## Single-file components
+
+The transform parses TypeScript and TSX. A `.vue`, `.svelte` or `.astro` file is neither, so `css.create` goes in a `.ts` module the component imports from. The template is not JSX either, so the module also resolves the class name with `css.props` and exports the string:
+
+```ts title="src/components/style.ts"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  main: { color: 'teal' },
+});
+
+export const mainClass = css.props(styles.main);
+```
+
+```html title="src/components/Card.vue"
+<script setup lang="ts">
+import { mainClass } from './style';
+</script>
+
+<template>
+  <div :class="mainClass">card</div>
+</template>
+```
+
+The lint rules read the same TypeScript, so the style module is covered by them.
+
+The plugin receives the component file whole, before the framework splits its script block out, so a `css.create` written inside one fails the build on the surrounding markup:
+
+```
+[plugin @typedcss/unplugin:vite] src/components/HelloWorld.vue
+Error:   x Expected '</', got ':'
+```
+
+A framework whose components are TSX — Qwik, Preact, Solid, React Router — has nowhere to put the call but the component, and needs no separate module.
+
+## Qwik
+
+`typedcss.vite()` goes before `qwikVite()`. The Qwik optimizer rewrites the component and re-exports what it finds there, so it has to run on styles that are already compiled away:
+
+```ts title="vite.config.ts"
+import { defineConfig } from 'vite';
+import { qwikVite } from '@builder.io/qwik/optimizer';
+import typedcss from '@typedcss/unplugin';
+
+export default defineConfig({
+  plugins: [typedcss.vite(), qwikVite({ csr: true })],
+});
+```
+
+The other order fails the build with `Export 'styles' is not defined`.
+
+## Astro
+
+Astro takes Vite plugins under `vite`:
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import typedcss from '@typedcss/unplugin';
+
+export default defineConfig({
+  vite: {
+    plugins: [typedcss.vite()],
+  },
+  integrations: [react()],
+});
+```
+
+See [`examples/example-vite-astro-ts`](https://github.com/zss-labs/plumeria/tree/main/examples/example-vite-astro-ts).
+
+- [Vite](/docs/integration/vite)
+- [@typedcss/unplugin options](/docs/api/plugins/unplugin)

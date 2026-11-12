@@ -1,0 +1,28 @@
+{
+  "pages": [
+    "---INTRODUCTION---",
+    "index",
+    "installation",
+    "---GUIDES---",
+    "editor-integration",
+    "selector-rules",
+    "testing",
+    "integration",
+    "troubleshooting",
+    "---API---",
+    "api/index",
+    "api/plugins",
+    "api/javascript",
+    "api/types",
+    "api/migrate",
+    "---PACKAGES---",
+    "creating-packages",
+    "api/packages",
+    "---AI RESOURCES---",
+    "ai-agent-resources",
+    "[AI.md](/docs/ai.md)",
+    "---",
+    "migrating",
+    "acknowledgements"
+  ]
+}

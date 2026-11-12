@@ -1,0 +1,118 @@
+---
+title: 'Style'
+description: 'The type of the styling prop and of every argument to css.props().'
+---
+
+```ts
+type Style = StyleList<StyleNamespace>;
+export type { Style };
+```
+
+`Style` is the type of the `sx` prop and of every argument to [css.props()](/docs/api/javascript/props). It accepts a style created by [css.create](/docs/api/javascript/create), the falsy values `false`, `null` and `undefined`, and arrays nesting any of those.
+
+## Example
+
+```tsx title="TypeScript"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  base: {
+    color: 'red',
+  },
+  active: {
+    fontWeight: 'bold',
+  },
+});
+
+export function Component({ active }: { active: boolean }) {
+  return <div sx={[styles.base, active && styles.active]} />;
+}
+```
+
+## Only created styles are accepted
+
+A style has to come out of `css.create` for the compiler to resolve it. An inline object is a type error:
+
+```tsx
+<div sx={styles.base} />       // ok
+<div sx={{ color: 'red' }} />  // Type error
+```
+
+The object `css.create` returns holds the styles rather than being one of them, so passing it whole is a type error as well:
+
+```tsx
+<div sx={styles} />  // Type error
+```
+
+## Declaring the styling prop
+
+`@typedcss/css` ships no prop declaration of its own. `sx` comes from the declaration bundled with the package, which you reference from `typedcss.d.ts`:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+Exporting `Style` is what lets you name that prop yourself instead. Set `styleProp` in the build configuration, then declare the same name against React:
+
+```ts title="typedcss.d.ts"
+import type { Style } from '@typedcss/css';
+
+declare global {
+  namespace React {
+    interface HTMLAttributes<T> {
+      classStyle?: Style;
+    }
+    interface SVGAttributes<T> {
+      classStyle?: Style;
+    }
+  }
+}
+```
+
+The prop then behaves exactly like `sx`, arrays and falsy values included:
+
+```tsx
+<div classStyle={[styles.text, cond && styles.cond]} />
+```
+
+The `styleProp` in the build configuration and the property name in `typedcss.d.ts` must match. If they disagree, the prop type-checks but is never compiled away. See [Next.js](/docs/installation#nextjs) or [Vite](/docs/installation#vite) for the configuration.
+
+## Any prop can carry a style
+
+`Style` is not tied to a host element prop at all. Type any prop of your own component with it, and the compiler resolves the style through the call site, because prop styles are registered by component rather than by prop name:
+
+```tsx title="TypeScript"
+import * as css from '@typedcss/css';
+
+type CardProps = {
+  boxStyle?: css.Style;
+};
+
+function Card({ boxStyle }: CardProps) {
+  return <div sx={[styles.base, boxStyle]} />;
+}
+
+export function Example() {
+  return <Card boxStyle={styles.active} />;
+}
+```
+
+A component can apply the style it receives, or pass it on to another component; the merge waits until the element.
+
+## One style rather than a list
+
+`Style` describes a list, so a prop typed with it can be handed an array, a conditional or nothing at all. A prop that instead takes exactly one created style, because the component reads a property off it, is [AtomicStyle](/docs/api/types/AtomicStyle):
+
+```tsx
+function Glyph({ glyphStyle }: { glyphStyle: css.AtomicStyle<{ color: string }> }) {
+  return <svg fill="currentColor" className={glyphStyle.color} />;
+}
+```
+
+That is the whole difference: `Style` is what a styling prop accepts, `AtomicStyle` is what a component can look inside.
+
+It is also the name TypeScript writes when it emits a declaration for an exported style, so a package that ships styles compiles with `declaration: true`.
+
+> **Good to know**
+>
+> `Style` accepts every property. To constrain what a component accepts through a style prop, use [StyleProps](/docs/api/types/StyleProps), [WithoutProperties](/docs/api/types/WithoutProperties) or [StaticStyles](/docs/api/types/StaticStyles).

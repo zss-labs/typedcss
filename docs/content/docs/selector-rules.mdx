@@ -1,0 +1,95 @@
+---
+title: 'Selector rules'
+description: 'How pseudo-classes, pseudo-elements and queries nest inside each other, and why.'
+---
+
+## Nesting
+A style nests one level of selectors, and only in one direction:
+
+- A query (`@media` or `@container`) can hold a pseudo-selector.
+- A pseudo-selector cannot hold a query, and a query cannot hold another query.
+- A pseudo-selector cannot hold another pseudo-selector. Write the pair as one key, such as `':hover::before'`.
+
+```ts title="TypeScript"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  list: {
+    '@media (max-width: 768px)': { // [!code ++]
+      ':hover': { // [!code ++]
+        listStyleType: 'none', // [!code ++]
+      }, // [!code ++]
+    }, // [!code ++]
+  },
+});
+```
+
+StyleX puts the pseudo-class key inside each property's value map. TypedCSS puts the declarations under the pseudo-selector key:
+
+```ts title="StyleX"
+import * as stylex from '@stylexjs/stylex';
+
+const styles = stylex.create({
+  button: {
+    backgroundColor: {
+      default: 'lightblue',
+      ':hover': 'blue',
+    },
+  },
+});
+```
+
+```ts title="TypedCSS"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  button: {
+    backgroundColor: 'lightblue',
+    ':hover': {
+      backgroundColor: 'blue',
+    },
+  },
+});
+```
+
+Not allowed:
+
+```ts title="TypeScript"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  list: {
+    ':hover': {
+      '@media (max-width: 768px)': { // [!code --]
+        background: 'skyblue', // [!code --]
+      }, // [!code --]
+    },
+  },
+});
+```
+
+## Combinators
+A key cannot contain a combinator (`>`, `+`, `~` or a space) except inside a functional pseudo-class such as `:has()`. To style a child from its parent's state, use [marker and extended](/docs/api/javascript/marker).
+
+`no-invalid-selector` and `no-combinator` in [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) report each of these.
+
+## Functional pseudo-classes
+A functional pseudo-class cannot appear inside another one of the same name, at any depth. Different names can nest, such as `':is(:where(:not(:has(.a))))'`. `:not()` is the exception: it may nest inside `:not()`, because `':not(:not(.a), .b)'` has no flat form.
+
+```ts
+':where(:where(.a, .b), .c)' // [!code --]
+':where(.a, .b, .c)' // [!code ++]
+':is(:where(:is(.a)))' // [!code --]
+```
+
+The compiler stops the build on such a key. `no-invalid-selector` flattens it with a fix when the nested call is a whole argument, as in the first line; any other shape has to be rewritten by hand, because flattening would change what the selector matches.
+
+A key can nest at most 16 levels of parentheses, and a quote must open and close a string inside brackets or parentheses. The compiler stops the build on a deeper key or a stray quote such as `':hover":is(.x)'`, and `no-invalid-selector` reports both.
+
+## Why one direction
+Every rule a style can produce has exactly one way to be written. A stylesheet places a selector inside a query — `@media (…) { .a:hover { … } }` — never the reverse, so the key order follows the CSS it compiles to.
+
+Allowing the reverse would give the same rule two spellings, and the style's type would have to recurse through every pseudo-selector and query to accept both. Keeping one level in one direction keeps the type flat, its autocomplete precise, and every style in a codebase nested the same way.
+
+
+- [css.create](/docs/api/javascript/create)

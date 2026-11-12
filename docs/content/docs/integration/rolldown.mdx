@@ -1,0 +1,47 @@
+---
+title: 'Rolldown'
+description: 'Add TypedCSS to a Rolldown project, with one command or by hand.'
+---
+
+[`examples/example-rolldown`](https://github.com/zss-labs/plumeria/tree/main/examples/example-rolldown) shows how to use [`@typedcss/unplugin`](https://www.npmjs.com/package/@plumeria/unplugin) in Rolldown.  
+The plugin compiles TypedCSS styles into the CSS asset Rolldown produces.
+
+`npx @typedcss/init` detects Rolldown and writes this setup for you; see [@typedcss/init](/docs/api/migrate/init). The rest of this page is the same setup by hand.
+
+## Installation
+```sh title="Terminal"
+pnpm i -D @typedcss/unplugin
+```
+
+## Usage
+```js title="rolldown.config.js"
+import { defineConfig } from 'rolldown';
+import typedcss from '@typedcss/unplugin';
+import postcss from 'rollup-plugin-postcss';
+
+export default defineConfig({
+  input: 'src/index.tsx',
+  output: {
+    dir: 'dist',
+  },
+  moduleTypes: {
+    css: 'empty',
+  },
+  plugins: [typedcss.rolldown(), postcss({ extract: true })],
+});
+```
+
+## typedcss.d.ts
+
+`@typedcss/css` ships no prop declaration of its own, so name the styling prop your project compiles with.
+
+For the default name (`sx`), reference the declaration that ships with the package, in `src/` when the project has one or at the application root otherwise:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+If you set a custom `styleProp` (such as `'classStyle'`), declare that name instead, and keep it the same as the one passed to the plugin; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+- [Shipping this as a package](/docs/creating-packages)
+- [Installation](/docs/installation)

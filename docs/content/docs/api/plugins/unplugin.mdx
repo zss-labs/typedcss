@@ -1,0 +1,116 @@
+---
+title: '@typedcss/unplugin'
+description: 'Install and configure the bundler plugin behind every integration except Next.js.'
+stability: Stable
+---
+
+[`@typedcss/unplugin`](https://www.npmjs.com/package/@plumeria/unplugin) is a general-purpose bundler plugin for TypedCSS.
+
+## Installation
+
+```sh title="Terminal"
+pnpm i -D @typedcss/unplugin
+```
+
+## Configuration
+```ts
+import typedcss from '@typedcss/unplugin';
+export default {
+  plugins: [
+    typedcss.vite({
+      include: ['**/*.{ts,tsx}'],
+      exclude: ['**/node_modules/**'],
+      devEmitToDisk: false,
+      styleProp: 'classStyle',
+    }),
+  ],
+};
+```
+
+### Options
+
+- `include`: Globs or regular expressions for the files to compile.
+- `exclude`: Globs or regular expressions for the files to leave out.
+- `devEmitToDisk`: Writes the styles to a file on disk (`zero-virtual.css`) in development, in place of a virtual module. The default is `false`.
+- `styleProp`: The JSX prop that carries styles. The default is `'sx'`.
+- `withoutLogicalProperties`: Rejects the logical name of a property that also has a physical name. The default is `false`.
+- `withoutPhysicalProperties`: Rejects the physical name of a property that also has a logical name. The default is `false`.
+- `lint`: Lints the project with [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) during a production build, on every bundler except esbuild and Bun. The default is `true`.
+
+```ts
+interface PluginOptions {
+  include?: string | RegExp | Array<string | RegExp>;
+  exclude?: string | RegExp | Array<string | RegExp>;
+  devEmitToDisk?: boolean;
+  styleProp?: string;
+  withoutLogicalProperties?: boolean | { sizes?: boolean };
+  withoutPhysicalProperties?: boolean | { sizes?: boolean };
+  lint?: boolean;
+}
+```
+
+### styleProp
+
+Renaming the prop takes two steps, and they have to agree. Tell the plugin:
+
+```ts
+typedcss.vite({ styleProp: 'classStyle' });
+```
+
+and declare the same name for TypeScript; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+If the two disagree, the prop type-checks but is never compiled away. [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) reads the same name from `settings.typedcss.styleProp`.
+
+### withoutLogicalProperties and withoutPhysicalProperties
+
+Two names for the same box edge cannot be ranked by specificity, so a file that
+uses both leaves the result to source order. These options settle it by
+rejecting one spelling:
+
+```ts
+typedcss.vite({ withoutPhysicalProperties: true });
+```
+
+The build fails on the first rejected property, and the message names the file
+and the property to write instead. Nothing is rewritten. `{ sizes: true }`
+extends the check from the edges to the twelve axis pairs — `width`, `height`,
+their `min` and `max` forms, and `overflow`, `overscroll-behavior` and
+`contain-intrinsic-size` on both axes:
+
+```ts
+typedcss.vite({ withoutPhysicalProperties: { sizes: true } });
+```
+
+Enabling both is a configuration error, and the direction has to match the lint
+rule you run: `withoutPhysicalProperties` with
+[`no-physical-properties`](/docs/api/plugins/eslint-plugin) and `withoutLogicalProperties` with
+[`no-logical-properties`](/docs/api/plugins/eslint-plugin), `{ sizes }` included. Set opposite
+directions and the rule renames a property the build then rejects.
+
+[Specificity](https://plumeria.dev/docs/specificity) explains why the pair cannot be
+ranked, and why neither spelling is rewritten for you.
+
+### lint
+
+The lint is integrated into the build by default, so it needs no setup. A production build runs [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) through oxlint alongside the build and stops on any error or warning. The build waits for the lint before it exits, so a build that finishes first still fails when the lint does.
+
+| Bundler | Lints on | Does not lint on |
+| --- | --- | --- |
+| Vite | `vite build` | the dev server, Vitest |
+| webpack, Rspack | a single build | `--watch`, the dev server |
+| Rollup, Rolldown | a single build | `--watch` |
+| Farm | `farm build` | `farm start` |
+
+esbuild and Bun do not say whether a build is a one-off or a watch, so they do not lint. Run `typedcss-lint` there instead.
+
+A build started from a script or a test lints as well, and a lint error ends that process. Pass `lint: false` where that is not wanted.
+
+The lint runs the recommended rules, and `withoutLogicalProperties` or `withoutPhysicalProperties` adds the [spelling rule](/docs/api/plugins/eslint-plugin) that matches, `{ sizes }` included. `styleProp` reaches the rules that read the styling prop. It does not read `eslint.config.*`.
+
+oxlint skips the files `.gitignore` ignores, and runs only the TypedCSS rules, not oxlint's own.
+
+`typedcss-lint -- vite build` still works, and the lint runs once. To build without it:
+
+```ts
+typedcss.vite({ lint: false });
+```

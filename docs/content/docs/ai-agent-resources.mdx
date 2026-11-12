@@ -1,0 +1,36 @@
+---
+title: 'AI Agent Resources'
+description: 'Context for coding agents working with TypedCSS.'
+---
+
+> **Installation comes first**
+>
+> Always load the installation guide before asking an agent to write TypedCSS. The compiler and bundler integration are part of the programming model, not optional setup around it.
+
+## Start here
+
+Copy this into your agent's prompt:
+
+```text title="Prompt for your coding agent"
+Read these TypedCSS documents in order before making changes:
+
+1. Installation — /docs/installation
+2. Rules for AI agents — /docs/ai.md
+3. Introduction and core usage — /docs
+
+Follow AI.md as authoritative. Inspect the existing project's bundler and framework,
+then read the matching integration guide before changing configuration.
+```
+
+[AI.md](/docs/ai.md) is plain Markdown, generated from these docs.
+
+## Add context for the task
+
+- Writing components and styles — [Selector rules](/docs/selector-rules), [css.create](/docs/api/javascript/create), [css.props](/docs/api/javascript/props), [Wind](/docs/api/packages/wind)
+- Tooling, testing, and migration — [Editor integration](/docs/editor-integration), [Testing](/docs/testing), [ESLint plugin](/docs/api/plugins/eslint-plugin), [@typedcss/init](/docs/api/migrate/init), [Codemod](/docs/api/migrate/codemod)
+- Components and distribution — [Frameworks](/docs/integration/frameworks), [Creating packages](/docs/creating-packages)
+- Bundlers — [Integrations](/docs/integration)
+
+## Working examples
+
+The [`examples/` directory](https://github.com/zss-labs/typedcss/tree/main/examples) contains compiling projects for Next.js, Vite, Rollup, Rspack, webpack, esbuild, Bun, Farm, and Rolldown, plus React Router, Waku, Vue, Svelte, Solid, Qwik, Preact, Astro, and Storybook. Point an agent to the matching example when it needs a complete configuration rather than an isolated snippet.

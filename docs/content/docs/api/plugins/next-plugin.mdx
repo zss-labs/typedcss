@@ -1,0 +1,113 @@
+---
+title: '@typedcss/next-plugin'
+description: 'Wrap your Next.js config with withTypedCSS and set its compiler options.'
+stability: Stable
+---
+
+[`@typedcss/next-plugin`](https://www.npmjs.com/package/@plumeria/next-plugin) adds TypedCSS to a Next.js project.
+It works with both Turbopack and Webpack, compiling styles in the build and updating them through HMR in development.
+
+## Installation
+
+```sh title="Terminal"
+pnpm i -D @typedcss/next-plugin
+```
+
+## Usage
+
+Wrap the configuration with `withTypedCSS` in `next.config.ts` or `next.config.js`.
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+import { withTypedCSS } from "@typedcss/next-plugin";
+
+const nextConfig: NextConfig = {
+  // Existing configuration
+};
+
+export default withTypedCSS(nextConfig);
+```
+
+## API
+### `withTypedCSS(nextConfig, options)`
+
+Takes a Next.js configuration object and returns a new one with the Turbopack or Webpack settings TypedCSS needs.
+
+- `nextConfig`: Next.js configuration object.
+- `options`: Compiler options, passed through to the loader, and `lint`.
+
+```ts
+function withTypedCSS(nextConfig: NextConfig, options?: TypedCSSOptions): NextConfig;
+```
+
+### Options
+
+```ts title="next.config.ts"
+export default withTypedCSS(nextConfig, {
+  include: ['./src/**/*.{ts,tsx}'],
+  exclude: ['**/node_modules/**', '**/.next/**'],
+  styleProp: 'classStyle',
+});
+```
+
+- `include`: Globs the stylesheet is compiled from. The default is every `js/jsx/ts/tsx` file.
+- `exclude`: Globs excluded from that compilation. The default is `node_modules`, `dist` and `.next`.
+- `styleProp`: The JSX prop that carries styles. The default is `'sx'`.
+- `withoutLogicalProperties`: Rejects the logical name of a property that also has a physical name. The default is `false`.
+- `withoutPhysicalProperties`: Rejects the physical name of a property that also has a logical name. The default is `false`.
+- `lint`: Lints the project with [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) during `next build`. The default is `true`.
+
+```ts
+interface TypedCSSOptions {
+  include?: string[];
+  exclude?: string[];
+  styleProp?: string;
+  withoutLogicalProperties?: boolean | { sizes?: boolean };
+  withoutPhysicalProperties?: boolean | { sizes?: boolean };
+  lint?: boolean;
+}
+```
+
+### styleProp
+
+Renaming the prop takes two steps, and they have to agree. Tell the plugin:
+
+```ts title="next.config.ts"
+export default withTypedCSS(nextConfig, { styleProp: 'classStyle' });
+```
+
+and declare the same name for TypeScript; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+If the two disagree, the prop type-checks but is never compiled away. [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) reads the same name from `settings.typedcss.styleProp`.
+
+### withoutLogicalProperties and withoutPhysicalProperties
+
+These reject one spelling of a property that has both a logical and a physical
+name. They behave exactly as on
+[`@typedcss/unplugin`](/docs/api/plugins/unplugin#withoutlogicalproperties-and-withoutphysicalproperties),
+which covers the error, the `{ sizes }` option and the lint rule each direction
+has to match:
+
+```ts title="next.config.ts"
+export default withTypedCSS(nextConfig, { withoutPhysicalProperties: true });
+```
+
+```ts title="next.config.ts"
+export default withTypedCSS(nextConfig, {
+  withoutPhysicalProperties: { sizes: true },
+});
+```
+
+### lint
+
+The lint is integrated into the build by default, so it needs no setup. `next build` runs [`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) through oxlint alongside the compile and stops on any error or warning. The build waits for the lint before it exits, so a build that finishes first still fails when the lint does. `next dev` does not lint.
+
+The lint runs the recommended rules, and `withoutLogicalProperties` or `withoutPhysicalProperties` adds the [spelling rule](/docs/api/plugins/eslint-plugin) that matches, `{ sizes }` included. `styleProp` reaches the rules that read the styling prop. It does not read `eslint.config.*`.
+
+oxlint skips the files `.gitignore` ignores, and runs only the TypedCSS rules, not oxlint's own.
+
+`typedcss-lint -- next build` still works, and the lint runs once. To build without it:
+
+```ts title="next.config.ts"
+export default withTypedCSS(nextConfig, { lint: false });
+```

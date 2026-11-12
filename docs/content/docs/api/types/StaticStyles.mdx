@@ -1,0 +1,58 @@
+---
+title: 'StaticStyles'
+description: 'A style list that rejects dynamic styles, for components that hand on only a class name.'
+---
+
+```ts
+type StaticStyles<K extends StyleKey = StyleKey> = StyleList<StaticNamespace<K>>;
+export type { StaticStyles };
+```
+
+`StaticStyles` rejects a dynamic style, which is what calling a [function key](/docs/api/javascript/create#dynamic-values) gives. A dynamic style has to reach the element as a custom property, so a component that hands on only the `className` from [css.props()](/docs/api/javascript/props), dropping its `style`, cannot carry one.
+
+## Without a type argument
+
+Every property is accepted and only the dynamic style is rejected:
+
+```tsx title="TypeScript"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  base: {
+    padding: '8px',
+  },
+  tinted: {
+    color: 'gold',
+  },
+  sized: (width: number) => ({
+    width,
+  }),
+});
+
+type ChipProps = {
+  sx?: css.StaticStyles;
+};
+
+export function Chip({ sx }: ChipProps) {
+  return <span className={css.props(styles.base, sx).className} />;
+}
+```
+
+```tsx
+<Chip sx={styles.tinted} />      // ok
+<Chip sx={styles.sized(120)} />  // Type error
+```
+
+## With a type argument
+
+A type argument narrows the properties as well, so `StaticStyles<'color'>` is [StyleProps](/docs/api/types/StyleProps)`<'color'>` without dynamic styles:
+
+```tsx
+type BadgeProps = {
+  sx?: css.StaticStyles<'color' | 'backgroundColor'>;
+};
+```
+
+> **Good to know**
+>
+> A component that applies its styles through the `sx` prop can carry a dynamic style. Use [StyleProps](/docs/api/types/StyleProps) or [WithoutProperties](/docs/api/types/WithoutProperties) there instead.

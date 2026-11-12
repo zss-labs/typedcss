@@ -1,0 +1,63 @@
+---
+title: 'css.keyframes'
+description: 'CSS animations you can play from any style, including on hover.'
+stability: Frozen
+---
+
+```ts
+export type keyframes = <const T extends Keyframes>(rule: T) => string;
+export const keyframes: keyframes;
+```
+
+`keyframes()` defines an `@keyframes` rule and returns its name, a unique hash inlined at build time, for use as `animationName`.
+
+## Example
+    ```ts title="TypeScript"
+    import * as css from '@typedcss/css'
+
+    const fadeIn = css.keyframes({
+      from: {
+        opacity: 0,
+      },
+      to: {
+        opacity: 1,
+      },
+    });
+
+    const styles = css.create({
+      box: {
+        animationName: fadeIn,
+        animationDuration: '1s',
+        animationTimingFunction: 'ease-in-out',
+      },
+    });
+    ```
+    ```css title="CSS"
+    @keyframes kf-x34h9adh {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .xhc714s1:not(#\#) { animation-name: kf-x34h9adh; }
+    .xdm4omap:not(#\#) { animation-duration: 1s; }
+    .xvct32ng:not(#\#) { animation-timing-function: ease-in-out; }
+    ```
+## Usage
+
+An animation can start from a pseudo-class such as `:hover`:
+
+```ts
+const styles = css.create({
+  card: {
+    transition: 'transform 0.3s ease',
+    ':hover': {
+      animationName: fadeIn,
+      animationDuration: '0.5s',
+    },
+  },
+});
+```

@@ -1,0 +1,33 @@
+---
+title: 'Editor integration'
+description: 'A VS Code snippet for the styling prop, ESLint in the editor, and jumping to definitions.'
+---
+## sx snippet
+In VS Code, add a snippet that expands `s` into `sx={}`:
+
+1. Open the Command Palette with `Shift` + `Cmd` + `P` (macOS) or `Shift` + `Ctrl` + `P` (Windows, Linux).
+2. Run **Snippets: Configure Snippets**.
+3. Choose `typescriptreact.json` (TypeScript JSX) or `javascriptreact.json` (JavaScript JSX).
+
+```json title="typescriptreact.json"
+{
+  "sx": {
+    "prefix": "s",
+    "body": "sx={$1}",
+    "description": "sx",
+  }
+}
+```
+
+### Usage
+```jsx
+<div s /> -> Enter -> <div sx={|} />
+```
+## ESLint
+
+[`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) reports style problems as you type, once your editor's ESLint extension is on.
+Set it up with the config in [Installation](/docs/installation#eslint-setup); the [plugin reference](/docs/api/plugins/eslint-plugin) lists every rule.
+## Jump to definition
+
+`Cmd` + click (macOS) or `Ctrl` + click (Windows, Linux) jumps from a style to its definition, even outside JSX.
+- [Back to installation](/docs/installation)

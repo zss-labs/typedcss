@@ -1,0 +1,43 @@
+---
+title: 'Farm'
+description: 'Add TypedCSS to a Farm project, with one command or by hand.'
+---
+
+[`examples/example-farm`](https://github.com/zss-labs/plumeria/tree/main/examples/example-farm) shows how to use [`@typedcss/unplugin`](https://www.npmjs.com/package/@plumeria/unplugin) in Farm.  
+The plugin compiles TypedCSS styles into CSS, with HMR in development.
+
+`npx @typedcss/init` detects Farm and writes this setup for you; see [@typedcss/init](/docs/api/migrate/init). The rest of this page is the same setup by hand.
+
+## Installation
+```sh title="Terminal"
+pnpm i -D @typedcss/unplugin
+```
+
+## Usage
+```ts title="farm.config.ts"
+import { defineConfig } from '@farmfe/core';
+import typedcss from '@typedcss/unplugin';
+
+export default defineConfig({
+  plugins: [
+    typedcss.farm({
+      devEmitToDisk: true,
+    }),
+  ],
+});
+```
+
+## typedcss.d.ts
+
+`@typedcss/css` ships no prop declaration of its own, so name the styling prop your project compiles with.
+
+For the default name (`sx`), reference the declaration that ships with the package, in `src/` when the project has one or at the application root otherwise:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+If you set a custom `styleProp` (such as `'classStyle'`), declare that name instead, and keep it the same as the one passed to the plugin; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+- [Shipping this as a package](/docs/creating-packages)
+- [Installation](/docs/installation)

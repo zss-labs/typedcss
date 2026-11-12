@@ -1,0 +1,87 @@
+---
+title: css.createStatic
+description: 'Constants such as breakpoints that styles and themes can refer to.'
+stability: Frozen
+---
+
+
+```ts
+export type createStatic = <const T extends CreateStatic>(rule: T)=> T;
+export const createStatic: createStatic;
+```
+
+`createStatic` defines **static values** and inlines them at build time. Read them inside `create` or `createTheme`, as a value or as a key such as a media query.
+
+## Example
+
+```ts title="TypeScript"
+import * as css from '@typedcss/css';
+
+export const breakpoints = css.createStatic({
+  xs: '@media (max-width: 480px)',
+  sm: '@media (max-width: 640px)',
+  md: '@media (max-width: 768px)',
+  lg: '@media (max-width: 1024px)',
+  xl: '@media (max-width: 1280px)',
+});
+```
+
+## Usage
+```ts
+import * as css from "@typedcss/css";
+import { breakpoints } from "lib/mediaQuery";
+
+export const styles = css.create({
+  container: {
+    [breakpoints.sm]: {
+      padding: 16,
+    },
+    [breakpoints.lg]: {
+      padding: 32,
+    },
+  },
+});
+```
+
+### Numeric keys
+
+Quote a numeric key, as in a color scale. An unquoted number stops the build:
+
+```ts title="tokens.ts"
+import * as css from "@typedcss/css";
+
+export const blue = css.createStatic({
+  '500': '#3b82f6',
+});
+```
+
+Read it as `blue[500]` or `blue['500']`.
+
+## Spreading static styles
+
+A `createStatic` value can also be a whole style object, spread inside `create`. Check it with `satisfies css.CSSProperties`, which keeps the literal types.
+
+```ts title="TypeScript"
+import * as css from "@typedcss/css";
+
+const flexBox = css.createStatic({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+} satisfies css.CSSProperties);
+
+export const styles = css.create({
+  container: {
+    ...flexBox,
+    backgroundColor: "red",
+  },
+});
+```
+
+## Sharing
+
+Values can be imported from another module, or from a package that opts in with a `typedcss` export condition; see [Across packages](/docs/creating-packages). [`@typedcss/wind`](/docs/api/packages/wind) ships the Tailwind CSS design values this way.
+
+> **Good to know**
+>
+> The names `keyframes`, `viewTransitionClass` and `createTheme` return are inlined at build time the same way.

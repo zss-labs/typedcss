@@ -1,0 +1,193 @@
+---
+title: 'css.create'
+description: 'The core styling API that most of your components are written with.'
+stability: Frozen
+---
+
+
+```ts
+export type create = <const T extends Record<string, CreateStyleValue>>(rule: T)=> CreateReturnType<T>;
+export const create: create;
+```
+
+`create` defines styles as plain objects that are type-checked, autocompleted and linted.
+
+Only the styles an element uses are compiled.
+
+## Example
+
+```tsx title="TypeScript"
+import * as css from '@typedcss/css'
+
+const styles = css.create({
+  container: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  text: {
+    fontSize: '14px',
+    textDecoration: 'none',
+  },
+})
+
+export default function App() {
+  return (
+    <div
+      sx={[
+        styles.container,
+        styles.text
+      ]}
+    />
+  );
+}
+```
+
+The compiler replaces the call with its class names, and the import goes with it.
+
+**Compiled:**
+```tsx
+<div className="xxp6epoh xwbwwha1 xbief8v4 xzllkng3" />
+```
+
+**Generated CSS:**
+
+```css
+.xxp6epoh {
+  display: flex;
+}
+.xwbwwha1 {
+  justify-content: space-between;
+}
+.xbief8v4:not(#\#) {
+  font-size: 14px;
+}
+.xzllkng3 {
+  text-decoration: none;
+}
+```
+
+Each declaration compiles to one **atomic** class whose name is a hash of the property and the value. The same declaration written anywhere else reuses that class, and two different declarations never collide.
+
+
+## Dynamic values
+
+A key whose value is a function is a **function key**. Calling it gives a **dynamic style**: the class names are fixed at build time, and the values reach the element as CSS variables.
+
+```tsx
+const styles = css.create({
+  palette: (color: string) => ({
+    backgroundColor: color,
+  }),
+});
+
+export const Color = ({ color }) => {
+  return (
+    <span sx={styles.palette(color)}>Dynamic Color</span>
+  )
+}
+```
+
+Pass a plain value. The argument is written into the element, so an expression that is not the same on every read, such as a call with a side effect or a getter, may be read more than once. A definition such as a `css.createStatic` value is not compiled there and has no value at runtime, so read it inside `css.create` instead.
+
+A number takes `px` the way it does in a static style, so `width` gets one and `opacity` does not. A number inside a color, filter or scale function, such as `hsl()`, `brightness()` or `scaleX()`, stays bare.
+
+## Variants bracket notation
+
+A variant is read with bracket notation, as in `variantStyles[size]`. TypedCSS merges it at runtime through [`css.props()`](/docs/api/javascript/props).
+
+```tsx
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  base: {
+    display: 'inline-flex',
+    borderRadius: '4px',
+    backgroundColor: 'blue',
+    color: 'white',
+  }
+});
+
+const sizeStyles = css.create({
+  small: {
+    fontSize: '12px',
+    padding: '4px 8px',
+  },
+  large: {
+    fontSize: '18px',
+    padding: '12px 24px',
+  }
+});
+
+type Size = 'small' | 'large';
+// can also use the type exhaustively via typeof sizeStyles
+
+export const Button = ({ size }: { size: Size }) => {
+  return (
+    <button sx={[styles.base, sizeStyles[size]]}>Button</button>
+  );
+};
+```
+
+### The last source wins
+
+An element takes a list, and a property set by more than one entry keeps the value from the one written last. That is what lets a variant override the base above.
+
+The rule holds whatever the entries are — a plain style, a condition, a bracket group. Swapping two of them swaps which one applies:
+
+```tsx
+const styles = css.create({
+  base: { color: 'white' },
+  muted: { color: 'slategray' },
+});
+
+const toneStyles = css.create({
+  brand: { color: 'royalblue' },
+  danger: { color: 'crimson' },
+});
+
+// muted wins — it is written last
+<button sx={[styles.base, toneStyles[tone], isMuted && styles.muted]} />
+
+// toneStyles wins — now it is
+<button sx={[styles.base, isMuted && styles.muted, toneStyles[tone]]} />
+```
+
+All three set `color` here. Entries that touch different properties never compete, so their order does not matter — `[styles.base, sizeStyles[size]]` above reads the same either way.
+
+Merging goes property by property, and that includes nested blocks. Overriding a `:hover` color leaves the rest of the `:hover` block in place.
+
+This merging rule applies to the style list. Object spreads inside a style definition follow JavaScript semantics: a later property replaces the whole earlier value, including a nested object.
+
+One pair the list does not settle is a shorthand and a longhand of the same property — `margin` against `marginTop`. The longhand wins wherever the two meet, whichever is written last. See [Specificity](https://plumeria.dev/docs/specificity).
+
+### Conditions with bracket notation
+
+The condition can sit inside the brackets or around them:
+
+```tsx
+<button sx={sizeStyles[isLarge ? keyA : keyB]} />
+<button sx={isLarge ? sizeStyles[keyA] : sizeStyles[keyB]} />
+<button sx={isActive && sizeStyles[key]} />
+```
+
+> **Falls back to css.props**
+>
+> TypedCSS does not build lookup tables. Bracket notation and conditions compile to a [`css.props()`](/docs/api/javascript/props) call that merges at runtime:
+>
+> ```tsx
+> <button {...css.props(styles.base, sizeStyles[size])} />
+> ```
+
+### Keep common properties in a base style
+
+Properties that do not vary belong in a base style — `styles.base` above — rather than repeated across every key of a variant object.
+
+Anything the variants do not compete for stays outside the decision table, so it is emitted once instead of being multiplied into every combination.
+
+## Runtime merge
+
+Plumeria resolves variants, dynamic props and conditions at compile time. TypedCSS falls back to [`css.props()`](/docs/api/javascript/props) for all of them: each style is compiled to atomic CSS and a class map, and the winning class is picked when the element renders.
+
+> **Atomic static API**
+>
+> An atomic class is emitted once and reused wherever the same declaration appears, so the stylesheet grows with the number of distinct declarations, not with the number of components. The compiler also removes the imports.

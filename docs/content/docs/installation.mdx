@@ -1,0 +1,120 @@
+---
+title: Installation
+description: Install TypedCSS and set up the compiler, ESLint, and your bundler integration.
+---
+
+Install commands in these docs use pnpm. TypedCSS works the same with any other package manager.
+
+## One command
+
+`npx @typedcss/init` reads the project, asks what it cannot read, and writes the
+rest: the packages, the bundler plugin, `typedcss.d.ts` and the ESLint config.
+
+```sh title="Terminal"
+npx @typedcss/init
+```
+
+It shows the plan before it writes anything, and `--dry-run` stops at the plan.
+See [@typedcss/init](/docs/api/migrate/init) for every question it asks and every file it
+touches. The rest of this page shows the setup by hand.
+
+## Installing css
+
+```sh title="Terminal"
+pnpm i -D @typedcss/css
+```
+
+### typedcss.d.ts
+
+`@typedcss/css` ships no prop declaration of its own. In `src/` when the project
+has one, or at the application root otherwise, reference the one for the default
+`sx` prop:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+To use another name, see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+ESLint is optional. Skip to your bundler: [Next.js](#nextjs) / [Vite](#vite)
+
+## ESLint Setup
+
+Install the plugin:
+
+```sh title="Terminal"
+pnpm i -D @typedcss/eslint-plugin
+```
+
+[`@typedcss/eslint-plugin`](/docs/api/plugins/eslint-plugin) sorts and formats style
+properties and reports invalid values and selectors. Its reference page lists
+every rule.
+
+```ts title="eslint.config.ts"
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import { defineConfig } from 'eslint/config';
+import typedcss from '@typedcss/eslint-plugin';
+
+export default defineConfig(
+  eslint.configs.recommended,
+  tseslint.configs.recommended,
+  typedcss.configs.recommended,
+);
+```
+
+The bundler plugins lint the build with these rules by default, so a style error
+or warning stops it with no setup. On esbuild and Bun, put `typedcss-lint --` in
+front of the build command instead. If you renamed the styling prop to
+`classStyle`, use `typedcss-lint --style-prop classStyle --` before the build
+command.
+
+## Integration
+
+Add the plugin for your bundler.
+
+### Next.js
+
+```sh title="Terminal"
+pnpm i -D @typedcss/next-plugin
+```
+
+It works with both Turbopack and Webpack.
+
+```ts title="next.config.ts"
+import type { NextConfig } from 'next';
+import { withTypedCSS } from '@typedcss/next-plugin';
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default withTypedCSS(nextConfig);
+```
+
+### Vite
+
+```sh title="Terminal"
+pnpm i -D @typedcss/unplugin
+```
+
+```ts title="vite.config.ts"
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import typedcss from '@typedcss/unplugin';
+
+export default defineConfig({
+  plugins: [react(), typedcss.vite()],
+});
+```
+
+Every other bundler takes the factory of the same name from
+`@typedcss/unplugin`: `webpack`, `rspack`, `rollup`, `rolldown`, `esbuild`,
+`farm` and `bun`.
+
+## First steps
+
+- [ ] The bundler config registers TypedCSS and `typedcss.d.ts` is in place
+- [ ] Override a style from the right — [Introduction](/docs)
+- [ ] Pass a runtime value through a function key — [css.create](/docs/api/javascript/create#dynamic-values)
+- [ ] Switch a theme with `createTheme` — [css.createTheme](/docs/api/javascript/createTheme)

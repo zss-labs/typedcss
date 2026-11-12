@@ -1,0 +1,5 @@
+{
+  "defaultOpen": false,
+  "title": "Migrate",
+  "pages": ["init", "codemod"]
+}

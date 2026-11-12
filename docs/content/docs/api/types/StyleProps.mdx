@@ -1,0 +1,73 @@
+---
+title: 'StyleProps'
+description: 'A style list limited to the properties it names.'
+---
+
+```ts
+type StyleProps<K extends StyleKey> = StyleList<AllowedNamespace<K>>;
+export type { StyleProps };
+```
+
+`StyleProps` enumerates the properties a component accepts through a style prop. A style that sets anything outside the list is rejected.
+
+## Example
+
+```tsx title="TypeScript"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  base: {
+    fontSize: '14px',
+  },
+});
+
+type TextProps = {
+  sx?: css.StyleProps<'color' | 'fontSize'>;
+};
+
+export function Text({ sx }: TextProps) {
+  return <span sx={[styles.base, sx]} />;
+}
+```
+
+```tsx
+<Text sx={styles.tinted} />  // ok when tinted only sets color
+<Text sx={styles.pinned} />  // Type error when pinned sets position
+```
+
+## Nested blocks are covered
+
+The enumeration reaches into pseudo-classes and at-rules, so a property that is only set inside a nested block is checked the same way:
+
+```tsx
+// Type error, position is not enumerated
+<Text sx={styles.hoverPinned} />
+```
+
+```ts
+const styles = css.create({
+  hoverPinned: {
+    ':hover': {
+      position: 'fixed',
+    },
+  },
+});
+```
+
+## A marker sets no property
+
+[css.marker()](/docs/api/javascript/marker) writes a custom property behind a pseudo-class rather than a CSS property, so a style built from one carries nothing for the enumeration to reject and passes through any of these types:
+
+```tsx
+const styles = css.create({
+  badge: css.marker('badge', ':hover'),
+});
+
+<Text sx={styles.badge} />  // ok under any enumeration
+```
+
+The block `css.extended()` guards is checked as usual. The at-rule it returns is a nested block like any other, and the properties inside it are enumerated the same way.
+
+> **Good to know**
+>
+> When a component only needs to protect a few properties, [WithoutProperties](/docs/api/types/WithoutProperties) is the shorter way to say the same thing.

@@ -1,0 +1,168 @@
+:root {
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background-color: rgba(13, 148, 136, 0.18);
+}
+
+:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+/* Shiki renders these blocks at build time; its markup carries no TypedCSS classes. */
+.shiki {
+  margin: 0;
+  padding: 12px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  tab-size: 2;
+  color: #d4d4d4;
+  background-color: #1e1e1e;
+  color-scheme: dark;
+}
+
+.shiki code {
+  font-family: inherit;
+}
+
+.shiki .mark {
+  background-color: rgba(45, 212, 191, 0.22);
+  border-radius: 4px;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.22);
+}
+
+pre code {
+  font: inherit;
+}
+
+/* Shiki writes each token color as a variable; both docs themes use the same palette. */
+figure pre span {
+  color: var(--shiki-light);
+}
+
+[data-playground='stage'] {
+  position: relative;
+}
+
+[data-playground='stage'] > :not(.playground-loading) {
+  opacity: 0;
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+}
+
+[data-playground='stage'] > iframe {
+  transform: translateY(16px);
+}
+
+[data-playground='stage'][data-ready='true'] > :not(.playground-loading) {
+  opacity: 1;
+  transform: none;
+}
+
+.playground-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #71717a;
+  font-size: 13px;
+  pointer-events: none;
+  transition:
+    opacity 200ms ease,
+    visibility 200ms;
+}
+
+.playground-loading-mark {
+  font-size: 32px;
+  line-height: 1;
+  color: var(--playground-accent);
+  animation: playground-spin 2.4s linear infinite;
+}
+
+.playground-loading-bar {
+  width: 160px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(113 113 122 / 20%);
+}
+
+.playground-loading-fill {
+  display: block;
+  height: 100%;
+  background: var(--playground-accent);
+  transform-origin: left;
+  transition: transform 200ms ease;
+}
+
+[data-playground='stage'][data-ready='true'] > .playground-loading {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@keyframes playground-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+:root {
+  --playground-accent: #0d9488;
+}
+.dark {
+  --playground-accent: #2dd4bf;
+}
+span.line.diff {
+  position: relative;
+}
+span.line.diff::before {
+  position: absolute;
+  left: -1.25ch;
+}
+span.line.diff.add {
+  background: rgba(45, 212, 191, 0.14);
+}
+span.line.diff.add::before {
+  content: '+';
+  color: #2dd4bf;
+}
+span.line.diff.remove {
+  background: rgba(255, 83, 252, 0.14);
+}
+span.line.diff.remove::before {
+  content: '-';
+  color: #ff53fc;
+}

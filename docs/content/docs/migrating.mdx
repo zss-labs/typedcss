@@ -1,0 +1,16 @@
+---
+title: Migrating
+description: Move a project between Plumeria and TypedCSS.
+---
+
+The same source runs on either, and a codemod moves a project in each direction. From Plumeria to TypedCSS:
+
+```sh
+npx @plumeria/codemod migrate-to-typedcss
+```
+
+From TypedCSS to Plumeria:
+
+```sh
+npx @typedcss/codemod migrate-to-plumeria
+```

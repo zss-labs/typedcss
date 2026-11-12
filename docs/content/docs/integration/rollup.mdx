@@ -1,0 +1,64 @@
+---
+title: 'Rollup'
+description: 'Add TypedCSS to a Rollup project, with one command or by hand.'
+---
+
+[`examples/example-rollup`](https://github.com/zss-labs/plumeria/tree/main/examples/example-rollup) shows how to use [`@typedcss/unplugin`](https://www.npmjs.com/package/@plumeria/unplugin) in Rollup.  
+The plugin compiles TypedCSS styles into the CSS asset Rollup produces.
+
+`npx @typedcss/init` detects Rollup and writes this setup for you; see [@typedcss/init](/docs/api/migrate/init). The rest of this page is the same setup by hand.
+
+## Installation
+```sh title="Terminal"
+pnpm i -D @typedcss/unplugin
+```
+
+## Usage
+```js title="rollup.config.js"
+import typedcss from '@typedcss/unplugin';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import replace from '@rollup/plugin-replace';
+import esbuild from 'rollup-plugin-esbuild';
+import postcss from 'rollup-plugin-postcss';
+
+export default {
+  input: 'src/index.tsx',
+  output: {
+    dir: 'dist',
+    format: 'esm',
+  },
+  plugins: [
+    typedcss.rollup(),
+    postcss({ extract: true }),
+    resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'] }),
+    commonjs(),
+    replace({
+      'process.env.NODE_ENV': JSON.stringify('development'),
+      preventAssignment: true,
+    }),
+    esbuild({
+      include: /\.[jt]sx?$/,
+      sourceMap: false,
+      minify: false,
+      target: 'es2022',
+      jsx: 'automatic',
+    }),
+  ],
+};
+```
+
+## typedcss.d.ts
+
+`@typedcss/css` ships no prop declaration of its own, so name the styling prop your project compiles with.
+
+For the default name (`sx`), reference the declaration that ships with the package, in `src/` when the project has one or at the application root otherwise:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+If you set a custom `styleProp` (such as `'classStyle'`), declare that name instead, and keep it the same as the one passed to the plugin; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+- [Shipping this as a package](/docs/creating-packages)
+- [Installation](/docs/installation)

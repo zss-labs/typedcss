@@ -1,0 +1,54 @@
+---
+title: 'esbuild'
+description: 'Add TypedCSS to an esbuild project, with one command or by hand.'
+---
+
+[`examples/example-esbuild`](https://github.com/zss-labs/plumeria/tree/main/examples/example-esbuild) shows how to use [`@typedcss/unplugin`](https://www.npmjs.com/package/@plumeria/unplugin) in esbuild.  
+The plugin compiles TypedCSS styles into the CSS asset esbuild produces.
+
+`npx @typedcss/init` detects esbuild and writes this setup for you; see [@typedcss/init](/docs/api/migrate/init). The rest of this page is the same setup by hand.
+
+## Installation
+```sh title="Terminal"
+pnpm i -D @typedcss/unplugin
+```
+
+## Usage
+```ts title="scripts/build.js"
+import esbuild from 'esbuild';
+import typedcss from '@typedcss/unplugin';
+
+esbuild
+  .build({
+    entryPoints: ['src/index.tsx'],
+    bundle: true,
+    outfile: 'dist/bundle.js',
+    plugins: [
+      typedcss.esbuild({
+        include: /\.[jt]sx?$/,
+      }),
+    ],
+    loader: {
+      '.tsx': 'tsx',
+      '.ts': 'ts',
+    },
+    format: 'esm',
+    minify: false,
+  })
+  .catch(() => process.exit(1));
+```
+
+## typedcss.d.ts
+
+`@typedcss/css` ships no prop declaration of its own, so name the styling prop your project compiles with.
+
+For the default name (`sx`), reference the declaration that ships with the package, in `src/` when the project has one or at the application root otherwise:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+If you set a custom `styleProp` (such as `'classStyle'`), declare that name instead, and keep it the same as the one passed to the plugin; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+- [Shipping this as a package](/docs/creating-packages)
+- [Installation](/docs/installation)

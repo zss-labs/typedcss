@@ -1,0 +1,84 @@
+---
+title: 'css.props / sx'
+description: 'Attach styles as a prop in JSX, or merge them into className and style anywhere else.'
+---
+
+Styles reach an element through the `sx` prop, or through `css.props()` where no prop is available.
+
+## sx
+
+```ts
+type Style = StyleList<StyleNamespace>;
+
+declare global {
+  namespace React {
+    interface HTMLAttributes<T> {
+      sx?: Style;
+    }
+    interface SVGAttributes<T> {
+      sx?: Style;
+    }
+  }
+}
+
+export type { Style };
+```
+
+`sx` is the prop that applies styles to a JSX element. The plugin rewrites it to a `css.props()` spread at build time.
+
+### Features
+
+- Accepts a single style, or an array of styles. Arrays can be nested.
+- Ignores `false`, `null`, and `undefined` wherever a style is accepted, which is what makes inline conditional branching work.
+- Within an array, a later style takes precedence over an earlier one.
+
+### Example
+
+```tsx
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  base: { color: 'red' },
+  active: { fontWeight: 'bold' },
+});
+
+function Component({ active }) {
+  return <div sx={[styles.base, active && styles.active]}>Hello</div>;
+}
+```
+
+**Compiled:**
+
+```tsx
+<div {...css.props(styles.base, active && styles.active)}>Hello</div>
+```
+
+## css.props()
+
+```ts
+export function props(...styles: Style[]): {
+  className?: string;
+  style?: Record<string, string | number>;
+};
+```
+
+`css.props()` merges styles on the element at runtime and returns `{ className, style }`, ready to spread. Use it where the `sx` prop is not available, for example on a component that only accepts `className` and `style`.
+
+A later argument takes precedence, property by property. A [function key](/docs/api/javascript/create#dynamic-values) is carried on `style`, so spread both.
+
+### Example
+
+```tsx
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  link: { color: 'gray' },
+  active: { color: 'teal' },
+});
+
+<Link href="/" {...css.props(styles.link, active && styles.active)} />
+```
+
+> **Merged at runtime**
+>
+> Unlike Plumeria's `css.use()`, which the compiler resolves at build time, `css.props()` decides the winning class when the element renders. A style can therefore be relayed through props, context or other packages before it is applied.

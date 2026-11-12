@@ -1,0 +1,60 @@
+---
+title: 'Next.js'
+description: 'Add TypedCSS to a Next.js project, with one command or by hand.'
+---
+
+[`examples/example-nextjs`](https://github.com/zss-labs/plumeria/tree/main/examples/example-nextjs) shows how to use [`@typedcss/next-plugin`](https://www.npmjs.com/package/@plumeria/next-plugin) in Next.js.  
+The plugin compiles TypedCSS styles into CSS, with HMR in development.
+
+`npx @typedcss/init` detects Next.js and writes this setup for you; see [@typedcss/init](/docs/api/migrate/init). The rest of this page is the same setup by hand.
+
+## Installation
+```sh title="Terminal"
+pnpm i -D @typedcss/next-plugin
+```
+
+## next.config.ts
+
+`withTypedCSS` works with both Turbopack and Webpack.
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+import { withTypedCSS } from "@typedcss/next-plugin";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default withTypedCSS(nextConfig);
+```
+
+`withTypedCSS` accepts a second argument for compiler options:
+
+```ts title="next.config.ts"
+export default withTypedCSS(nextConfig, {
+  include: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  exclude: ['**/node_modules/**', '**/.next/**'],
+  styleProp: 'classStyle',
+});
+```
+
+- `include` — Globs the stylesheet is compiled from. The default is every `js/jsx/ts/tsx` file.
+- `exclude` — Globs excluded from that compilation. The default is `node_modules`, `dist` and `.next`.
+- `styleProp` — The JSX prop that carries styles. The default is `'sx'`.
+
+These are the options a project usually sets. `withoutLogicalProperties` and `withoutPhysicalProperties` reject one spelling of a property that carries both names, so the pair cannot be written; see [@typedcss/next-plugin](/docs/api/plugins/next-plugin) for every option and its type.
+
+## typedcss.d.ts
+
+`@typedcss/css` ships no prop declaration of its own, so name the styling prop your project compiles with.
+
+For the default name (`sx`), reference the declaration that ships with the package, in `src/` when the project has one or at the application root otherwise:
+
+```ts title="typedcss.d.ts"
+/// <reference types="@typedcss/css/sx" />
+```
+
+If you set a custom `styleProp` (such as `'classStyle'`), declare that name instead, and keep it the same as the one in `next.config.ts`; see [Declaring the styling prop](/docs/api/types/Style#declaring-the-styling-prop).
+
+- [Shipping this as a package](/docs/creating-packages)
+- [Installation](/docs/installation)

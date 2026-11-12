@@ -1,0 +1,4 @@
+{
+  "defaultOpen": false,
+  "pages": ["bun", "esbuild", "farm", "next", "rollup", "rolldown", "rspack", "vite", "webpack", "frameworks"]
+}

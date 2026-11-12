@@ -1,0 +1,156 @@
+import {
+  createTheme as themeStyles,
+  getStyleRecords,
+  themeHashOf,
+} from './compiler';
+import { camelToKebabCase, genBase36Hash, transpile } from 'zss-engine';
+import { resolveClassStyle } from './class-style';
+
+type StyleRule = Record<string, unknown>;
+
+let element: HTMLStyleElement | undefined;
+let inserted = new Set<string>();
+let pending: Set<string> | undefined;
+// An imported package such as @typedcss/wind runs once, but its keyframes have to outlive each render.
+const keyframeSheets = new Set<string>();
+
+function styleElement(): HTMLStyleElement {
+  element ??= document.head.appendChild(document.createElement('style'));
+  return element;
+}
+
+export function beginStyles(): void {
+  pending = new Set();
+}
+
+export function commitStyles(): void {
+  if (!pending) return;
+  inserted = pending;
+  pending = undefined;
+  styleElement().textContent = [
+    ...new Set([...keyframeSheets, ...inserted]),
+  ].join('');
+}
+
+export function discardStyles(): void {
+  pending = undefined;
+}
+
+function insert(sheet: string): void {
+  const sheets = pending ?? inserted;
+  if (!sheet || sheets.has(sheet)) return;
+  sheets.add(sheet);
+  if (!pending) styleElement().textContent += sheet;
+}
+
+export function create<T extends Record<string, StyleRule>>(
+  rules: T,
+): Record<string, unknown> {
+  const result: Record<string, Record<string, string>> = {};
+
+  for (const [name, rule] of Object.entries(rules)) {
+    const entry: Record<string, string> = {};
+
+    for (const record of getStyleRecords(rule)) {
+      insert(record.sheet);
+      entry[record.key] = record.hash;
+    }
+
+    result[name] = entry;
+  }
+
+  return result;
+}
+
+export function use(...rules: unknown[]): string {
+  return resolveClassStyle(rules);
+}
+
+export function props(...rules: unknown[]): { className: string } {
+  return { className: resolveClassStyle(rules) };
+}
+
+export function keyframes(rule: StyleRule): string {
+  const hash = genBase36Hash(rule, 1, 8);
+  const { styleSheet } = transpile(
+    { [`@keyframes kf-${hash}`]: rule },
+    undefined,
+    '--global',
+  );
+  keyframeSheets.add(styleSheet);
+  insert(styleSheet);
+  return `kf-${hash}`;
+}
+
+export function createTheme(
+  themeSelector: string,
+  rule: Record<string, { default: string; theme: string }>,
+): Record<string, string> {
+  const hash = themeHashOf(themeSelector, rule);
+  const { styleSheet } = transpile(
+    themeStyles(themeSelector, rule, hash),
+    undefined,
+    '--global',
+  );
+  insert(styleSheet);
+
+  const variables: Record<string, string> = {};
+  for (const [key, value] of Object.entries(rule)) {
+    const atomicHash = genBase36Hash({ _theme: hash, [key]: value }, 1, 8);
+    variables[key] = `var(--${atomicHash}-${camelToKebabCase(key)})`;
+  }
+
+  return variables;
+}
+
+function markerVariable(id: string, pseudo: string): string {
+  const ident = (value: string) => value.replace(/[^A-Za-z0-9-]/g, '');
+  return `--${genBase36Hash({ [id]: pseudo }, 1, 8)}-${ident(id)}-${ident(pseudo.split('(')[0])}`;
+}
+
+export function marker(
+  id: string,
+  pseudo: string,
+): Record<string, Record<string, number>> {
+  return { [pseudo]: { [markerVariable(id, pseudo)]: 1 } };
+}
+
+export function extended(id: string, pseudo: string): string {
+  return `@container style(${markerVariable(id, pseudo)}: 1)`;
+}
+
+export function createStatic<T extends Record<string, unknown>>(rule: T): T {
+  return rule;
+}
+
+function unsupported(name: string): never {
+  throw new Error(`${name} is not available in the playground preview`);
+}
+
+const VIEW_TRANSITION_PSEUDOS = {
+  group: 'group',
+  imagePair: 'image-pair',
+  old: 'old',
+  new: 'new',
+} as const;
+
+export function viewTransitionClass(rule: StyleRule): string {
+  const hash = genBase36Hash(rule, 1, 8);
+  const styles: Record<string, unknown> = {};
+
+  for (const [key, pseudo] of Object.entries(VIEW_TRANSITION_PSEUDOS)) {
+    const style = rule[key];
+    if (style && typeof style === 'object') {
+      styles[`::view-transition-${pseudo}(*.vt-${hash})`] = style;
+    }
+  }
+
+  const { styleSheet } = transpile(
+    styles as Parameters<typeof transpile>[0],
+    undefined,
+    '--global',
+  );
+  insert(styleSheet);
+  return `vt-${hash}`;
+}
+export const global = () => unsupported('css.global');

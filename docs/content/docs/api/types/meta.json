@@ -1,0 +1,15 @@
+{
+  "defaultOpen": false,
+  "title": "Types",
+  "pages": [
+    "Style",
+    "StyleProps",
+    "StaticStyles",
+    "WithoutProperties",
+    "AtomicStyle",
+    "AtomicClassStyle",
+    "AtomicClassNameFor",
+    "AtomicClassStyleFor",
+    "CSSProperties"
+  ]
+}
