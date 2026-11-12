@@ -1,6 +1,6 @@
 {
   "name": "@typedcss/init",
-  "version": "22.0.8",
+  "version": "22.0.9",
   "description": "One command that sets up TypedCSS: detects the bundler, installs the packages, writes the configs",
   "author": "Refirst 11",
   "license": "MIT",
