@@ -21,7 +21,9 @@
     "**/.*/**",
     "**/*.js",
     "packages/oxide/binding.d.ts",
-    "packages/oxide/wasi-worker*.mjs"
+    "packages/oxide/wasi-worker*.mjs",
+    "docs/out/**",
+    "docs/public/playground/**"
   ],
   "rules": {
     "constructor-super": "error",
