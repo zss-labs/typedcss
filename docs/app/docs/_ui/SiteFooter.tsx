@@ -94,15 +94,15 @@ const groups: {
   {
     heading: 'Develop',
     links: [
-      { label: 'Installation', href: '/docs/installation' },
-      { label: 'ESLint', href: '/docs/api/plugins/eslint-plugin' },
+      { label: 'API', href: '/docs/api' },
+      { label: 'Testing', href: '/docs/testing' },
     ],
   },
   {
-    heading: 'Migrate',
+    heading: 'Explore',
     links: [
+      { label: 'Playground', href: '/docs/playground' },
       { label: 'Migrating', href: '/docs/migrating' },
-      { label: 'Codemod', href: '/docs/api/migrate/codemod' },
     ],
   },
   {
@@ -113,12 +113,19 @@ const groups: {
         href: 'https://github.com/zss-labs/typedcss',
         external: true,
       },
-      { label: 'Plumeria', href: 'https://plumeria.dev', external: true },
+      { label: 'Acknowledgements', href: '/docs/acknowledgements' },
     ],
   },
   {
     heading: 'AI',
-    links: [{ label: 'AI.md', href: '/docs/ai.md', external: true }],
+    links: [
+      { label: 'AI.md', href: '/docs/ai.md', external: true },
+      {
+        label: 'AI Agent Resources',
+        href: '/docs/ai-agent-resources',
+        external: true,
+      },
+    ],
   },
 ];
 
