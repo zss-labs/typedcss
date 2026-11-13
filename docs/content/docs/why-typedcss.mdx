@@ -1,0 +1,130 @@
+---
+title: 'Why TypedCSS'
+description: 'Every merge falls back to a map, so nothing stops and nothing guesses.'
+---
+
+Plumeria settles every merge at build time and stops the build when it cannot. TypedCSS settles what it can at build time and hands the rest to a map keyed by property. It never refuses a composition, and it never lets the cascade pick a winner.
+
+## A style is a value
+
+A style can go anywhere a value can: through a wrapper, out of context, or in from another package.
+
+```tsx title="Card.tsx"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  card: {
+    padding: 16,
+    color: 'gray',
+  },
+});
+
+export function Card({ sx }: { sx?: css.Style }) {
+  return <section sx={[styles.card, sx]} />;
+}
+```
+
+```tsx title="Panel.tsx"
+import * as css from '@typedcss/css';
+import { Card } from './Card';
+
+export function Panel({ sx }: { sx?: css.Style }) {
+  return <Card sx={sx} />;
+}
+```
+
+```tsx title="Sidebar.tsx"
+import * as css from '@typedcss/css';
+import { Panel } from './Panel';
+
+export function Sidebar({ sx }: { sx?: css.Style }) {
+  return <Panel sx={sx} />;
+}
+```
+
+Plumeria compiles `Panel` alone: one relay is a boundary the compiler can follow. `Sidebar` makes it a chain, and a chain is what Plumeria refuses. TypedCSS merges on the element, so the number of hops does not matter.
+
+## Strings are joined, maps are merged
+
+`cn` and `clsx` join class names into one string. Two classes for the same property both reach the element, and the stylesheet order decides which one wins:
+
+```tsx
+cn('p-4', 'p-2'); // "p-4 p-2"
+```
+
+TypedCSS merges by key, and every key is a property. A later style replaces the earlier class instead of sitting next to it:
+
+```tsx
+const styles = css.create({
+  a: { padding: 16, color: 'gray' },
+  b: { padding: 8 },
+});
+
+css.props(styles.a, styles.b);
+// padding: 8px, color: gray
+```
+
+Joining is the faster operation, and nothing beats it. But it answers a different question. A joined string lists classes; a merged map decides the winner. If you already accept `cn` running on every render, you already accept a runtime merge — TypedCSS is that merge with the conflict resolved.
+
+StyleX made the same choice: `stylex.props` merges objects keyed by property, and so does `css.props`.
+
+## Only the dynamic part runs
+
+A composition the compiler can see in the same file folds to a class string at build time, and `css.props` disappears from the output. What reaches the resolver is the part that really is dynamic: a style that arrives through a prop, from context, or from another package.
+
+That part is cheap. On Node 24, 500 calls × 30 rounds, median:
+
+| Call | StyleX 0.19 | TypedCSS |
+| :-- | --: | --: |
+| `props(base, isRed && red)` | 343 ns | 99 ns |
+| `props(container)` with `:last-child` and `@media` | 144 ns | 126 ns |
+
+Both received the same definitions and returned the same eight winning classes.
+
+## The same laws
+
+The same mechanism as Plumeria decides the winner, and the resolver keeps one class per property key. So every rule in [Specificity](/docs/specificity) and every law in [Composition laws](/docs/composition-laws) holds unchanged. A longhand still beats its shorthand in either order:
+
+```tsx
+const styles = css.create({
+  base: { padding: 20 },
+  top: { paddingTop: 4 },
+});
+
+css.props(styles.base, styles.top);
+css.props(styles.top, styles.base);
+// both: padding: 20px, padding-top: 4px
+```
+
+`padding` and `paddingTop` are different keys, so both classes stay, and the longhand is emitted at a higher specificity.
+
+## TypedCSS or StyleX
+
+StyleX is the closest relative, and the shared ground goes all the way to the call site. Both compile to atomic CSS, fold the compositions they can see at build time, merge the rest at runtime keyed by property, and accept an `sx` prop; in both the last style applied wins. The differences are in themes, the toolchain, what runs by default, and where a project can go next.
+
+|  | StyleX | TypedCSS |
+| :-- | :-- | :-- |
+| Themes | `defineVars` in a `.stylex.*` file, and a `createTheme` override applied to a subtree with `props()` | [`createTheme`](/docs/api/javascript/createTheme) takes the selector or query that switches the theme and declares default and themed values in one call, in any module |
+| Compiler | A Babel plugin, with wrappers for each bundler | A compiler written in Rust on the oxc parser, with no Babel step |
+| Checks | An ESLint plugin you set up and run | The bundler plugins run the TypedCSS rules during the build and stop it on an error or a warning |
+| When the build cannot settle a merge | The runtime merge covers it | The runtime merge covers it, and [Plumeria](https://plumeria.dev) is the same source with the build settling everything |
+
+**The runtime merge is faster.** A composition the compiler cannot fold is merged by `css.props` in roughly a third of the time `stylex.props` takes, as measured above.
+
+**Themes are a selector, not an application step.** `css.createTheme('.dark', { ... })` writes both values into the generated CSS, so components contain no theme branch and no element has to receive the theme.
+
+**The way out is the same source.** When every composition in a project becomes visible to the compiler, it can move to Plumeria with the codemod and ship no runtime at all. StyleX has no stricter mode to move to.
+
+When StyleX is the better choice: you already run it, or your codebase depends on its recipes and theming patterns. From StyleX, the APIs keep their names and shapes, so most files change only at the import.
+
+## TypedCSS or Plumeria
+
+| Your situation | Choose |
+| :-- | :-- |
+| A new project, or components that apply the styles they receive | **Plumeria** |
+| Styles relayed through more than one wrapper | **TypedCSS** |
+| Styles from context, a store, or another package | **TypedCSS** |
+| A migration where you cannot yet say where every style ends up | **TypedCSS**, then Plumeria with the codemod |
+| No runtime and no class map in the bundle | **Plumeria** |
+
+The source is the same, so the choice can change later.
