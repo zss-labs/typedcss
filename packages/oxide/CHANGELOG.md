@@ -1,5 +1,11 @@
 # @typedcss/oxide
 
+## 22.0.11
+
+### Patch Changes
+
+- 3b898a6: Bump version to 22.0.11
+
 ## 22.0.10
 
 ### Patch Changes
