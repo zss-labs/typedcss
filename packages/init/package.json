@@ -4,7 +4,7 @@
   "description": "One command that sets up TypedCSS: detects the bundler, installs the packages, writes the configs",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
+  "homepage": "https://typedcss.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zss-labs/typedcss.git",
