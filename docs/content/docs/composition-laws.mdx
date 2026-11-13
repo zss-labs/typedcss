@@ -1,0 +1,102 @@
+---
+title: 'Composition laws'
+description: 'The four laws a style array obeys, and how two of them make the merge a monoid, a category with one object.'
+---
+
+This page matches [its Plumeria counterpart](https://plumeria.dev/docs/composition-laws), and the same mechanism applies.
+
+![Regrouping keeps the result, false drops out, a repeated style counts once, and swapping two styles changes which one wins](/composition-laws.svg)
+
+An `sx` array merges its styles property by property. Written as an
+operation, where `⊕` merges the style on its right into the one on its left,
+that merge obeys four laws. Each one is something you can rely on when you
+restructure styles.
+
+## Associativity
+
+```text
+(A ⊕ B) ⊕ C = A ⊕ (B ⊕ C)
+```
+
+Grouping does not change the result. Arrays can be nested, so these are the
+same:
+
+```tsx
+<div sx={[[styles.a, styles.b], styles.c]} />
+<div sx={[styles.a, [styles.b, styles.c]]} />
+```
+
+That is what lets you pull part of an array into a variable, or a prop, and put
+it back anywhere in the same position.
+
+## Identity
+
+```text
+A ⊕ I = I ⊕ A = A
+```
+
+`false`, `null` and `undefined` merge into nothing, so each of them is the
+identity `I`. That is why a condition can sit in the array:
+
+```tsx
+<div sx={[styles.base, isActive && styles.active]} />
+```
+
+When `isActive` is false, the array is `styles.base` alone.
+
+## Idempotency
+
+```text
+A ⊕ A = A
+```
+
+Merging a style with itself changes nothing, so a style that reaches an element
+twice, through a shared base and a prop, say, does no harm.
+
+## No commutativity
+
+```text
+A ⊕ B ≠ B ⊕ A
+```
+
+Order is the one thing that does matter. When two styles set the same property,
+the one on the right wins, so swapping them swaps the winner. Styles that set
+different properties never compete, and their order makes no difference.
+
+A shorthand against its longhand is the exception: the longhand wins in either
+order. See [Specificity](/docs/specificity).
+
+## The merge is a monoid
+
+A monoid is a category with one object. Every style is an arrow from that object
+back to itself, an array composes its arrows into one, and `false` is the
+identity arrow:
+
+![Styles a and b drawn as loops on one object, [a, b] as their composite loop, false as the identity loop, and the composite reduced to one class list](/one-object-category.svg)
+
+Together, associativity and identity make the merge a **monoid**: any array,
+however it is nested or wherever its conditions fall, reduces to one style. The
+compiler does that reduction at build time when it can see the whole array, and
+the resolver does it when the element renders otherwise. Either way the element
+receives a single class list:
+
+```text
+parse(A ⊕ B ⊕ C) → "classA classB classC"
+```
+
+Here `classA` and the rest are not each style's classes laid side by side. The
+reduction is a merge, so a property overridden from the right leaves no class
+behind:
+
+```tsx
+const styles = css.create({
+  a: { color: 'red', padding: 4 },
+  b: { color: 'blue' },
+});
+
+<div sx={[styles.a, styles.b]} />
+```
+
+The element receives two classes, `padding: 4px` and `color: blue`; the class
+for `color: red` is not among them. Two classes for the same property never
+reach one element, so the cascade is never left to pick the winner.
