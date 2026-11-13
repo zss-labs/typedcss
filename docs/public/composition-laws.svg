@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+  <style>
+    :root { --paper: #fdfcf8; --ink: #222; --soft: #8a8a8a; --accent: #0d9488; --error: #d9480f; }
+    @media (prefers-color-scheme: dark) {
+      :root { --paper: #0b0b0b; --ink: #e6e6e6; --soft: #777; --accent: #2dd4bf; --error: #fb923c; }
+    }
+    .bg { fill: var(--paper); }
+    .line { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .ghost { fill: none; stroke: var(--ink); stroke-width: 0.9; opacity: 0.45; stroke-linecap: round; stroke-linejoin: round; }
+    .accent { stroke: var(--accent); }
+    .soft { stroke: var(--soft); }
+    .dash { stroke-dasharray: 5 6; }
+    .chip { fill: var(--ink); font-size: 17px; text-anchor: middle; }
+    .op { fill: var(--ink); font-size: 24px; text-anchor: middle; }
+    .hl { fill: var(--accent); }
+    .dim { fill: var(--soft); }
+    .swatch-ink { fill: var(--ink); }
+    .swatch-accent { fill: var(--accent); }
+  </style>
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="11" />
+      <feDisplacementMap in="SourceGraphic" scale="3.2" />
+    </filter>
+    <filter id="ink" x="-2%" y="-10%" width="104%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="3" result="grain" />
+      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.55" result="mask" />
+      <feComposite in="SourceGraphic" in2="mask" operator="in" result="inked" />
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="8" result="edge" />
+      <feDisplacementMap in="inked" in2="edge" scale="0.9" />
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1000" height="420" />
+
+  <g filter="url(#rough)">
+    <path class="ghost" d="M500 24 L502 396" />
+    <path class="ghost" d="M24 210 L976 208" />
+
+    <circle class="line" cx="87" cy="106" r="22" />
+    <circle class="line accent" cx="143" cy="106" r="22" />
+    <circle class="line soft" cx="209" cy="106" r="22" />
+    <path class="line" d="M54 76 C50 100 52 120 56 136 M174 76 C178 100 177 120 172 136" />
+    <circle class="line" cx="299" cy="106" r="22" />
+    <circle class="line accent" cx="365" cy="106" r="22" />
+    <circle class="line soft" cx="421" cy="106" r="22" />
+    <path class="line" d="M334 76 C330 100 332 120 336 136 M454 76 C458 100 457 120 452 136" />
+
+    <circle class="line" cx="613" cy="106" r="22" />
+    <ellipse class="line soft dash" cx="691" cy="106" rx="38" ry="22" />
+    <circle class="line" cx="853" cy="106" r="22" />
+
+    <circle class="line" cx="123" cy="312" r="22" />
+    <circle class="line" cx="179" cy="312" r="22" />
+    <circle class="line" cx="343" cy="312" r="22" />
+
+    <circle class="line" cx="597" cy="312" r="22" />
+    <circle class="line accent" cx="653" cy="312" r="22" />
+    <circle class="line accent" cx="823" cy="312" r="22" />
+    <circle class="line" cx="879" cy="312" r="22" />
+  </g>
+
+  <circle class="swatch-accent" cx="625" cy="368" r="9" filter="url(#rough)" />
+  <circle class="swatch-ink" cx="851" cy="368" r="9" filter="url(#rough)" />
+
+  <g filter="url(#ink)">
+    <text class="chip" x="87" y="112">a</text>
+    <text class="chip hl" x="143" y="112">b</text>
+    <text class="chip dim" x="209" y="112">c</text>
+    <text class="op" x="254" y="114">=</text>
+    <text class="chip" x="299" y="112">a</text>
+    <text class="chip hl" x="365" y="112">b</text>
+    <text class="chip dim" x="421" y="112">c</text>
+
+    <text class="chip" x="613" y="112">a</text>
+    <text class="chip dim" x="691" y="112">false</text>
+    <text class="op" x="778" y="114">=</text>
+    <text class="chip" x="853" y="112">a</text>
+
+    <text class="chip" x="123" y="318">a</text>
+    <text class="chip" x="179" y="318">a</text>
+    <text class="op" x="262" y="320">=</text>
+    <text class="chip" x="343" y="318">a</text>
+
+    <text class="chip" x="597" y="318">a</text>
+    <text class="chip hl" x="653" y="318">b</text>
+    <text class="op" x="738" y="320">≠</text>
+    <text class="chip hl" x="823" y="318">b</text>
+    <text class="chip" x="879" y="318">a</text>
+  </g>
+</svg>
