@@ -77,6 +77,12 @@ const styles = css.create({
     borderLeftStyle: 'solid',
     borderLeftWidth: 2,
   },
+  img: {
+    display: 'block',
+    maxWidth: '100%',
+    height: 'auto',
+    margin: '24px 0',
+  },
   hr: {
     margin: '42px 0',
     borderColor: docs.docBorder,
@@ -280,6 +286,21 @@ export const mdxComponents: MDXComponents = {
   blockquote: ({ children }) => (
     <blockquote sx={styles.blockquote}>{children}</blockquote>
   ),
+  img: ({ src, alt, width, height }) => {
+    const image =
+      typeof src === 'object'
+        ? (src as { src: string; width: number; height: number })
+        : null;
+    return (
+      <img
+        src={image ? image.src : src}
+        alt={alt}
+        width={image ? image.width : width}
+        height={image ? image.height : height}
+        sx={styles.img}
+      />
+    );
+  },
   hr: () => <hr sx={styles.hr} />,
   table: ({ children }) => (
     <div sx={styles.tableWrap}>
