@@ -1,5 +1,11 @@
 # @typedcss/oxide
 
+## 22.0.12
+
+### Patch Changes
+
+- dc1d2c7: - Feat: Fold local conditions in sx and css.props into Plumeria's conflict lookup tables instead of the runtime merge.
+
 ## 22.0.11
 
 ### Patch Changes

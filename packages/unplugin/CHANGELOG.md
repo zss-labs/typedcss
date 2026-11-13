@@ -1,5 +1,15 @@
 # @typedcss/unplugin
 
+## 22.0.12
+
+### Patch Changes
+
+- dc1d2c7: Bump version to 22.0.12
+- Updated dependencies [dc1d2c7]
+- Updated dependencies [dc1d2c7]
+  - @typedcss/eslint-plugin@22.0.12
+  - @typedcss/oxide@22.0.12
+
 ## 22.0.11
 
 ### Patch Changes
