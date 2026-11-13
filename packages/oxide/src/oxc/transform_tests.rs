@@ -215,8 +215,23 @@ fn empty_static_styles_do_not_override_an_earlier_spread() {
 }
 
 #[test]
+fn local_conditions_fold_like_plumeria() {
+    let head = "import * as css from '@typedcss/css'; const s = css.create({ a: { color: 'red', padding: 4 }, b: { color: 'blue' }, c: { margin: 1 } });";
+    // Keys only one source sets stay a plain ternary.
+    let out = transform(&format!("{head} const A = ({{ x }}) => <div sx={{[s.a, x && s.c]}} />;"));
+    assert!(!out.contains(PROPS_LOCAL), "{out}");
+    assert!(out.contains("(x ? \"xjo3phh9\" : \"\")"), "{out}");
+    // Conflicting conditions share one table keyed by "x__y"; the independent one adds a ternary.
+    let out = transform(&format!("{head} const A = ({{ x, y, z }}) => <div sx={{[s.a, x && s.b, y && s.b, z ? s.c : null]}} />;"));
+    assert!(!out.contains(PROPS_LOCAL), "{out}");
+    assert!(out.contains("[(x ? \"1\" : \"0\") + \"__\" + (y ? \"1\" : \"0\")]"), "{out}");
+    assert!(out.contains("\"1__1\""), "{out}");
+    assert!(out.contains("(z ? \"xjo3phh9\" : \"\")"), "{out}");
+}
+
+#[test]
 fn unsupported_compositions_keep_the_entire_runtime_merge() {
-    for expression in ["[s.a, extra]", "[s.a, on && s.a]", "s[key]", "alias", "[s.a, ...items]", "s.dynamic(2)", "imported.a"] {
+    for expression in ["[s.a, extra]", "[s.a, on && extra]", "s[key]", "alias", "[s.a, ...items]", "s.dynamic(2)", "imported.a"] {
         let source = format!("import * as css from '@typedcss/css'; import {{ imported }} from './other'; const s = css.create({{ a: {{ color: 'red' }}, dynamic: (n) => ({{ padding: n }}) }}); const alias = s.a; const A = ({{ extra, on, key, items }}) => <div sx={{{expression}}} />;");
         let out = transform(&source);
         assert!(out.contains("{...__typedcss_props("), "{expression}: {out}");
