@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './global.css';
 import * as css from '@typedcss/css';
 import { theme } from './theme';
@@ -36,7 +37,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: initTheme }} />
       </head>
-      <body sx={styles.body}>{children}</body>
+      <body sx={styles.body}>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
