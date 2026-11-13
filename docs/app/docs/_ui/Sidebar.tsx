@@ -76,6 +76,11 @@ const styles = css.create({
   nested: {
     paddingLeft: 20,
   },
+  label: {
+    flex: 1,
+    color: 'inherit',
+    textDecoration: 'none',
+  },
   folder: {
     justifyContent: 'space-between',
     cursor: 'pointer',
@@ -206,9 +211,20 @@ function Items({
           }
         >
           <summary
-            sx={[styles.link, styles.folder, depth > 0 && styles.nested]}
+            sx={[
+              styles.link,
+              styles.folder,
+              depth > 0 && styles.nested,
+              node.index?.url === path && styles.active,
+            ]}
           >
-            {node.name}
+            {node.index ? (
+              <Link href={node.index.url} sx={styles.label}>
+                {node.name}
+              </Link>
+            ) : (
+              node.name
+            )}
             <svg
               width="12"
               height="12"
@@ -224,18 +240,6 @@ function Items({
               <path d="m9 18 6-6-6-6" />
             </svg>
           </summary>
-          {node.index && (
-            <Link
-              href={node.index.url}
-              {...css.props(
-                styles.link,
-                styles.nested,
-                path === node.index.url && styles.active,
-              )}
-            >
-              Overview
-            </Link>
-          )}
           <Items nodes={node.children} path={path} depth={depth + 1} />
         </details>
       );
