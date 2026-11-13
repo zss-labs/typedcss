@@ -9,7 +9,7 @@ use crate::oxc::syntax::module::{CORE, SpecKind, import_specs};
 use crate::style::escalation::{StateAtom, state_atoms};
 use crate::style::records::{StyleRecord, atom_map_of};
 
-struct StaticStyle {
+pub(super) struct StaticStyle {
     map: Object,
     states: Vec<StateAtom>,
 }
@@ -180,13 +180,53 @@ impl StaticStyles {
         }
     }
 
-    pub fn class_name(&self, value: &JSXAttributeValue, deferred: bool) -> Option<String> {
+    fn resolve_slots<'s, 'e, 'a>(
+        &'s self,
+        expression: &'e Expression<'a>,
+        deferred: bool,
+        slots: &mut Vec<Slot<'s, 'e, 'a>>,
+    ) -> Option<()> {
+        match expression {
+            Expression::ParenthesizedExpression(paren) => self.resolve_slots(&paren.expression, deferred, slots),
+            Expression::ArrayExpression(array) => {
+                for element in &array.elements {
+                    match element {
+                        ArrayExpressionElement::Elision(_) => {}
+                        ArrayExpressionElement::SpreadElement(_) => return None,
+                        expression => self.resolve_slots(expression.as_expression()?, deferred, slots)?,
+                    }
+                }
+                Some(())
+            }
+            Expression::LogicalExpression(logical) if logical.operator == LogicalOperator::And => {
+                let mut on = Vec::new();
+                self.resolve(&logical.right, deferred, &mut on)?;
+                slots.push(Slot::Choice { test: &logical.left, on, off: Vec::new() });
+                Some(())
+            }
+            Expression::ConditionalExpression(cond) => {
+                let (mut on, mut off) = (Vec::new(), Vec::new());
+                self.resolve(&cond.consequent, deferred, &mut on)?;
+                self.resolve(&cond.alternate, deferred, &mut off)?;
+                slots.push(Slot::Choice { test: &cond.test, on, off });
+                Some(())
+            }
+            expression => {
+                let mut styles = Vec::new();
+                self.resolve(expression, deferred, &mut styles)?;
+                slots.extend(styles.into_iter().map(Slot::Fixed));
+                Some(())
+            }
+        }
+    }
+
+    pub fn class_name<'e, 'a>(&self, value: &'e JSXAttributeValue<'a>, deferred: bool) -> Option<Folded<'e, 'a>> {
         let JSXAttributeValue::ExpressionContainer(container) = value else {
             return None;
         };
-        let mut styles = Vec::new();
-        self.resolve(container.expression.as_expression()?, deferred, &mut styles)?;
-        Some(merge(&styles))
+        let mut slots = Vec::new();
+        self.resolve_slots(container.expression.as_expression()?, deferred, &mut slots)?;
+        fold(&slots)
     }
 
     pub fn props_callee(&self, callee: &Expression) -> Option<&'static str> {
@@ -205,7 +245,11 @@ impl StaticStyles {
         }
     }
 
-    pub fn spread_class_name(&self, argument: &Expression, deferred: bool) -> Option<(String, &'static str)> {
+    pub fn spread_class_name<'e, 'a>(
+        &self,
+        argument: &'e Expression<'a>,
+        deferred: bool,
+    ) -> Option<(Folded<'e, 'a>, &'static str)> {
         let Expression::CallExpression(call) = argument else {
             return None;
         };
@@ -213,12 +257,254 @@ impl StaticStyles {
             return None;
         }
         let class_prop = self.props_callee(&call.callee)?;
-        let mut styles = Vec::new();
+        let mut slots = Vec::new();
         for argument in &call.arguments {
-            self.resolve(argument.as_expression()?, deferred, &mut styles)?;
+            self.resolve_slots(argument.as_expression()?, deferred, &mut slots)?;
         }
-        Some((merge(&styles), class_prop))
+        Some((fold(&slots)?, class_prop))
     }
+}
+
+pub(super) enum Slot<'s, 'e, 'a> {
+    Fixed(&'s StaticStyle),
+    Choice {
+        test: &'e Expression<'a>,
+        on: Vec<&'s StaticStyle>,
+        off: Vec<&'s StaticStyle>,
+    },
+}
+
+impl<'s> Slot<'s, '_, '_> {
+    fn styles(&self) -> impl Iterator<Item = &'s StaticStyle> + '_ {
+        let (first, second): (&[&'s StaticStyle], &[&'s StaticStyle]) = match self {
+            Slot::Fixed(style) => (std::slice::from_ref(style), &[]),
+            Slot::Choice { on, off, .. } => (on, off),
+        };
+        first.iter().chain(second).copied()
+    }
+}
+
+/// One operand of the className concatenation, joined with `+ " " +`.
+pub(super) enum Part<'e, 'a> {
+    Text(String),
+    /// `(test ? truthy : falsy)`
+    Ternary {
+        test: &'e Expression<'a>,
+        truthy: String,
+        falsy: String,
+    },
+    /// `({ "0__1": "..." }[(a ? "1" : "0") + "__" + (b ? "1" : "0")] || fallback)`
+    Lookup {
+        tests: Vec<&'e Expression<'a>>,
+        entries: Vec<(String, String)>,
+        fallback: String,
+    },
+}
+
+pub(super) enum Folded<'e, 'a> {
+    Static(String),
+    Dynamic(Vec<Part<'e, 'a>>),
+}
+
+/// A style cut down to the keys `keep` accepts.
+fn restrict(style: &StaticStyle, keep: impl Fn(&str) -> bool) -> StaticStyle {
+    let mut map = Object::new();
+    for (key, value) in style.map.iter() {
+        if keep(key) {
+            map.insert(key, value.clone());
+        }
+    }
+    let states = style.states.iter().filter(|state| keep(&state.key)).cloned().collect();
+    StaticStyle { map, states }
+}
+
+fn merge_owned(styles: &[StaticStyle]) -> String {
+    merge(&styles.iter().collect::<Vec<_>>())
+}
+
+struct Dimension<'e, 'a> {
+    test: Option<&'e Expression<'a>>,
+    options: Vec<(&'static str, Vec<StaticStyle>)>,
+}
+
+fn find(parent: &mut [usize], index: usize) -> usize {
+    if parent[index] != index {
+        parent[index] = find(parent, parent[index]);
+    }
+    parent[index]
+}
+
+fn recurse(dims: &[&Dimension], current: Vec<&StaticStyle>, keys: Vec<&str>, results: &mut Vec<(String, String)>) {
+    let Some((dimension, rest)) = dims.split_first() else {
+        let class_name = merge(&current);
+        if !class_name.is_empty() {
+            results.push((keys.join("__"), class_name));
+        }
+        return;
+    };
+    for (value, styles) in &dimension.options {
+        let mut merged = current.clone();
+        merged.extend(styles);
+        let mut parts = keys.clone();
+        if dimension.test.is_some() {
+            parts.push(value);
+        }
+        recurse(rest, merged, parts, results);
+    }
+}
+
+/// Plumeria's conditional folding: keys only one source sets stay independent
+/// (`base` and `(test ? a : b)`), and the remaining keys form dimensions that
+/// union-find joins when they share a key. Each joined component expands its
+/// combinations into one lookup table, so the table sizes add up across
+/// components and multiply only inside one.
+fn fold<'e, 'a>(slots: &[Slot<'_, 'e, 'a>]) -> Option<Folded<'e, 'a>> {
+    if slots.iter().all(|slot| matches!(slot, Slot::Fixed(_))) {
+        let styles: Vec<_> = slots.iter().flat_map(Slot::styles).collect();
+        return Some(Folded::Static(merge(&styles)));
+    }
+    // State weights depend on the whole set of styles the runtime merge sees.
+    if slots.iter().flat_map(Slot::styles).any(|style| !style.states.is_empty()) {
+        return None;
+    }
+    let mut participation: FxHashMap<&str, FxHashSet<usize>> = FxHashMap::default();
+    for (index, slot) in slots.iter().enumerate() {
+        let source = match slot {
+            Slot::Fixed(_) => 0,
+            Slot::Choice { .. } => index + 1,
+        };
+        for style in slot.styles() {
+            for key in style.map.keys() {
+                participation.entry(key).or_default().insert(source);
+            }
+        }
+    }
+    let conflicting: FxHashSet<&str> = participation
+        .into_iter()
+        .filter(|(_, sources)| sources.len() > 1)
+        .map(|(key, _)| key)
+        .collect();
+    let cut = |styles: &[&StaticStyle], conflict: bool| -> Vec<StaticStyle> {
+        styles
+            .iter()
+            .map(|style| restrict(style, |key| conflicting.contains(key) == conflict))
+            .filter(|style| !style.map.keys().is_empty())
+            .collect()
+    };
+
+    let mut parts = Vec::new();
+    let base: Vec<&StaticStyle> = slots
+        .iter()
+        .filter_map(|slot| match slot {
+            Slot::Fixed(style) => Some(*style),
+            Slot::Choice { .. } => None,
+        })
+        .collect();
+    let base_independent = merge_owned(&cut(&base, false));
+    if !base_independent.is_empty() {
+        parts.push(Part::Text(base_independent));
+    }
+    for slot in slots {
+        let Slot::Choice { test, on, off } = slot else { continue };
+        let (truthy, falsy) = (cut(on, false), cut(off, false));
+        if truthy.is_empty() && falsy.is_empty() {
+            continue;
+        }
+        parts.push(Part::Ternary {
+            test,
+            truthy: merge_owned(&truthy),
+            falsy: merge_owned(&falsy),
+        });
+    }
+
+    let mut dimensions: Vec<Dimension<'e, 'a>> = Vec::new();
+    for slot in slots {
+        match slot {
+            Slot::Fixed(style) => {
+                let styles = cut(&[*style], true);
+                if !styles.is_empty() {
+                    dimensions.push(Dimension { test: None, options: vec![("", styles)] });
+                }
+            }
+            Slot::Choice { test, on, off } => {
+                let (truthy, falsy) = (cut(on, true), cut(off, true));
+                if !truthy.is_empty() || !falsy.is_empty() {
+                    dimensions.push(Dimension {
+                        test: Some(test),
+                        options: vec![("0", falsy), ("1", truthy)],
+                    });
+                }
+            }
+        }
+    }
+    let dimension_keys: Vec<Vec<&str>> = dimensions
+        .iter()
+        .map(|dimension| {
+            let mut keys: Vec<&str> = dimension
+                .options
+                .iter()
+                .flat_map(|(_, styles)| styles.iter().flat_map(|style| style.map.keys()))
+                .collect();
+            keys.sort_unstable();
+            keys.dedup();
+            keys
+        })
+        .collect();
+    let mut parent: Vec<usize> = (0..dimensions.len()).collect();
+    let mut owner_by_key: FxHashMap<&str, usize> = FxHashMap::default();
+    for (index, keys) in dimension_keys.iter().enumerate() {
+        for key in keys {
+            match owner_by_key.get(key) {
+                None => {
+                    owner_by_key.insert(key, index);
+                }
+                Some(&owner) => {
+                    let (a, b) = (find(&mut parent, owner), find(&mut parent, index));
+                    if a != b {
+                        parent[b] = a;
+                    }
+                }
+            }
+        }
+    }
+    let mut components: IndexMap<usize, Vec<usize>, FxBuildHasher> = IndexMap::default();
+    for index in 0..dimensions.len() {
+        let root = find(&mut parent, index);
+        components.entry(root).or_default().push(index);
+    }
+    for indexes in components.values() {
+        let dims: Vec<&Dimension> = indexes.iter().map(|&index| &dimensions[index]).collect();
+        let mut results = Vec::new();
+        recurse(&dims, Vec::new(), Vec::new(), &mut results);
+        let tests: Vec<&'e Expression<'a>> = dims.iter().filter_map(|dimension| dimension.test).collect();
+        if tests.is_empty() {
+            if let Some((_, only)) = results.into_iter().next() {
+                parts.push(Part::Text(only));
+            }
+            continue;
+        }
+        let component_keys: FxHashSet<&str> = indexes.iter().flat_map(|&index| dimension_keys[index].iter().copied()).collect();
+        let fallback = merge_owned(
+            &cut(&base, true)
+                .iter()
+                .map(|style| restrict(style, |key| component_keys.contains(key)))
+                .collect::<Vec<_>>(),
+        );
+        parts.push(Part::Lookup { tests, entries: results, fallback });
+    }
+
+    if parts.iter().all(|part| matches!(part, Part::Text(_))) {
+        let text = parts
+            .iter()
+            .filter_map(|part| match part {
+                Part::Text(text) => Some(text.as_str()),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+        return Some(Folded::Static(text));
+    }
+    Some(Folded::Dynamic(parts))
 }
 
 struct Winner<'a> {
