@@ -1,5 +1,9 @@
 # Release Notes
 
+## 22.0.12 (Nov 13, 2026)
+
+- Feat: Fold local conditions in sx and css.props into Plumeria's conflict lookup tables instead of the runtime merge.
+
 ## 22.0.11 (Nov 13, 2026)
 
 - Update: Regenerate the CSS types and property list from mdn-data, adding fitTolerance, hyphenateLimitLines, whiteSpaceTrim and wrapInside and removing flowTolerance.

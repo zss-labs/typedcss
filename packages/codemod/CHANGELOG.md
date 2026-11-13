@@ -1,5 +1,11 @@
 # @typedcss/codemod
 
+## 22.0.12
+
+### Patch Changes
+
+- dc1d2c7: Bump version to 22.0.12
+
 ## 22.0.11
 
 ### Patch Changes
