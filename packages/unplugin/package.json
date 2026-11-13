@@ -1,6 +1,6 @@
 {
   "name": "@typedcss/unplugin",
-  "version": "22.0.10",
+  "version": "22.0.11",
   "description": "Universal TypedCSS plugin for various build tools",
   "author": "Refirst 11",
   "license": "MIT",
