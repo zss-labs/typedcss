@@ -4,7 +4,7 @@
   "description": "TypedCSS Next.js plugin",
   "author": "Refirst 11",
   "license": "MIT",
-  "homepage": "https://github.com/zss-labs/typedcss/tree/main/packages/css",
+  "homepage": "https://typedcss.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zss-labs/typedcss.git",
