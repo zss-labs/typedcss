@@ -1,0 +1,5 @@
+{
+  "title": "@typedcss/eslint-plugin",
+  "defaultOpen": false,
+  "pages": ["index", "optional-rules"]
+}
