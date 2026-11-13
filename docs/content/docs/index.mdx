@@ -48,4 +48,12 @@ TypedCSS and Plumeria share every version number, and each package takes the sam
 | `@typedcss/unplugin`      | `@plumeria/unplugin`      |
 | `@typedcss/wind`          | `@plumeria/wind`          |
 
-Read [plumeria.dev/docs/typedcss](https://plumeria.dev/docs/typedcss) for what differs, and the Plumeria documentation for everything else.
+Read [Why TypedCSS](/docs/why-typedcss) for when to choose it over Plumeria or StyleX.
+
+## Ask an agent to write TypedCSS
+
+Copy this prompt into your coding agent:
+
+```text
+Build this with TypedCSS for all styling. First read https://typedcss.dev/docs/installation and https://typedcss.dev/docs/ai.md in full, and follow every rule in the ai doc exactly — including the property order and the border shorthand expansion. If the project is not set up yet, set it up the way the installation doc describes. Task: <describe what to build>. Build with `npm run build` and lint with `npm run lint`; both must pass.
+```
