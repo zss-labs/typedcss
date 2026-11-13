@@ -265,5 +265,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${page.data.title} | TypedCSS`,
     description: page.data.description,
     alternates: { canonical: page.url },
+    openGraph: {
+      images: `/api/ogp/${[...page.slugs, 'og.png'].join('/')}`,
+    },
   };
 }
