@@ -78,6 +78,9 @@ const styles = css.create({
   },
   label: {
     flex: 1,
+    alignSelf: 'stretch',
+    padding: '6px 8px',
+    margin: '-6px -8px',
     color: 'inherit',
     textDecoration: 'none',
   },
@@ -219,7 +222,7 @@ function Items({
             ]}
           >
             {node.index ? (
-              <Link href={node.index.url} sx={styles.label}>
+              <Link href={node.index.url} {...css.props(styles.label)}>
                 {node.name}
               </Link>
             ) : (
