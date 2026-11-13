@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+  <style>
+    :root { --paper: #fdfcf8; --ink: #222; --soft: #8a8a8a; --accent: #0d9488; }
+    @media (prefers-color-scheme: dark) {
+      :root { --paper: #0b0b0b; --ink: #e6e6e6; --soft: #777; --accent: #2dd4bf; }
+    }
+    .bg { fill: var(--paper); }
+    .line { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .ghost { fill: none; stroke: var(--ink); stroke-width: 0.9; opacity: 0.45; stroke-linecap: round; }
+    .accent { stroke: var(--accent); }
+    .dash { stroke-dasharray: 6 7; }
+    .code { fill: var(--ink); font-size: 13px; }
+    .hl { fill: var(--accent); }
+    .title { fill: var(--ink); font-size: 15px; font-weight: 600; font-family: "Inter", system-ui, sans-serif; }
+  </style>
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="11" />
+      <feDisplacementMap in="SourceGraphic" scale="3.2" />
+    </filter>
+    <filter id="ink" x="-2%" y="-10%" width="104%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="3" result="grain" />
+      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.55" result="mask" />
+      <feComposite in="SourceGraphic" in2="mask" operator="in" result="inked" />
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="8" result="edge" />
+      <feDisplacementMap in="inked" in2="edge" scale="0.9" />
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1000" height="360" />
+
+  <g filter="url(#rough)">
+    <path class="line" d="M30 46 L500 43 L502 326 L28 329 Z" />
+    <path class="ghost" d="M33 49 L497 47 L498 322 L32 325 Z" />
+
+    <path class="line accent" d="M590 46 L972 44 L974 112 L592 114 Z" />
+    <path class="ghost accent" d="M594 50 L969 48 L970 108 L595 110 Z" />
+
+    <path class="line accent" d="M590 148 L972 146 L974 244 L592 246 Z" />
+    <path class="ghost accent" d="M594 152 L969 150 L970 240 L595 242 Z" />
+
+    <path class="line dash" d="M590 268 L972 266 L974 330 L592 332 Z" />
+
+    <path class="line accent" d="M276 206 C400 200 470 84 578 80" />
+    <path class="line accent" d="M564 73 L579 80 L565 88" />
+    <path class="line accent" d="M512 246 C540 246 550 198 578 196" />
+    <path class="line accent" d="M564 189 L579 196 L565 204" />
+    <path class="line dash" d="M314 286 C420 292 500 300 578 300" />
+    <path class="line" d="M564 292 L579 300 L564 308" />
+  </g>
+
+  <g filter="url(#ink)">
+    <text class="title" x="36" y="32">Card.tsx</text>
+    <text class="code" x="52" y="82">const styles = css.create({</text>
+    <text class="code" x="68" y="106">card: { padding: 16, color: 'gray' },</text>
+    <text class="code" x="68" y="130">pinned: { position: 'sticky', top: 0 },</text>
+    <text class="code" x="52" y="154">});</text>
+
+    <text class="title" x="40" y="210">A</text>
+    <text class="code" x="62" y="210">&lt;div sx={<tspan class="hl">styles.card</tspan>} /&gt;</text>
+    <text class="title" x="40" y="250">B</text>
+    <text class="code" x="62" y="250">&lt;div sx={[<tspan class="hl">styles.card</tspan>, pinned &amp;&amp; <tspan class="hl">styles.pinned</tspan>]} /&gt;</text>
+    <text class="title" x="40" y="290">C</text>
+    <text class="code" x="62" y="290">&lt;div sx={[<tspan class="hl">styles.card</tspan>, sx]} /&gt;</text>
+
+    <text class="code" x="608" y="84">className="xqqbxt1d xuifcaas"</text>
+
+    <text class="code" x="608" y="176">className={</text>
+    <text class="code" x="624" y="200">"xqqbxt1d xuifcaas" + " " +</text>
+    <text class="code" x="624" y="224">(pinned ? "xxkkh052 x3v14h35" : "")}</text>
+
+    <text class="code" x="608" y="304">{...__typedcss_props(styles.card, sx)}</text>
+  </g>
+</svg>
