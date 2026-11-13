@@ -6,7 +6,7 @@ Do not use AI token.
 - Follow the recent commit-message style.
 - End implementation commit messages with `in filename.ext`.
 - Use `chore(scope/__tests__): add/update filename.test.ts` for tests.
-- Use `typedcss@x.y.z` as the exact commit message when committing release changesets.
+- Use `@typedcss@x.y.z` as the exact commit message when committing release changesets.
 - Release changesets are the only exception to the one-file-per-commit rule; commit both changeset files together.
 
 ## Release changesets
