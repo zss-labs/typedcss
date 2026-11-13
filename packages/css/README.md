@@ -12,28 +12,45 @@ npx @typedcss/init
 
 ## Example
 
-`css.props` merges at runtime and returns `{ className, style }`, ready to spread onto any element. It is the counterpart of Plumeria's `css.use`; the `sx` prop works the same on both.
-
 ```tsx
 import * as css from '@typedcss/css';
 
 const styles = css.create({
   text: {
-    fontSize: 14,
+    fontSize: 12,
+    color: 'gray',
   },
-  color: {
-    color: 'aqua',
+  active: {
+    color: 'navy',
   },
 });
 
-export function Component({ isActive }: { isActive: boolean }) {
-  return (
-    <button {...css.props(styles.text, isActive && styles.color)}>
-      text
-    </button>
-  );
+export function App() {
+  return <div sx={[styles.text, styles.active]} />;
 }
 ```
+
+**Compiled:**
+
+```tsx
+<div className="xhrr6ses xvbwmxqp" />
+```
+
+**Generated CSS:**
+
+```css
+.xhrr6ses:not(#\#) {
+  font-size: 12px;
+}
+.xuifcaas {
+  color: gray;
+}
+.xvbwmxqp {
+  color: navy;
+}
+```
+
+When `sx` can be resolved statically, the merge is decided at build time and only the winning classes reach the element. When it cannot, `sx` falls back to `css.props`, which merges at runtime and returns `{ className, style }`.
 
 ## Migrating
 
