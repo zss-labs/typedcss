@@ -1,0 +1,170 @@
+---
+title: 'Thinking in TypedCSS'
+description: 'Every composition folds at build time or falls back to a runtime merge, and the structure of your code decides which.'
+---
+
+Every `sx` either folds or falls back. A composition the compiler can see whole folds into a class string at build time, and nothing runs in the browser. Anything else reaches [`css.props`](/docs/api/javascript/props), which merges it when the element renders. Both give the same classes.
+
+You never choose between them. Where a style is defined and where it travels decides it, so the shape of the code is the setting.
+
+## Fold what stays local
+
+Styles defined in the file that applies them fold:
+
+```tsx title="components/Notice.tsx"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  notice: {
+    display: 'flex',
+    padding: 16,
+    color: 'gray',
+  },
+  pinned: {
+    position: 'sticky',
+    top: 0,
+  },
+});
+
+export const Notice = ({ pinned }: { pinned?: boolean }) => (
+  <div sx={[styles.notice, pinned && styles.pinned]} />
+);
+```
+
+```tsx title="Output"
+<div className={"xxp6epoh xqqbxt1d xuifcaas" + " " + (pinned ? "xxkkh052 x3v14h35" : "")} />
+```
+
+`css.props` is not in the output. A single style, an array, a condition with `&&`, a ternary between two styles and an at-rule all fold. This is zero runtime, the same as Plumeria and StyleX.
+
+## Share values, not styles
+
+A value read from another file folds too. [`createTheme`](/docs/api/javascript/createTheme), [`createStatic`](/docs/api/javascript/createStatic) and [`@typedcss/wind`](/docs/api/packages/wind) are written in place wherever they are read:
+
+```ts title="styles/theme.ts"
+import * as css from '@typedcss/css';
+
+export const theme = css.createTheme('.dark', {
+  info: {
+    default: '#0b5fff',
+    theme: '#8ab4ff',
+  },
+});
+```
+
+```tsx title="components/Notice.tsx"
+import * as css from '@typedcss/css';
+import { theme } from '../styles/theme';
+
+const styles = css.create({
+  notice: {
+    color: theme.info,
+  },
+});
+
+<div sx={styles.notice} />
+```
+
+```tsx title="Output"
+<div className="xh91kmru" />
+```
+
+A project that keeps its styles beside its components and shares only values ships no merge at all.
+
+## Fall back where it travels
+
+A style that leaves its file is a value, and the resolver merges it where it lands:
+
+```tsx title="components/Card.tsx"
+import * as css from '@typedcss/css';
+
+const styles = css.create({
+  card: {
+    padding: 16,
+    color: 'gray',
+  },
+});
+
+export const Card = ({ sx }: { sx?: css.Style }) => (
+  <section sx={[styles.card, sx]} />
+);
+```
+
+```tsx title="Output"
+<section {...__typedcss_props(styles.card, sx)} />
+```
+
+The same happens for a style imported from another file, a choice indexed by a runtime key, a [function key](#pass-a-runtime-value-through-a-function), and a pseudo-class state whose order has to be settled against another. Each one is a single `css.props` call, around 100 ns. See [Why TypedCSS](/docs/why-typedcss#only-the-dynamic-part-runs).
+
+The fallback has no limit. A style can pass through any number of components, come from context, or arrive from another package:
+
+```tsx
+const Layout = ({ headerStyle }: { headerStyle?: css.Style }) => (
+  <Header sx={headerStyle} />
+);
+```
+
+Apply it last on the element, so the caller still wins. [`StyleProps`](/docs/api/types/StyleProps) and [`WithoutProperties`](/docs/api/types/WithoutProperties) decide what a caller may change.
+
+## One file, three components
+
+![Card.tsx defines two styles and three components. A and B fold to class strings at build time; C, which also takes a style from its caller, merges at runtime.](/fold-and-fallback.svg)
+
+All three components read the same styles from the same file. `A` and `B` fold, conditions included. `C` also takes `sx` from its caller, so part of its style is decided outside the file, and only `C` merges at runtime.
+
+`C` still receives the same classes as if the caller's style had been written into `Card.tsx`. The compiler emits the same atomic CSS for both paths, and `css.props` keeps one class per property key, so [Specificity](/docs/specificity) and [Composition laws](/docs/composition-laws) hold on either one.
+
+## Read the cost in the output
+
+Every `__typedcss_props` in the compiled output is one runtime merge, and every `className` is none. To take a component back to zero runtime, bring the style it applies into its file. To let a style travel, pass it; nothing has to be restructured first.
+
+A project that cannot yet say where every style ends up starts here and pays only for what travels. Once nothing travels, the same source moves to [Plumeria](https://plumeria.dev) with the codemod.
+
+## Pass a runtime value through a function
+
+A value known only at runtime goes through a function key. The classes stay shared, and the value lands in a custom property on the element:
+
+```tsx
+const styles = css.create({
+  progress: (width: string) => ({
+    width,
+    height: 2,
+  }),
+});
+
+<div sx={styles.progress(`${remaining}%`)} />
+```
+
+A runtime value in any other declaration stops the build and points here:
+
+```text title="next build"
+Error: [typedcss] Cannot resolve the value of "width" at build time (x).
+Values in css.create must be statically known; pass a runtime value through
+the function form, css.create({ name: (value) => ({ ... }) }).
+```
+
+## Across packages
+
+A package shares values the same way a file does. It points a `typedcss` export condition at its TypeScript source:
+
+```json title="packages/tokens/package.json"
+{
+  "name": "@acme/tokens",
+  "exports": {
+    ".": {
+      "typedcss": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  }
+}
+```
+
+The compiler follows the condition through subpath and pattern exports, and into packages linked from a pnpm store. A package without it is not read, and a definition taken from it stops the build. A style object exported from a package is a value like any other and merges at runtime.
+
+## Next steps
+
+- [Why TypedCSS](/docs/why-typedcss)
+- [Specificity](/docs/specificity)
+- [Composition laws](/docs/composition-laws)
+- [Selector rules](/docs/selector-rules)
+- [Troubleshooting](/docs/troubleshooting)
