@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast::builder::AstBuilder;
 use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
@@ -11,7 +11,7 @@ use oxc_syntax::scope::ScopeFlags;
 use crate::js::{Object, Value};
 use crate::style::records::{StyleRecord, atom_map_of};
 use crate::oxc::extract::{entry_records, file_styles_with};
-use crate::oxc::fold::StaticStyles;
+use crate::oxc::fold::{Folded, Part, StaticStyles};
 use crate::oxc::link::{FileStyles, LinkOptions};
 use crate::oxc::model::{Code, Entry, Method, Source, analyze};
 use crate::oxc::syntax::module::CORE;
@@ -311,6 +311,7 @@ fn attr_name<'b>(attr: &'b JSXAttributeItem<'b>) -> Option<&'b str> {
 }
 
 struct StyleProp<'s, 'a> {
+    allocator: &'a Allocator,
     build: &'s Build<'a>,
     style_prop: &'s str,
     class_prop: &'s str,
@@ -355,6 +356,86 @@ impl<'a> StyleProp<'_, 'a> {
             Some(JSXAttributeValue::new_string_literal(SPAN, JSStr::from_str_in(class_name, ast), None, ast)),
             ast,
         )
+    }
+
+    /// Plumeria's className expression: the parts joined with `+ " " +`.
+    fn folded_attribute(&self, class_prop: &str, folded: Folded<'_, 'a>) -> Option<JSXAttributeItem<'a>> {
+        let parts = match folded {
+            Folded::Static(class_name) if class_name.is_empty() => return None,
+            Folded::Static(class_name) => return Some(self.class_attribute(class_prop, &class_name)),
+            Folded::Dynamic(parts) => parts,
+        };
+        let ast = &self.build.ast;
+        let test = |test: &Expression<'a>| {
+            Expression::new_parenthesized_expression(SPAN, test.clone_in(self.allocator), ast)
+        };
+        let expressions = parts.into_iter().map(|part| match part {
+            Part::Text(text) => self.build.str_expr(&text),
+            Part::Ternary { test: condition, truthy, falsy } => Expression::new_parenthesized_expression(
+                SPAN,
+                Expression::new_conditional_expression(
+                    SPAN,
+                    test(condition),
+                    self.build.str_expr(&truthy),
+                    self.build.str_expr(&falsy),
+                    ast,
+                ),
+                ast,
+            ),
+            Part::Lookup { tests, entries, fallback } => {
+                let key = tests
+                    .into_iter()
+                    .map(|condition| {
+                        Expression::new_parenthesized_expression(
+                            SPAN,
+                            Expression::new_conditional_expression(
+                                SPAN,
+                                test(condition),
+                                self.build.str_expr("1"),
+                                self.build.str_expr("0"),
+                                ast,
+                            ),
+                            ast,
+                        )
+                    })
+                    .reduce(|left, right| {
+                        let left = Expression::new_binary_expression(SPAN, left, BinaryOperator::Addition, self.build.str_expr("__"), ast);
+                        Expression::new_binary_expression(SPAN, left, BinaryOperator::Addition, right, ast)
+                    })
+                    .expect("a lookup has at least one test");
+                let table = self.build.object_expr(entries.iter().map(|(key, class_name)| {
+                    ObjectPropertyKind::new_object_property(
+                        SPAN,
+                        PropertyKind::Init,
+                        PropertyKey::from(self.build.str_expr(key)),
+                        self.build.str_expr(class_name),
+                        false,
+                        false,
+                        false,
+                        ast,
+                    )
+                }));
+                let table = Expression::new_parenthesized_expression(SPAN, table, ast);
+                let lookup = Expression::new_computed_member_expression(SPAN, table, key, false, ast);
+                Expression::new_parenthesized_expression(
+                    SPAN,
+                    Expression::new_logical_expression(SPAN, lookup, LogicalOperator::Or, self.build.str_expr(&fallback), ast),
+                    ast,
+                )
+            }
+        });
+        let class_name = expressions
+            .reduce(|left, right| {
+                let left = Expression::new_binary_expression(SPAN, left, BinaryOperator::Addition, self.build.str_expr(" "), ast);
+                Expression::new_binary_expression(SPAN, left, BinaryOperator::Addition, right, ast)
+            })?;
+        let value = JSXAttributeValue::new_expression_container(SPAN, JSXExpression::from(class_name), ast);
+        Some(JSXAttributeItem::new_attribute(
+            SPAN,
+            JSXAttributeName::new_identifier(SPAN, self.build.ident(class_prop), ast),
+            Some(value),
+            ast,
+        ))
     }
 
     fn function_in(&self, attr: &JSXAttributeItem<'a>) -> Option<String> {
@@ -430,15 +511,18 @@ impl<'a> VisitMut<'a> for StyleProp<'_, 'a> {
         let mut index = 0;
         while index < it.attributes.len() {
             let folded = match &it.attributes[index] {
-                JSXAttributeItem::SpreadAttribute(spread) => self.static_styles.spread_class_name(&spread.argument, deferred),
+                JSXAttributeItem::SpreadAttribute(spread) => self
+                    .static_styles
+                    .spread_class_name(&spread.argument, deferred)
+                    .map(|(folded, class_prop)| self.folded_attribute(class_prop, folded)),
                 JSXAttributeItem::Attribute(_) => None,
             };
             match folded {
-                Some((class_name, _)) if class_name.is_empty() => {
+                Some(None) => {
                     it.attributes.remove(index);
                     continue;
                 }
-                Some((class_name, class_prop)) => it.attributes[index] = self.class_attribute(class_prop, &class_name),
+                Some(Some(attribute)) => it.attributes[index] = attribute,
                 None => {}
             }
             index += 1;
@@ -477,15 +561,24 @@ impl<'a> VisitMut<'a> for StyleProp<'_, 'a> {
             self.error = Some(function);
             return;
         }
-        if let JSXAttributeItem::Attribute(attr) = &it.attributes[index]
-            && let Some(class_name) = attr.value.as_ref().and_then(|value| self.static_styles.class_name(value, self.functions > 0))
-        {
-            if class_name.is_empty() {
+        let folded = match &it.attributes[index] {
+            JSXAttributeItem::Attribute(attr) => attr
+                .value
+                .as_ref()
+                .and_then(|value| self.static_styles.class_name(value, self.functions > 0))
+                .map(|folded| self.folded_attribute(self.class_prop, folded)),
+            JSXAttributeItem::SpreadAttribute(_) => None,
+        };
+        match folded {
+            Some(None) => {
                 it.attributes.remove(index);
-            } else {
-                it.attributes[index] = self.class_attribute(self.class_prop, &class_name);
+                return;
             }
-            return;
+            Some(Some(attribute)) => {
+                it.attributes[index] = attribute;
+                return;
+            }
+            None => {}
         }
         let JSXAttributeItem::Attribute(attr) = it.attributes.remove(index) else {
             unreachable!()
@@ -550,6 +643,7 @@ pub fn transform_module<'a>(
     ReplaceInits { plan }.visit_program(program);
 
     let mut style_prop = StyleProp {
+        allocator,
         build: &build,
         style_prop: &options.style_prop,
         class_prop: &options.class_prop,
