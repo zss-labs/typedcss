@@ -3,8 +3,15 @@ title: 'Optional rules'
 description: 'Rules that are not enabled by the recommended config.'
 ---
 
-These rules are not enabled by `typedcss.configs.recommended`. Enable the
-ones that fit the project:
+These rules are not enabled by `typedcss.configs.recommended`. They do not
+report a defect; they take away the room for one.
+
+| Rule | Reports | Suggests |
+| :-- | :-- | :-- |
+| `no-physical-properties` | `paddingLeft` | `paddingInlineStart` |
+| `no-logical-properties` | `paddingInlineStart` | `paddingLeft` |
+
+Enable the one that fits the project:
 
 ```js
 export default [
@@ -17,7 +24,7 @@ export default [
 ];
 ```
 
-### no-physical-properties / no-logical-properties
+## no-physical-properties / no-logical-properties
 
 Disallow one of the two names a property can carry, so a project writes edges
 under one spelling only. `no-physical-properties` reports `paddingLeft` and
