@@ -3,36 +3,48 @@ title: 'Recommended'
 description: Lint rules for TypedCSS styles.
 ---
 
-ESLint plugin for typedcss.  
-Below are the available rules and the recommended configuration.
+`@typedcss/eslint-plugin` is the ESLint plugin for TypedCSS.
 
-## Recommended configuration
+## Installation
 
-The `plugin:@typedcss/recommended` config enables the following:
+```bash
+pnpm add -D @typedcss/eslint-plugin
+```
 
-- `@typedcss/expand-border-shorthands`: **warn**
-- `@typedcss/no-combinator`: **error**
-- `@typedcss/no-destructure`: **error**
-- `@typedcss/no-inline-object`: **error**
-- `@typedcss/no-inner-call`: **error**
-- `@typedcss/no-invalid-selector`: **error**
-- `@typedcss/no-mixed-styling-props`: **error**
-- `@typedcss/no-mutable-binding`: **warn**
-- `@typedcss/no-order-dependent-overlap`: **warn**
-- `@typedcss/no-unknown-css-properties`: **error**
-- `@typedcss/no-unresolved-composition`: **warn**
-- `@typedcss/no-unused-keys`: **warn**
-- `@typedcss/sort-properties`: **warn**
-- `@typedcss/format-properties`: **warn**
-- `@typedcss/validate-values`: **warn**
-- `@typedcss/validate-pseudos`: **warn**
-- `@typedcss/validate-at-rules`: **warn**
+## Usage
 
 ```js
 import typedcss from '@typedcss/eslint-plugin';
 
 export default [typedcss.configs.recommended];
 ```
+
+## Rules
+
+`recommended` turns on every rule below. Each one is prefixed with `@typedcss/`.
+
+| Rule | Level | Reports |
+| :-- | :-- | :-- |
+| `expand-border-shorthands` | warn | a border shorthand that bundles a width, a style and a color; fixable |
+| `no-combinator` | error | `>`, `+`, `~` and the descendant combinator outside a functional pseudo-class |
+| `no-destructure` | error | destructuring the TypedCSS API |
+| `no-inline-object` | error | an inline object on the styling prop or in `css.props()` |
+| `no-inner-call` | error | an API call inside a function |
+| `no-invalid-selector` | error | a selector or nesting order the compiler cannot place |
+| `no-mixed-styling-props` | error | the styling prop on an element that also has `className` or `style` |
+| `no-mutable-binding` | warn | a `let` or `var` in a style definition |
+| `no-order-dependent-overlap` | warn | two declarations in one style that only source order can rank |
+| `no-unknown-css-properties` | error | a property CSS does not have |
+| `no-unused-keys` | warn | a key nothing in the same component file reads |
+| `no-unresolved-composition` | warn | a `css.props()` result turned into a string, combined with other class names or passed to another function |
+| `sort-properties` | warn | properties out of the recommended order; fixable |
+| `format-properties` | warn | a style written on one line, or with empty lines between its properties; fixable |
+| `validate-values` | warn | a value the property does not accept |
+| `validate-pseudos` | warn | a misspelled or malformed pseudo-class or pseudo-element |
+| `validate-at-rules` | warn | an at-rule other than `@media`, `@container`, `@supports` and `@starting-style` |
+
+Two more rules ship with the plugin and stay off until you ask for them. See
+[Optional rules](/docs/api/plugins/eslint-plugin/optional-rules).
 
 ## Configuring the styling prop
 
@@ -71,10 +83,7 @@ A single rule can override that if you need it to:
 The name must match whatever the loader or unplugin was given. If they disagree,
 the lint rules report against a prop the compiler never transforms.
 
-## Recommended rules
-
-The following rules are enabled by `typedcss.configs.recommended` with the
-severity shown in [Recommended configuration](#recommended-configuration).
+## Rule details
 
 ### expand-border-shorthands
 
@@ -97,33 +106,11 @@ borderTopColor: 'red', borderTopStyle: 'solid', borderTopWidth: '1px'
 A shorthand resets what it omits, so `borderBlock: 'solid'` expands with
 `medium` and `currentcolor` written out.
 
-### no-combinator
-
-Disallow combinators `>`, `+`, `~` and descendant combinator (space) unless inside functional pseudo-classes. A `css.createStatic` value is checked only when it starts with `:` or `[`, the ones that become a selector when used as a key.
-
-### no-destructure
-
-Disallow destructuring APIs.
-
-### no-inline-object
-
-Disallow passing inline object to `sx` and `css.props()`. Only compiled styles from `css.create()` are allowed.
-
-### no-inner-call
-
-Disallow calling APIs inside functions.
-
 ### no-invalid-selector
 
 Disallow invalid selector inside `css.create()` and `css.keyframes()` and `css.viewTransitionClass()`.  
 `create()` example: (Pseudo -> Query, Query -> Query)  
 Also reports a functional pseudo-class nested inside one of the same name, such as `:where(:where(.a), .b)`, and flattens it with a fix when the nested call is a whole argument. `:not()` may nest inside `:not()`. Reports a key nested deeper than 16 levels or holding a stray quote.
-
-### no-mixed-styling-props
-
-Disallow mixing the styling prop with `className` or `style`. `sx` can handle both `className` and `style`.
-
-Accepts `{ styleProp }`; see [Configuring the styling prop](#configuring-the-styling-prop).
 
 ### no-order-dependent-overlap
 
@@ -144,43 +131,6 @@ properties in a vertical one, which is per element and cannot be read from the
 source. The rule reads them as one property; disable the line where an element
 is known to be vertical.
 
-### no-unknown-css-properties
-
-Disallow unknown CSS properties in camelCase within `css.create`, `css.keyframes`, `css.viewTransitionClass`, and `css.positionTry`. Inside `css.positionTry`, it also reports properties that `@position-try` does not accept.
-
-In `css.create`, a key that holds an object is reported with a hint that nested selectors start with `:`, `[` or `@`.
-
-### no-unresolved-composition
-
-A safety net for `css.props()`. Warns when its result is turned into a string, combined with other class names or passed to another function. Pass every style to one `css.props()` call, and spread the result onto the element.
-
-### no-unused-keys
-
-Warns when object keys are defined but not used, mainly in component files.
-
-### sort-properties
-
-Automatically sorts CSS properties in the recommended order for consistency and maintainability. A computed key from `css.createStatic` is read as the at-rule it holds and sorted with the other at-rules, after the pseudo-classes.
-
-### format-properties
-
-Automatically format for consistency and maintainability.
-
-- Formats a line into a multi-line.
-- Formats by filling in blank lines.
-
-### validate-values
-
-Validates CSS property values for correctness. Only standard CSS properties are checked; properties with string literal keys (e.g., computed or dynamic property names) are not validated.
-
-### validate-pseudos
-
-Validates CSS pseudo-classes and pseudo-elements inside `css.create()`. It checks for typos and structural correctness and supports validation of computed keys when TypeScript is available.
-
-### validate-at-rules
-
-Validates at-rules inside `css.create()`. It accepts `@media`, `@container`, and `@supports`, each with a prelude, whether or not a space separates it from the keyword, and `@starting-style` on its own, and supports validation of computed keys when TypeScript is available.
-
 ## CLI (typedcss-lint)
 
 This package provides a CLI command, `typedcss-lint`, as a convenient way
@@ -189,15 +139,7 @@ to run typedcss's custom ESLint rules.
 It runs `oxlint`, which this package depends on, for fast linting with code
 snippets in output, so oxlint needs no separate install.
 
-### Installation
-
-```bash
-npm install -D @typedcss/eslint-plugin
-# or
-pnpm add -D @typedcss/eslint-plugin
-```
-
-### Usage
+The CLI comes with the plugin, so it needs no separate install:
 
 ```bash
 typedcss-lint
