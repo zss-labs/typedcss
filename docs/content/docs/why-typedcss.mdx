@@ -109,7 +109,15 @@ StyleX is the closest relative, and the shared ground goes all the way to the ca
 | Checks | An ESLint plugin you set up and run | The bundler plugins run the TypedCSS rules during the build and stop it on an error or a warning |
 | When the build cannot settle a merge | The runtime merge covers it | The runtime merge covers it, and [Plumeria](https://plumeria.dev) is the same source with the build settling everything |
 
-**The runtime merge is faster.** A composition the compiler cannot fold is merged by `css.props` in roughly a third of the time `stylex.props` takes, as measured above.
+**The runtime merge is faster.** A composition the compiler cannot fold is merged by `css.props` in under half the time `stylex.props` takes.
+
+| Call | `stylex.props` | `css.props` |
+| :-- | --: | --: |
+| `props(styles.base, styles.red)` | 127 ns | 45 ns |
+| `props(styles.base, false)` | 94 ns | 35 ns |
+| `props(styles.container)` | 77 ns | 32 ns |
+
+Median per call on Node 24, `@stylexjs/stylex` 0.19.0 and `@typedcss/css` 22.0.12, over compiled style maps of the same shape.
 
 **Themes are a selector, not an application step.** `css.createTheme('.dark', { ... })` writes both values into the generated CSS, so components contain no theme branch and no element has to receive the theme.
 
