@@ -51,13 +51,13 @@ afterAll(() => {
 afterEach(() => jest.clearAllMocks());
 
 const serve = (options?: Parameters<typeof vite>[0]) => {
-  const plugin = vite({ lint: false, ...options }) as any;
+  const plugin = vite({ lint: false, ...options })[0] as any;
   plugin.configResolved({ root: ROOT, command: 'serve' });
   return plugin;
 };
 
 it('merges Vite config for serve and build commands', () => {
-  const plugin = vite() as any;
+  const plugin = vite()[0] as any;
 
   expect(
     plugin.config(
@@ -90,7 +90,7 @@ it('configures source packages and Solid class output', () => {
       },
     }),
   );
-  const plugin = vite({ lint: false }) as any;
+  const plugin = vite({ lint: false })[0] as any;
   expect(
     plugin.config({ root: packageRoot }, { command: 'serve' }),
   ).toMatchObject({
@@ -109,22 +109,25 @@ it('starts the lint guard for builds only', () => {
   const { startLintGuard } = jest.requireMock<{ startLintGuard: jest.Mock }>(
     '@typedcss/eslint-plugin/guard',
   );
-  (vite() as any).config({}, { command: 'serve' });
+  (vite()[0] as any).config({}, { command: 'serve' });
   expect(startLintGuard).not.toHaveBeenCalled();
-  (vite() as any).config({}, { command: 'build' });
+  (vite()[0] as any).config({}, { command: 'build' });
   expect(startLintGuard).toHaveBeenCalledTimes(1);
-  (vite({ lint: false }) as any).config({}, { command: 'build' });
+  (vite({ lint: false })[0] as any).config({}, { command: 'build' });
   expect(startLintGuard).toHaveBeenCalledTimes(1);
 });
 
 it('configures RSC builds detected from environments and nested plugins', () => {
   expect(
-    (vite() as any).config({ environments: { rsc: {} } }, { command: 'build' }),
+    (vite()[0] as any).config(
+      { environments: { rsc: {} } },
+      { command: 'build' },
+    ),
   ).toMatchObject({
     environments: { rsc: { build: { cssCodeSplit: false } } },
   });
   expect(
-    (vite() as any).config(
+    (vite()[0] as any).config(
       { plugins: [null, 'ignored', [{ name: 'rsc:server' }]] },
       { command: 'build' },
     ),
@@ -132,7 +135,7 @@ it('configures RSC builds detected from environments and nested plugins', () => 
     environments: { rsc: { build: { cssCodeSplit: false } } },
   });
   expect(
-    (vite() as any).config(
+    (vite()[0] as any).config(
       { plugins: [{ name: 'rsc' }] },
       { command: 'build' },
     ),
@@ -242,7 +245,7 @@ it('imports the shared disk file when development CSS is emitted to disk', async
 });
 
 it('omits CSS imports and emits one stylesheet for an RSC build', async () => {
-  const plugin = vite({ lint: false }) as any;
+  const plugin = vite({ lint: false })[0] as any;
   plugin.config({ environments: { rsc: {} } }, { command: 'build' });
   plugin.configResolved({ root: ROOT, command: 'build' });
 
@@ -279,17 +282,57 @@ it('omits CSS imports and emits one stylesheet for an RSC build', async () => {
 
 it('does not emit an empty RSC stylesheet or run build hooks outside RSC', async () => {
   const emitFile = jest.fn();
-  await (vite() as any).buildEnd.call({
+  await (vite()[0] as any).buildEnd.call({
     environment: { name: 'rsc' },
     emitFile,
   });
   expect(emitFile).not.toHaveBeenCalled();
 
-  const rscPlugin = vite({ lint: false }) as any;
+  const rscPlugin = vite({ lint: false })[0] as any;
   rscPlugin.config({ plugins: [{ name: 'rsc' }] }, { command: 'build' });
   rscPlugin.configResolved({ root: EMPTY, command: 'build' });
   await rscPlugin.buildEnd.call({ environment: { name: 'rsc' }, emitFile });
   expect(emitFile).not.toHaveBeenCalled();
+});
+
+it('links the single CSS bundle to entry chunks in a non-RSC build', () => {
+  const [plugin, cssBundlePlugin] = vite({ lint: false }) as any[];
+  const bundle = () => ({
+    'assets/style-x.css': {
+      type: 'asset',
+      fileName: 'assets/style-x.css',
+      originalFileNames: ['style.css'],
+    },
+    'entry.js': {
+      type: 'chunk',
+      isEntry: true,
+      viteMetadata: { importedCss: new Set<string>() },
+    },
+    'lazy.js': {
+      type: 'chunk',
+      isEntry: false,
+      viteMetadata: { importedCss: new Set<string>() },
+    },
+  });
+  expect(cssBundlePlugin.enforce).toBe('post');
+
+  const serve = bundle();
+  plugin.config({}, { command: 'serve' });
+  cssBundlePlugin.generateBundle({}, serve);
+  expect([...serve['entry.js'].viteMetadata.importedCss]).toEqual([]);
+
+  const build = bundle();
+  plugin.config({}, { command: 'build' });
+  cssBundlePlugin.generateBundle({}, build);
+  expect([...build['entry.js'].viteMetadata.importedCss]).toEqual([
+    'assets/style-x.css',
+  ]);
+  expect([...build['lazy.js'].viteMetadata.importedCss]).toEqual([]);
+
+  const rsc = bundle();
+  plugin.config({ plugins: [{ name: 'rsc' }] }, { command: 'build' });
+  cssBundlePlugin.generateBundle({}, rsc);
+  expect([...rsc['entry.js'].viteMetadata.importedCss]).toEqual([]);
 });
 
 it('re-transforms every other target when a file with styles changes', async () => {
