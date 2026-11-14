@@ -1,5 +1,13 @@
 # @typedcss/swc-jest
 
+## 22.0.13
+
+### Patch Changes
+
+- 6bdc5fa: Bump version to 22.0.13
+- Updated dependencies [6bdc5fa]
+  - @typedcss/oxide@22.0.13
+
 ## 22.0.12
 
 ### Patch Changes
