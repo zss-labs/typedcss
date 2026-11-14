@@ -15,6 +15,7 @@
     "prepare": "git config core.hooksPath .githooks",
     "build": "turbo run build --filter=./packages/*",
     "build:examples": "turbo run build --filter=./examples/*",
+    "build:skill": "node scripts/build-skill.js",
     "typecheck": "tsc --noEmit --project tsconfig.test.json && node scripts/check-declaration-emit.js",
     "test": "jest --coverage",
     "dev": "cd docs && npm run dev",
