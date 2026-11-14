@@ -6,10 +6,10 @@
 
 **ESLint guarantees.** `@typedcss/eslint-plugin` enforces TypedCSS's rules. Treat its errors as blocking, and its warnings (such as `no-order-dependent-overlap`) as defects to resolve rather than noise. It checks:
 
-* **CSS property value validation** — invalid values are caught at lint time.
-* **Property sort order** — one canonical order is enforced; the full order is specified under **Property order** below.
-* **Property formatting** — one property per line, with no empty lines between properties; see **Property formatting** below.
-* **Unused style detection** — unused styles are flagged automatically.
+- **CSS property value validation** — invalid values are caught at lint time.
+- **Property sort order** — one canonical order is enforced; the full order is specified under **Property order** below.
+- **Property formatting** — one property per line, with no empty lines between properties; see **Property formatting** below.
+- **Unused style detection** — unused styles are flagged automatically.
 
 Follow the plugin's rules as documented in its `README.md`.
 

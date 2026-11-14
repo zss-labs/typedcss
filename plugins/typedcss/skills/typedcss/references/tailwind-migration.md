@@ -8,16 +8,16 @@ Tailwind's model and TypedCSS's do not map one-to-one. A utility-by-utility rewr
 
 **Where a compiled value is Tailwind's default, read it from `@typedcss/wind`.** The package holds the default theme of Tailwind CSS v4 as `css.createStatic` tokens, and each one compiles into the style that reads it, so nothing reaches the bundle. Install it with `pnpm i -D @typedcss/wind` and import it with `import * as t from '@typedcss/wind'`. It knows nothing of the project's `@theme`, so compare a token with the emitted CSS and keep the emitted value where the two differ. It generates no utility classes, so the key naming below still applies.
 
-| Tailwind                    | `@typedcss/wind`                                                                                                                            |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `p-4`                       | `padding: t.spacing[4]`                                                                                                                     |
-| `text-sm`                   | `fontSize: t.text.sm`, `lineHeight: t.textLineHeight.sm`                                                                                    |
-| `font-medium`               | `fontWeight: t.fontWeight.medium`                                                                                                           |
-| `bg-blue-500`, `text-white` | `backgroundColor: t.blue[500]`, `color: t.color.white`                                                                                      |
-| `rounded-md`                | `borderRadius: t.radius.md`                                                                                                                 |
-| `shadow-lg`                 | `boxShadow: t.shadow.lg`, which holds the resolved value                                                                                    |
-| `md:`                       | ``[`@media (width >= ${t.breakpoint.md})`]``. The token is a length, so write the query around it; as a key on its own it produces no rule. |
-| `animate-spin`              | `` animation: `${t.spin} ${t.animate.spin}` ``                                                                                              |
+| Tailwind | `@typedcss/wind` |
+|---|---|
+| `p-4` | `padding: t.spacing[4]` |
+| `text-sm` | `fontSize: t.text.sm`, `lineHeight: t.textLineHeight.sm` |
+| `font-medium` | `fontWeight: t.fontWeight.medium` |
+| `bg-blue-500`, `text-white` | `backgroundColor: t.blue[500]`, `color: t.color.white` |
+| `rounded-md` | `borderRadius: t.radius.md` |
+| `shadow-lg` | `boxShadow: t.shadow.lg`, which holds the resolved value |
+| `md:` | `` [`@media (width >= ${t.breakpoint.md})`] ``. The token is a length, so write the query around it; as a key on its own it produces no rule. |
+| `animate-spin` | `` animation: `${t.spin} ${t.animate.spin}` `` |
 
 **Name keys after what the element is, not after the utilities it carried.** The class list is the input to the migration, not the output.
 
@@ -48,21 +48,21 @@ const styles = css.create({
 
 **Three variants need restructuring rather than translation.** Breakpoints (`md:`) and `data-*` variants map directly, to `@media` and attribute-selector keys. `dark:` depends on the project: it is `@media (prefers-color-scheme: dark)` by default, but `@custom-variant dark` commonly redefines it as a `.dark` class selector — which belongs in the restructuring set below, not the direct one. Check the compiled output before assuming which.
 
-| Tailwind                | Compiles to                               | Write instead                                                                                                                                           |
-| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hover:`, `focus:`      | `&:hover { @media (hover: hover) { … } }` | `':hover': { … }`, dropping the `@media (hover: hover)` wrapper — TypedCSS forbids a query inside a pseudo. The styles then apply on touch devices too. |
-| `group-*`, `peer-*`     | `&:is(:where(.group):hover *)`            | `css.marker()` on the parent and `css.extended()` on the descendant. The `.group` / `.peer` class disappears.                                           |
-| `space-x-*`, `divide-*` | `:where(& > :not(:last-child))`           | The margin or border applied to the children directly — a child combinator is only accepted inside a functional pseudo-class.                           |
+| Tailwind | Compiles to | Write instead |
+|---|---|---|
+| `hover:`, `focus:` | `&:hover { @media (hover: hover) { … } }` | `':hover': { … }`, dropping the `@media (hover: hover)` wrapper — TypedCSS forbids a query inside a pseudo. The styles then apply on touch devices too. |
+| `group-*`, `peer-*` | `&:is(:where(.group):hover *)` | `css.marker()` on the parent and `css.extended()` on the descendant. The `.group` / `.peer` class disappears. |
+| `space-x-*`, `divide-*` | `:where(& > :not(:last-child))` | The margin or border applied to the children directly — a child combinator is only accepted inside a functional pseudo-class. |
 
 ### `tv()` and `twMerge()`
 
-| Tailwind Variants  | TypedCSS                                                                                                                     |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `base`             | Static keys in the component's own `css.create()`                                                                            |
-| `variants`         | One dedicated `css.create()` per variant group, read with bracket notation (keep these calls minimal — see Bracket notation) |
-| `defaultVariants`  | Default parameter values                                                                                                     |
-| `compoundVariants` | An explicit condition in the `sx` array                                                                                      |
-| `slots`            | One `css.create()` per element, not one call carrying every slot                                                             |
+| Tailwind Variants | TypedCSS |
+|---|---|
+| `base` | Static keys in the component's own `css.create()` |
+| `variants` | One dedicated `css.create()` per variant group, read with bracket notation (keep these calls minimal — see Bracket notation) |
+| `defaultVariants` | Default parameter values |
+| `compoundVariants` | An explicit condition in the `sx` array |
+| `slots` | One `css.create()` per element, not one call carrying every slot |
 
 **An external `className` override becomes a `Style` prop, not a `className`.** `twMerge(button(...), className)` exists to let the call site win; Pattern 2 does the same job, because array position is right-wins. **NEVER** resolve the override away, force it through `css.props()`, or change the component's public API to avoid the mixing rule.
 

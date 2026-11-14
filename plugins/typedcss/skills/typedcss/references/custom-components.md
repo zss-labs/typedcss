@@ -97,17 +97,15 @@ NEVER resolve styles with `css.props()` to apply them to an element your compone
 
 `css.props()` is for the places `sx` cannot reach: a third-party component whose props have no `Style` type, a class name prop with another name such as `overlayClassName`, and templates that are not JSX (Vue, Svelte, Astro). The opt-in `@typedcss/no-use-in-jsx` lint rule reports every `css.props()` in JSX for projects that never need those.
 
-### Plumeria migration compatibility
+### Relaying a Style prop
 
-TypedCSS supports relaying a received `css.Style` through props, context, variables, and other components. This is valid TypedCSS code.
-
-If you plan to migrate to Plumeria, we recommend applying each received style on an element rendered by that component instead of forwarding it through wrappers. Plumeria requires this shape for static compilation. Treat this as a migration recommendation, not a TypedCSS restriction.
+A received `css.Style` can be applied on an element with `sx` or forwarded through props, context, variables, and other components. The number of hops does not matter: it merges on the element that finally renders it.
 
 ### Summary
 
-| Pattern         | Compilation site     | Component's role             |
-| --------------- | -------------------- | ---------------------------- |
-| 1. Direct `sx`  | Inside the component | Self-contained styles        |
-| 2. `Style` prop | Merged at runtime  | Receives and applies `Style` |
+| Pattern | Compilation site | Component's role |
+|---------|-----------------|-----------------|
+| 1. Direct `sx` | Inside the component | Self-contained styles |
+| 2. `Style` prop | Merged at runtime | Receives and applies `Style` |
 
-Applying a received style directly is recommended for Plumeria migration compatibility; forwarding it is supported in TypedCSS.
+A received style can be applied on an element or forwarded to another component; it merges on the element that finally renders it.

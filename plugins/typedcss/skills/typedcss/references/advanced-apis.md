@@ -4,8 +4,8 @@
 
 These paired APIs enable context-aware styling (e.g. styling a child when the parent is hovered) without naming a DOM path:
 
-* **`css.marker(id, pseudo)`** — sets a CSS variable marker on the parent when the pseudo state is active. MUST be spread into the parent style: `...css.marker(...)`.
-* **`css.extended(id, pseudo)`** — applies styles to descendants while the linked marker is active. Used as a computed key: `[css.extended(...)]`.
+- **`css.marker(id, pseudo)`** — sets a CSS variable marker on the parent when the pseudo state is active. MUST be spread into the parent style: `...css.marker(...)`.
+- **`css.extended(id, pseudo)`** — applies styles to descendants while the linked marker is active. Used as a computed key: `[css.extended(...)]`.
 
 ```tsx
 import * as css from '@typedcss/css';
