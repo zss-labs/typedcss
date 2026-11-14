@@ -1,0 +1,17 @@
+{
+  "name": "typedcss",
+  "version": "1.0.0",
+  "description": "Teaches Claude the TypedCSS rules for writing, reviewing, and fixing styles. Generated from the official AI.md documentation.",
+  "author": {
+    "name": "refirst11"
+  },
+  "homepage": "https://typedcss.dev",
+  "repository": "https://github.com/zss-labs/typedcss",
+  "license": "MIT",
+  "keywords": [
+    "css",
+    "css-in-js",
+    "typedcss",
+    "styling"
+  ]
+}
