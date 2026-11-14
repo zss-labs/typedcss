@@ -69,12 +69,12 @@ export function generateAI(source) {
     'Bracket notation selects a compiled style map at runtime:',
   );
   replace(
-    /^\* \*\*Keep variant `css.create\(\)` calls minimal\.\*\*.*$/m,
-    '* **Keep variants focused.** Group related variants for clarity. Bracket notation selects their runtime class maps.',
+    /^[-*] \*\*Keep variant `css.create\(\)` calls minimal\.\*\*.*$/m,
+    '- **Keep variants focused.** Group related variants for clarity. Bracket notation selects their runtime class maps.',
   );
   replace(
-    /^\* \*\*Local variable assignment is supported\.\*\*.*$/m,
-    '* **Local variable assignment is supported.** `const currentStyle = sizeStyles[size]; <div sx={currentStyle} />` works with runtime class maps.',
+    /^[-*] \*\*Local variable assignment is supported\.\*\*.*$/m,
+    '- **Local variable assignment is supported.** `const currentStyle = sizeStyles[size]; <div sx={currentStyle} />` works with runtime class maps.',
   );
   replace(
     /### `css.use\(\)` returns a static string[^\n]*\n[\s\S]*?(?=## Advanced APIs)/,
