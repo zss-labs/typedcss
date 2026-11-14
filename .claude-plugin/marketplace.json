@@ -1,0 +1,14 @@
+{
+  "name": "typedcss",
+  "description": "Official Claude Code plugins for TypedCSS",
+  "owner": {
+    "name": "refirst11"
+  },
+  "plugins": [
+    {
+      "name": "typedcss",
+      "source": "./plugins/typedcss",
+      "description": "TypedCSS rules for writing, reviewing, and fixing styles, generated from the official AI.md documentation"
+    }
+  ]
+}
