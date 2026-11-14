@@ -1,5 +1,9 @@
 # Release Notes
 
+## 22.0.13 (Nov 14, 2026)
+
+- Fix: link the single CSS bundle to entry chunks so the Vite manifest lists it under the entry's `css`. `typedcss.vite()` now returns an array of plugins.
+
 ## 22.0.12 (Nov 13, 2026)
 
 - Feat: Fold local conditions in sx and css.props into Plumeria's conflict lookup tables instead of the runtime merge.

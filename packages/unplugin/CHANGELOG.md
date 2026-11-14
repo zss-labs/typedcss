@@ -1,5 +1,14 @@
 # @typedcss/unplugin
 
+## 22.0.13
+
+### Patch Changes
+
+- 6bdc5fa: - Fix: link the single CSS bundle to entry chunks so the Vite manifest lists it under the entry's `css`. `typedcss.vite()` now returns an array of plugins.
+- Updated dependencies [6bdc5fa]
+  - @typedcss/eslint-plugin@22.0.13
+  - @typedcss/oxide@22.0.13
+
 ## 22.0.12
 
 ### Patch Changes
