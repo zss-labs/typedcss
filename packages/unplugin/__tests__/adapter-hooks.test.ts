@@ -45,7 +45,7 @@ const transform = (plugin: any) =>
 
 describe('the vite adapter', () => {
   it('carries the resolved root and command into the core plugin', () => {
-    const plugin = vite() as any;
+    const plugin = vite()[0] as any;
     plugin.configResolved({ root: DIR, command: 'serve' });
 
     expect(plugin.__typedcssInternal).toBeDefined();
@@ -53,7 +53,7 @@ describe('the vite adapter', () => {
   });
 
   it('hands back what the core transform produced', async () => {
-    const plugin = vite() as any;
+    const plugin = vite()[0] as any;
     plugin.configResolved({ root: DIR, command: 'serve' });
     const adapted = await transform(plugin);
 
@@ -67,7 +67,7 @@ describe('the vite adapter', () => {
   });
 
   it('serves the virtual stylesheet it registered', async () => {
-    const plugin = vite() as any;
+    const plugin = vite()[0] as any;
     plugin.configResolved({ root: DIR, command: 'serve' });
     await transform(plugin);
 
@@ -77,7 +77,7 @@ describe('the vite adapter', () => {
   });
 
   it('keeps the core out of dependency optimization', () => {
-    const plugin = vite() as any;
+    const plugin = vite()[0] as any;
     const config = plugin.config({}, { command: 'build' });
 
     expect(config.optimizeDeps.exclude).toContain('@typedcss/css');
