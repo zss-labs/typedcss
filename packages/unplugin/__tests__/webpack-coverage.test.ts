@@ -15,6 +15,8 @@ const createBase = () => ({
     setCssImport: jest.fn(),
     resolveSource: jest.fn(() => null),
     inSource: jest.fn(() => false),
+    cssFilename: jest.fn(() => ABSOLUTE_CSS),
+    refresh: jest.fn(),
   },
   transform: jest.fn(async (code: string) => {
     if (code === 'null') return null;
@@ -87,6 +89,30 @@ it('loads the stylesheet and depends on every file that defines styles', () => {
     ['/project/Card.tsx'],
     ['/project/tokens.ts'],
   ]);
+});
+
+it('resolves and compiles the stylesheet when cached modules skipped the transform', () => {
+  const base = createBase();
+  const internal = base.__typedcssInternal;
+  internal.cssLookup.clear();
+  internal.refresh.mockImplementation(() =>
+    internal.cssLookup.set(ABSOLUTE_CSS, '.cached {}'),
+  );
+  const plugin = attachWebpackHooks(base) as any;
+
+  expect(
+    plugin.resolveId('../typedcss.zero.css?t=1', '/project/src/App.tsx'),
+  ).toBe(`${ABSOLUTE_CSS}?t=1`);
+  expect(plugin.resolveId(ABSOLUTE_CSS)).toBe(ABSOLUTE_CSS);
+  expect(internal.refresh).not.toHaveBeenCalled();
+
+  expect(plugin.load.call({}, `${ABSOLUTE_CSS}?t=1`)).toEqual({
+    code: '.cached {}',
+    moduleType: 'css',
+  });
+  plugin.load.call({}, ABSOLUTE_CSS);
+  expect(internal.refresh).toHaveBeenCalledTimes(1);
+  expect(plugin.load.call({}, '/project/Other.zero.css')).toBeNull();
 });
 
 it('configures root without enabling development for production compilers', () => {
