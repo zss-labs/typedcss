@@ -323,6 +323,13 @@ it('links the single CSS bundle to entry chunks in a non-RSC build', () => {
 
   const build = bundle();
   plugin.config({}, { command: 'build' });
+  cssBundlePlugin.generateBundle(
+    {},
+    {
+      'asset.css': { type: 'asset' },
+      'entry.js': { type: 'chunk', isEntry: true },
+    },
+  );
   cssBundlePlugin.generateBundle({}, build);
   expect([...build['entry.js'].viteMetadata.importedCss]).toEqual([
     'assets/style-x.css',
