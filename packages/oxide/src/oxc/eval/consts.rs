@@ -6,7 +6,7 @@ use oxc_ast::ast::*;
 
 use super::{Env, Evaluator, Imports, Lookup};
 use crate::js::{Object, Value};
-use crate::oxc::syntax::expr::{E, K, str_value, unwrap};
+use crate::oxc::syntax::expr::{E, K, unwrap};
 
 pub type ConstNodes<'b> = IndexMap<&'b str, &'b Expression<'b>, FxBuildHasher>;
 
@@ -69,7 +69,7 @@ impl Consts<'_, '_> {
         let live = Live(&self.values);
         let env = Env::statics_only(&live);
         let result = match init.kind() {
-            K::Str(value) => Some(Value::Str(str_value(value))),
+            K::Str(value) => value.value.as_str().map(|text| Value::Str(text.to_string())),
             K::Num(value) => Some(Value::Num(value.value)),
             K::Bool(value) => Some(Value::Bool(value)),
             K::Ident(ident) => self.resolve(ident.name.as_str()),
