@@ -8,7 +8,7 @@ import {
   PACKAGE,
 } from '../src/stylesheet';
 
-it('covers stylesheet defaults, cache reuse, overrides, and stale entries', () => {
+it('covers stylesheet defaults, cache reuse, filtering, and stale entries', () => {
   expect(PACKAGE).toBe('@typedcss/css');
   expect(DEFAULT_STYLE_PROP).toBe('sx');
   expect(isRelevant("export * from './theme';")).toBe(true);
@@ -26,24 +26,11 @@ it('covers stylesheet defaults, cache reuse, overrides, and stale entries', () =
   expect(compileStylesheet(options).files).toEqual([source]);
   expect(compileStylesheet(options).files).toEqual([source]);
   expect(
-    compileStylesheet(
-      options,
-      new Map([[plain, 'export const stillPlain = 1;']]),
-    ).files,
+    compileStylesheet({ ...options, accept: (file) => file !== plain }).files,
   ).toEqual([source]);
   fs.rmSync(source);
   expect(compileStylesheet(options).files).toEqual([]);
 
-  const virtual = path.join(root, 'virtual.ts');
-  expect(
-    compileStylesheet(
-      options,
-      new Map([
-        [virtual, "export * from './virtual-theme';"],
-        [path.join(root, 'ignored.ts'), 'export const value = 1;'],
-      ]),
-    ).files,
-  ).toEqual([virtual]);
   fs.rmSync(root, { recursive: true, force: true });
 });
 
