@@ -1,3 +1,11 @@
+## 22.0.14
+
+### Patch Changes
+
+- 782cd61: Bump version to 22.0.14
+- Updated dependencies [782cd61]
+  - @typedcss/oxide@22.0.14
+
 ## 22.0.13
 
 ### Patch Changes
