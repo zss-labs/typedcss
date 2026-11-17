@@ -105,6 +105,18 @@ it('compiles files under the exported source directory only', async () => {
   ).resolves.toBeNull();
 });
 
+it('stops a module under the source directory the stylesheet does not collect', async () => {
+  const plugin = createPlugin();
+  const file = path.join(PKG, 'src', 'dist', 'Card.tsx');
+  const source = BUTTON_SOURCE.replace('rgb(1, 2, 3)', 'rgb(4, 5, 6)');
+  write(file, source);
+
+  await expect(plugin.transform.handler.call({}, source, file)).rejects.toThrow(
+    /is outside the project files the stylesheet is compiled from/,
+  );
+  fs.rmSync(file);
+});
+
 it('collects package styles an app file only renders', () => {
   const plugin = createPlugin();
 
