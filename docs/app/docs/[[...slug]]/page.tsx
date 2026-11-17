@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { findNeighbour, type Node } from 'fumadocs-core/page-tree';
+import { siteUrl } from '@/lib/site';
 import { source } from '@/lib/source';
 import { CopyPage } from '../_ui/CopyButton';
 import { mdxComponents } from '../_ui/mdx';
@@ -188,9 +189,32 @@ export default async function Page({ params }: Props) {
   const { previous, next } = findNeighbour(tree, page.url);
   const describe = (url: string) =>
     source.getPages().find((item) => item.url === url)?.data.description;
+  const crumbs = [
+    { name: 'Home', url: '/' },
+    ...[[], ...page.slugs.map((_, i) => page.slugs.slice(0, i + 1))].flatMap(
+      (slugs) => {
+        const crumb = source.getPage(slugs);
+        return crumb ? [{ name: crumb.data.title, url: crumb.url }] : [];
+      },
+    ),
+  ];
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((crumb, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: crumb.name,
+      item: new URL(crumb.url, siteUrl).toString(),
+    })),
+  }).replace(/</g, '\\u003c');
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd }}
+      />
       <article sx={styles.article}>
         <header sx={styles.header}>
           {section && <p sx={styles.section}>{section}</p>}
