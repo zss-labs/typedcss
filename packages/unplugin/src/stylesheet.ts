@@ -22,6 +22,7 @@ export interface StylesheetOptions extends PropertyPolicyOptions {
   include?: string[];
   exclude?: string[];
   sourceDirs?: string[];
+  accept?: (file: string) => boolean;
 }
 
 const BROAD_NODE_MODULES = new Set(['**/node_modules/**', 'node_modules/**']);
@@ -63,7 +64,7 @@ function modified(file: string): number | undefined {
   }
 }
 
-function collect(options: StylesheetOptions, overrides: Map<string, string>) {
+function collect(options: StylesheetOptions) {
   const files: StyleFile[] = [];
   const found: string[] = [];
   const present = new Set<string>();
@@ -80,17 +81,8 @@ function collect(options: StylesheetOptions, overrides: Map<string, string>) {
   ))
     scanned.add(file);
   for (const file of scanned) {
+    if (options.accept && !options.accept(file)) continue;
     present.add(file);
-    const override = overrides.get(file);
-    if (override !== undefined) {
-      const relevant = isRelevant(override, file, options.styleProp);
-      seen.delete(file);
-      if (relevant) {
-        files.push({ path: file, source: override });
-        found.push(file);
-      }
-      continue;
-    }
     const mtime = modified(file);
     if (mtime === undefined) {
       present.delete(file);
@@ -112,23 +104,17 @@ function collect(options: StylesheetOptions, overrides: Map<string, string>) {
       found.push(file);
     }
   }
-  for (const [file, source] of overrides) {
-    if (present.has(file) || !isRelevant(source, file, options.styleProp))
-      continue;
-    files.push({ path: file, source });
-    found.push(file);
-  }
   for (const file of seen.keys()) {
     if (!present.has(file)) seen.delete(file);
   }
   return { files, found };
 }
 
-export function compileStylesheet(
-  options: StylesheetOptions,
-  overrides: Map<string, string> = new Map(),
-): { css: string; files: string[] } {
-  const { files, found } = collect(options, overrides);
+export function compileStylesheet(options: StylesheetOptions): {
+  css: string;
+  files: string[];
+} {
+  const { files, found } = collect(options);
   try {
     return {
       css: oxide.compileCss({
