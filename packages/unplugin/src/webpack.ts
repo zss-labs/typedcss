@@ -35,18 +35,20 @@ export function attachWebpackHooks(plugin: any) {
 
   plugin.resolveId = function (id: string, importer?: string) {
     const [pathId, query] = id.split('?');
-    const { cssLookup } = plugin.__typedcssInternal;
+    const { cssLookup, cssFilename } = plugin.__typedcssInternal;
+    const known = (file: string) =>
+      cssLookup.has(file) || file === cssFilename().replace(/\\/g, '/');
 
     if (pathId.endsWith('.zero.css')) {
       let resolvedAbsolute: string | null = null;
 
-      if (cssLookup.has(pathId)) {
+      if (known(pathId)) {
         resolvedAbsolute = pathId;
       } else if (importer) {
         const resolved = path
           .resolve(path.dirname(importer), pathId)
           .replace(/\\/g, '/');
-        if (cssLookup.has(resolved)) {
+        if (known(resolved)) {
           resolvedAbsolute = resolved;
         }
       }
@@ -60,8 +62,15 @@ export function attachWebpackHooks(plugin: any) {
 
   plugin.load = function (this: any, id: string) {
     const [pathId] = id.split('?', 1);
-    const { cssLookup, stylesheetFiles } = plugin.__typedcssInternal;
+    const { cssLookup, cssFilename, refresh, stylesheetFiles } =
+      plugin.__typedcssInternal;
 
+    if (
+      !cssLookup.has(pathId) &&
+      pathId === cssFilename().replace(/\\/g, '/')
+    ) {
+      refresh();
+    }
     const css = cssLookup.get(pathId);
     if (css == null) return null;
 
