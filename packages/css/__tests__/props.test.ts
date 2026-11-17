@@ -2,6 +2,12 @@ import * as css from '@typedcss/css';
 
 // Tests pass compiled runtime maps ($$css, $$w), which the public Style type does not model.
 const props = (...styles: unknown[]) => css.props(...(styles as css.Style[]));
+const { classProps } = css as typeof css & {
+  classProps(...styles: unknown[]): {
+    class?: string;
+    style?: Record<string, string | number>;
+  };
+};
 
 it('keeps cached sequences, prefixes and output objects independent', () => {
   const a = { $$css: true, color: 'red' };
@@ -104,4 +110,113 @@ it('shares sequence caching across nested arrays while observing their changes',
     className: 'red',
     style: { '--x': 'green' },
   });
+});
+
+it('orders selectors and nested at-rules by their final declarations', () => {
+  const style = {
+    $$css: true,
+    color: 'base',
+    ':hover:color': 'hover-color',
+    ':hover:background': 'hover-background',
+    '[open]:color': 'open-color',
+    '@media (width: 1px):color': 'media-color',
+    '@media (width: 1px)::hover:color': 'media-hover-color',
+    '@supports (selector(:is(a, b)))::focus:color': 'supports-focus-color',
+  };
+  const override = {
+    $$css: true,
+    ':hover:color': 'hover-override',
+    '@media (width: 1px)::hover:color': 'media-hover-override',
+  };
+
+  expect(props(style, override)).toEqual({
+    className:
+      'base media-color hover-override hover-background open-color media-hover-override supports-focus-color',
+  });
+});
+
+it('repairs conflicting weighted atoms and ignores incomplete weight metadata', () => {
+  const compiled = (
+    key: string,
+    group: string,
+    property: string,
+    base: number[],
+    covers?: string[],
+  ) => ({
+    $$css: true,
+    [key]: key,
+    $$w: { [key]: [`target|scope|${group}|${property}`, base, covers] },
+  });
+  const shorthand = compiled(
+    'shorthand',
+    'shared',
+    'margin',
+    [1, 1, 0],
+    ['marginLeft'],
+  );
+  const earlierShorthand = compiled(
+    'earlierShorthand',
+    'shared',
+    'margin',
+    [1, 1, 0],
+    ['marginLeft'],
+  );
+  const longhand = compiled('longhand', 'shared', 'marginLeft', [0, 1, 0]);
+  const higher = compiled('higher', 'higher', 'marginLeft', [0, 1, 1]);
+  const unrelated = compiled('unrelated', 'other', 'color', [0, 1, 0]);
+  const noState = { $$css: true, missing: 'missing', $$w: {} };
+  const falseState = { $$css: true, empty: 'empty', $$w: { empty: null } };
+  const nullClass = {
+    $$css: true,
+    hidden: null,
+    $$w: { hidden: ['target|scope|shared|margin', [0, 0, 0]] },
+  };
+
+  expect(
+    props(
+      higher,
+      unrelated,
+      noState,
+      falseState,
+      nullClass,
+      earlierShorthand,
+      shorthand,
+      longhand,
+    ),
+  ).toEqual({
+    className:
+      'higher unrelated missing empty earlierShorthand shorthand-w1 longhand',
+  });
+});
+
+it('returns class props and omits empty or null inline values', () => {
+  const compiled = { $$css: true, color: 'red' };
+
+  expect(classProps(compiled, { color: null, opacity: 0 })).toEqual({
+    class: 'red',
+    style: { opacity: 0 },
+  });
+  expect(classProps(null, false, {}, { color: null })).toEqual({});
+  expect(props()).toEqual({});
+});
+
+it('handles un-nested at-rules and weight groups owned by one style', () => {
+  expect(
+    props({
+      $$css: true,
+      '@media (width: 1px):color': 'media',
+    }),
+  ).toEqual({ className: 'media' });
+
+  expect(
+    props({
+      $$css: true,
+      first: 'first',
+      second: 'second',
+      $$w: {
+        first: ['target|scope|color', [0, 1, 0]],
+        second: ['target|scope|color', [0, 1, 0]],
+      },
+    }),
+  ).toEqual({ className: 'first second' });
 });
