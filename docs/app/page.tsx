@@ -13,6 +13,31 @@ import { styles as graph } from './demo/graph';
 import { styles as merge } from './demo/styles';
 import { highlight, source, tokenize } from './highlight';
 import Link from 'next/link';
+import { siteUrl } from '@/lib/site';
+
+const home = siteUrl.toString();
+
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${home}#website`,
+      url: home,
+      name: 'TypedCSS',
+      description:
+        'The atomic CSS-in-JS dual model of Plumeria. The same API, merged at runtime.',
+      publisher: { '@id': `${home}#organization` },
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${home}#organization`,
+      name: 'TypedCSS',
+      url: home,
+      sameAs: ['https://github.com/zss-labs/typedcss'],
+    },
+  ],
+}).replace(/</g, '\\u003c');
 
 const PACKAGES = [
   ['@typedcss/css', '@plumeria/core'],
@@ -389,6 +414,10 @@ export default async function Home() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd }}
+      />
       <SiteHeader />
       <div sx={styles.page}>
         <main>
