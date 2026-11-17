@@ -20,6 +20,20 @@ use crate::oxc::syntax::expr::{
 
 pub type EvalResult<T> = Result<T, String>;
 
+fn lone_surrogate(text: impl std::fmt::Display) -> String {
+    format!(
+        "[typedcss] The string \"{text}\" contains a lone surrogate, which CSS cannot represent. Write the complete character instead."
+    )
+}
+
+fn well_formed(value: &oxc_ast::ast::StringLiteral) -> EvalResult<String> {
+    value
+        .value
+        .as_str()
+        .map(str::to_string)
+        .ok_or_else(|| lone_surrogate(value.value.display()))
+}
+
 pub type ResolveVariable<'r> = &'r dyn Fn(&str) -> Option<Value>;
 
 pub type Replacements = rustc_hash::FxHashMap<(u32, u32), Value>;
@@ -249,7 +263,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         }
 
         match val.kind() {
-            K::Str(value) => Ok(Some(Value::Str(str_value(value)))),
+            K::Str(value) => Ok(Some(Value::Str(well_formed(value)?))),
             K::Num(value) => Ok(Some(Value::Num(value.value))),
             K::Bool(value) => Ok(Some(Value::Bool(value))),
             K::Unary(_) => self.plain().expression(val).map(Some),
@@ -279,7 +293,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
     pub fn property_key(&self, key: Key) -> EvalResult<Value> {
         let expr = match key {
             Key::Ident(name) => return Ok(Value::str(name)),
-            Key::Str(value) => return Ok(Value::Str(str_value(value))),
+            Key::Str(value) => return Ok(Value::Str(well_formed(value)?)),
             Key::Num(value) => {
                 let text = number_to_string(value);
                 return Err(format!(
@@ -290,7 +304,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
             Key::Other => return Ok(Value::str("")),
         };
         match expr.kind() {
-            K::Str(value) => return Ok(Value::Str(str_value(value))),
+            K::Str(value) => return Ok(Value::Str(well_formed(value)?)),
             K::Ident(ident) => {
                 if let Some(Value::Str(text)) = self.env.statics.lookup(ident.name.as_str())
                     && !text.is_empty()
@@ -341,7 +355,9 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         let mut result = String::new();
         for (index, quasi) in node.quasis.iter().enumerate() {
             match quasi.value.cooked {
-                Some(cooked) if !cooked.as_bytes().is_empty() => result.push_str(&cooked.display().to_string()),
+                Some(cooked) if !cooked.as_bytes().is_empty() => result.push_str(
+                    cooked.as_str().ok_or_else(|| lone_surrogate(cooked.display()))?,
+                ),
                 _ => result.push_str(quasi.value.raw.as_str()),
             }
             if let Some(expr) = node.expressions.get(index) {
@@ -489,7 +505,7 @@ impl<'e, 'r> Evaluator<'e, 'r> {
         }
         match node.kind() {
             K::Call(call) => self.call(call),
-            K::Str(value) => Ok(Value::Str(str_value(value))),
+            K::Str(value) => Ok(Value::Str(well_formed(value)?)),
             K::Num(value) => Ok(Value::Num(value.value)),
             K::Bool(value) => Ok(Value::Bool(value)),
             K::Null => Ok(Value::Null),
