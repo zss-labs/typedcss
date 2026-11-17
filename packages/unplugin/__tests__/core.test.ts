@@ -183,6 +183,60 @@ it('uses a custom CSS import formatter and permits omitting the import', async (
   expect(restored.code).toContain(`import "${CSS_ID}";`);
 });
 
+it('collects transformed files that exist on disk and stops on the rest', async () => {
+  const plugin = createPlugin();
+  const outside = path.join(path.dirname(ROOT), 'Outside.tsx');
+
+  await plugin.transform.handler(card('tomato'), CARD);
+  expect(plugin.load(CSS_FILE)).toContain('tomato');
+  expect(plugin.load(CSS_FILE)).not.toContain('teal');
+
+  await expect(
+    plugin.transform.handler(card('plum'), path.join(ROOT, 'Virtual.tsx')),
+  ).rejects.toThrow(/has no file on disk/);
+  const plain = `import * as css from '@typedcss/css';
+const styles = css.create({ box: { color: 'plum' } });
+export const Box = () => <div sx={styles.box} />;
+`;
+  for (const file of [outside, path.join(ROOT, 'build', 'Card.tsx')]) {
+    await expect(plugin.transform.handler(plain, file)).rejects.toThrow(
+      /is outside the project files the stylesheet is compiled from/,
+    );
+  }
+  await expect(
+    plugin.transform.handler(
+      'export const Virtual = 1;',
+      path.join(ROOT, 'Virtual.tsx'),
+    ),
+  ).resolves.toBeNull();
+  expect(plugin.load(CSS_FILE)).not.toContain('plum');
+});
+
+it('drops a deleted file when the stylesheet is refreshed', async () => {
+  const plugin = createPlugin();
+  const gone = path.join(ROOT, 'Gone.tsx');
+  fs.writeFileSync(gone, card('coral'));
+
+  await plugin.transform.handler(card('coral'), gone);
+  expect(plugin.load(CSS_FILE)).toContain('coral');
+  fs.rmSync(gone);
+  plugin.__typedcssInternal.refresh();
+  expect(plugin.load(CSS_FILE)).not.toContain('coral');
+  expect(plugin.load(CSS_FILE)).toContain('tomato');
+  expect(plugin.__typedcssInternal.stylesheetFiles.has(gone)).toBe(false);
+});
+
+it('leaves files the include and exclude options skip out of the stylesheet', () => {
+  for (const exclude of ['**/Card.tsx', /Card\.tsx$/]) {
+    const plugin = createPlugin({ exclude: [exclude] });
+
+    expect(plugin.load(CSS_ID)).not.toContain('teal');
+  }
+  expect(createPlugin({ include: /tokens\.ts$/ }).load(CSS_ID)).not.toContain(
+    'teal',
+  );
+});
+
 it('compiles the stylesheet on demand when it is loaded first', () => {
   const plugin = createPlugin();
 
