@@ -16,7 +16,7 @@ const FILE = path.join(DIR, 'box.tsx');
 afterAll(() => fs.rmSync(DIR, { recursive: true, force: true }));
 
 it.each([true, false])(
-  'serves the CSS of the source it compiled, not the file on disk (dev: %s)',
+  'serves the CSS collected from disk (dev: %s)',
   async (isDev) => {
     fs.writeFileSync(FILE, moduleUsing('#a11111'));
     const plugin = unpluginFactory({ lint: false }, {
@@ -35,9 +35,9 @@ it.each([true, false])(
       '';
     const [className] = result.code.match(/x[0-9a-z]{7}/) ?? [];
 
-    expect(css).toContain('#1111a1');
-    expect(css).not.toContain('#a11111');
-    expect(css).toContain(`.${className}`);
+    expect(css).toContain('#a11111');
+    expect(css).not.toContain('#1111a1');
+    expect(css).not.toContain(`.${className}`);
   },
 );
 
@@ -65,7 +65,7 @@ it.each([true, false])(
 );
 
 it.each([true, false])(
-  'compiles a module that has no file on disk (dev: %s)',
+  'stops on a module that has no file on disk (dev: %s)',
   async (isDev) => {
     const file = path.join(DIR, 'virtual.tsx');
     const plugin = unpluginFactory({ lint: false }, {
@@ -74,17 +74,13 @@ it.each([true, false])(
     plugin.__typedcssInternal.setDev(isDev);
     plugin.__typedcssInternal.setRoot(DIR);
 
-    const result = await plugin.transform.handler.call(
-      { addWatchFile() {} },
-      moduleUsing('#c33333'),
-      file,
-    );
-    const [className] = result.code.match(/x[0-9a-z]{7}/) ?? [];
-
     expect(fs.existsSync(file)).toBe(false);
-    expect(result.code).toContain(`import "/${CSS_FILENAME}"`);
-    expect(
-      plugin.__typedcssInternal.cssLookup.get(path.join(DIR, CSS_FILENAME)),
-    ).toContain(`.${className}`);
+    await expect(
+      plugin.transform.handler.call(
+        { addWatchFile() {} },
+        moduleUsing('#c33333'),
+        file,
+      ),
+    ).rejects.toThrow(/has no file on disk/);
   },
 );
