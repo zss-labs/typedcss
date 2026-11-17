@@ -1,5 +1,6 @@
 import type { UnpluginFactory } from 'unplugin';
 import { createFilter } from '@rollup/pluginutils';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as oxide from '@typedcss/oxide';
 import type { PropertyPolicyOptions, SourcePackage } from '@typedcss/oxide';
@@ -10,6 +11,43 @@ import {
   compileStylesheet,
   isRelevant,
 } from './stylesheet';
+
+const PACKAGE_EXCLUDED_DIRS = ['dist', 'build', '.git'];
+const EXCLUDED_DIRS = ['node_modules', ...PACKAGE_EXCLUDED_DIRS];
+
+const within = (dir: string, file: string): boolean => {
+  const relative = path.relative(dir, file);
+  return !relative.startsWith('..') && !path.isAbsolute(relative);
+};
+
+const excludedBy = (dirs: string[], base: string, file: string): boolean =>
+  path
+    .relative(base, file)
+    .replace(/\\/g, '/')
+    .split('/')
+    .some((segment) => dirs.includes(segment));
+
+function assertInProjectSheet(
+  file: string,
+  cwd: string,
+  root: string,
+  sourceDirs: string[],
+): void {
+  const inProject = within(cwd, file) && !excludedBy(EXCLUDED_DIRS, cwd, file);
+  const inPackage =
+    sourceDirs.some((dir) => within(dir, file)) &&
+    !excludedBy(PACKAGE_EXCLUDED_DIRS, root, file);
+  if (!inProject && !inPackage) {
+    throw new Error(
+      `[typedcss] ${file} is outside the project files the stylesheet is compiled from, so its styles would be missing. Move it under ${cwd}, or publish it from a package with a typedcss export condition.`,
+    );
+  }
+  if (!fs.existsSync(file)) {
+    throw new Error(
+      `[typedcss] ${file} has no file on disk, so its styles would be missing from the stylesheet. Write css.create in a source file instead.`,
+    );
+  }
+}
 
 export type CssImportContext = {
   id: string;
@@ -47,6 +85,23 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
     withoutPhysicalProperties: options.withoutPhysicalProperties,
   };
 
+  const addsStyles = (file: string, source: string, css: string): boolean => {
+    try {
+      return (
+        oxide.compileCss({
+          root: root(),
+          ...policy,
+          files: [
+            ...[...stylesheetFiles].map((listed) => ({ path: listed })),
+            { path: file, source },
+          ],
+        }) !== css
+      );
+    } catch {
+      return true;
+    }
+  };
+
   const cssLookup = new Map<string, string>();
   const cssFileLookup = new Map<string, string>();
   const targets: { id: string; dependencies: string[] }[] = [];
@@ -76,17 +131,15 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
   const cssFilename = () => path.join(viteRoot, CSS_FILENAME);
   const cssId = () => `/${CSS_FILENAME}`;
 
-  const refresh = (overrides?: Map<string, string>) => {
-    const { css, files } = compileStylesheet(
-      {
-        cwd: viteRoot,
-        root: root(),
-        styleProp,
-        sourceDirs: sourceDirs(),
-        ...policy,
-      },
-      overrides,
-    );
+  const refresh = () => {
+    const { css, files } = compileStylesheet({
+      cwd: viteRoot,
+      root: root(),
+      styleProp,
+      sourceDirs: sourceDirs(),
+      accept: (file) => filter(file),
+      ...policy,
+    });
     stylesheetFiles.clear();
     for (const file of files) stylesheetFiles.add(file);
     cssLookup.set(cssFilename(), css);
@@ -207,7 +260,19 @@ export const unpluginFactory: UnpluginFactory<PluginOptions | undefined> = (
         if (transformedSource === null) return null;
 
         const filename = cssFilename();
-        const css = refresh(new Map([[path.resolve(baseId), source]]));
+        const css = refresh();
+        const filePath = path.resolve(baseId);
+        if (
+          !stylesheetFiles.has(filePath) &&
+          addsStyles(filePath, source, css)
+        ) {
+          assertInProjectSheet(
+            filePath,
+            path.resolve(viteRoot),
+            path.resolve(root()),
+            sourceDirs(),
+          );
+        }
 
         const targetIndex = targets.findIndex((t) => t.id === id);
         const dependencies = [...stylesheetFiles];
