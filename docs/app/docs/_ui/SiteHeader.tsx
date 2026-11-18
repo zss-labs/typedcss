@@ -5,6 +5,7 @@ import { GitHubIcon } from '../../GitHubIcon';
 import { Logo } from '../../Logo';
 import { PopoverAutoClose } from './PopoverAutoClose';
 import { Search } from './Search';
+import { SearchTrigger } from './SearchTrigger';
 import { ThemeSwitch } from './ThemeSwitch';
 import { bp, docs } from './theme';
 
@@ -133,11 +134,6 @@ const styles = css.create({
       color: docs.docFg,
     },
   },
-  external: {
-    display: 'inline-flex',
-    gap: 4,
-    alignItems: 'center',
-  },
   actions: {
     display: 'flex',
     gap: 12,
@@ -215,23 +211,15 @@ export function SiteHeader() {
         </button>
         <div id="docs-menu" popover="auto" sx={styles.menu}>
           <PopoverAutoClose id="docs-menu" />
+          <SearchTrigger />
           <Link href="/docs" {...css.props(styles.link)}>
             Docs
           </Link>
           <Link href="/playground" {...css.props(styles.link)}>
             Playground
           </Link>
-          <a href="/docs/ai.md" sx={styles.link}>
-            AI.md
-          </a>
-          <a
-            href="https://plumeria.dev"
-            target="_blank"
-            rel="noreferrer noopener"
-            sx={[styles.link, styles.external]}
-          >
-            Plumeria
-            <ExternalIcon />
+          <a href="/llms.txt" sx={styles.link}>
+            llms.txt
           </a>
           <div sx={styles.actions}>
             <ThemeSwitch />
