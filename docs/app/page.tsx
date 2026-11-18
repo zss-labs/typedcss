@@ -1,9 +1,9 @@
 import { theme } from './theme';
 import * as css from '@typedcss/css';
 
-const title = 'TypedCSS — Type-safe atomic CSS-in-JS';
+const title = 'TypedCSS — Predictable overrides across component boundaries';
 const description =
-  'TypedCSS is type-safe atomic CSS-in-JS with build-time compilation and a runtime fallback for dynamic style composition. Works with Next.js, Vite, webpack, and more.';
+  'TypedCSS brings predictable overrides to React styling across component boundaries. The rightmost style in an array wins for each property, regardless of import or load order.';
 const images = '/api/ogp/home/og.png';
 
 export const metadata = {
@@ -34,8 +34,7 @@ const jsonLd = JSON.stringify({
       '@id': `${home}#website`,
       url: home,
       name: 'TypedCSS',
-      description:
-        'TypedCSS is type-safe atomic CSS-in-JS with build-time compilation and a runtime fallback for dynamic style composition. Works with Next.js, Vite, webpack, and more.',
+      description,
       publisher: { '@id': `${home}#organization` },
     },
     {
@@ -214,7 +213,7 @@ export default async function Home() {
               <h1 sx={styles.title}>
                 TypedCSS
                 <br />
-                <span sx={styles.accent}>The right side always wins</span>
+                <span sx={styles.accent}>The right side wins</span>
               </h1>
               <p sx={styles.lead}>
                 Type-safe atomic CSS-in-JS. Styles compile at build time. What
