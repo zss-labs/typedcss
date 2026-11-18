@@ -26,9 +26,9 @@ const initTheme = `try {
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
-  title: 'TypedCSS — Type-safe atomic CSS-in-JS',
+  title: 'TypedCSS — Predictable overrides across component boundaries',
   description:
-    'TypedCSS is type-safe atomic CSS-in-JS with build-time compilation and a runtime fallback for dynamic style composition. Works with Next.js, Vite, webpack, and more.',
+    'TypedCSS brings predictable overrides to React styling across component boundaries. The rightmost style in an array wins for each property, regardless of import or load order.',
 };
 
 export default function RootLayout({
