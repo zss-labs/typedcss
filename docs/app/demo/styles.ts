@@ -5,10 +5,11 @@ export const styles = css.create({
     padding: '10px 20px',
     fontWeight: 600,
     color: 'black',
-    backgroundColor: 'lightblue',
+    backgroundColor: 'lightgray',
+    borderWidth: 0,
     borderRadius: 8,
   },
-  pill: {
+  rounded: {
     borderRadius: 999,
   },
   sky: {
