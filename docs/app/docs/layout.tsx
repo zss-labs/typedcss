@@ -2,7 +2,6 @@ import * as css from '@typedcss/css';
 import type { ReactNode } from 'react';
 import { source } from '@/lib/source';
 import { Sidebar } from './_ui/Sidebar';
-import { SiteHeader } from './_ui/SiteHeader';
 import { bp, docs } from './_ui/theme';
 
 const styles = css.create({
@@ -28,7 +27,6 @@ const styles = css.create({
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div sx={styles.root}>
-      <SiteHeader />
       <div sx={styles.grid}>
         <Sidebar tree={source.getPageTree()} />
         {children}
