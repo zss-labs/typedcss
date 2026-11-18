@@ -9,40 +9,23 @@ import { bp, docs } from './theme';
 
 const styles = css.create({
   trigger: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    display: 'inline-flex',
+    display: 'none',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 'clamp(120px, 100vw - 760px, 280px)',
-    padding: '6px 12px',
-    fontSize: 12,
+    justifyContent: 'center',
+    width: 28,
+    height: 28,
+    padding: 0,
+    marginLeft: 'auto',
     color: docs.docMuted,
     cursor: 'pointer',
-    background: `color-mix(in oklab, ${docs.docAccent} 50%, transparent)`,
+    background: 'none',
     borderWidth: 0,
-    borderRadius: 9999,
-    transform: 'translate(-50%, -50%)',
-    transitionDuration: '0.2s',
-    transitionProperty: 'color, background-color',
+    borderRadius: 6,
     ':hover': {
-      color: docs.docFg,
       background: docs.docAccent,
     },
     [bp.md]: {
-      position: 'static',
-      width: 'auto',
-      padding: 6,
-      marginLeft: 'auto',
-      background: 'none',
-      transform: 'none',
-    },
-  },
-  kbd: {
-    fontFamily: 'inherit',
-    [bp.md]: {
-      display: 'none',
+      display: 'inline-flex',
     },
   },
   dialog: {
@@ -198,6 +181,8 @@ const sortBySidebar = (items: SortedResult[], query: string) => {
   return groups.sort((a, b) => rank(a) - rank(b)).flat();
 };
 
+export const OPEN_SEARCH = 'search:open';
+
 export function Search() {
   const dialog = useRef<HTMLDialogElement>(null);
   const { search, setSearch, query } = useDocsSearch({
@@ -217,7 +202,11 @@ export function Search() {
       }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener(OPEN_SEARCH, open);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener(OPEN_SEARCH, open);
+    };
   }, []);
 
   const results = useMemo(
@@ -237,7 +226,6 @@ export function Search() {
         onClick={open}
       >
         <SearchIcon />
-        <kbd sx={styles.kbd}>⌘K</kbd>
       </button>
       <dialog
         ref={dialog}
