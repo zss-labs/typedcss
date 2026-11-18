@@ -1,7 +1,7 @@
 {
   "name": "@typedcss/css",
   "version": "22.0.14",
-  "description": "The Atomic CSS-in-JS Dual model of Plumeria",
+  "description": "React styling with predictable overrides across component boundaries",
   "author": "Refirst 11",
   "license": "MIT",
   "homepage": "https://typedcss.dev",
@@ -16,9 +16,9 @@
   "keywords": [
     "css",
     "css-in-js",
+    "atomic-css",
     "react",
     "typedcss",
-    "typed",
     "typescript"
   ],
   "sideEffects": false,
