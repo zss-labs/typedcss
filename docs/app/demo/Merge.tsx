@@ -8,7 +8,7 @@ import { styles as demo } from './styles';
 
 const SOURCES = {
   base: demo.base,
-  pill: demo.pill,
+  rounded: demo.rounded,
   sky: demo.sky,
 };
 
@@ -145,7 +145,7 @@ const styles = css.create({
 });
 
 export function Merge() {
-  const [order, setOrder] = useState<Name[]>(['base', 'pill', 'sky']);
+  const [order, setOrder] = useState<Name[]>(['base', 'rounded', 'sky']);
   const merged = css.props(order.map((name) => SOURCES[name]));
   const classes = merged.className?.split(' ') ?? [];
 
@@ -227,18 +227,20 @@ export function Merge() {
       <div sx={styles.result}>
         <pre sx={styles.output}>
           <code>
-            {'<div\n  class="'}
+            {'<button\n  class="'}
             {classes.map((name, index) => (
               <Fragment key={name}>
                 {index > 0 && ' '}
                 <span sx={[styles.atom, styles.outputAtom]}>{name}</span>
               </Fragment>
             ))}
-            {'"\n/>'}
+            {'"\n>\n  Button\n</button>'}
           </code>
         </pre>
         <div sx={styles.stage}>
-          <div {...merged}>Badge</div>
+          <button type="button" {...merged}>
+            Button
+          </button>
         </div>
       </div>
     </div>
