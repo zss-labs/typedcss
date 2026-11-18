@@ -26,9 +26,9 @@ const initTheme = `try {
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
-  title: 'TypedCSS',
+  title: 'TypedCSS — Type-safe atomic CSS-in-JS',
   description:
-    'The atomic CSS-in-JS dual model of Plumeria. The same API, merged at runtime.',
+    'TypedCSS is type-safe atomic CSS-in-JS with build-time compilation and a runtime fallback for dynamic style composition. Works with Next.js, Vite, webpack, and more.',
 };
 
 export default function RootLayout({
