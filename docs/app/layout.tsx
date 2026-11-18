@@ -5,6 +5,8 @@ import './global.css';
 import * as css from '@typedcss/css';
 import { theme } from './theme';
 import { siteUrl } from '@/lib/site';
+import { HeaderGate } from './docs/_ui/HeaderGate';
+import { SiteHeader } from './docs/_ui/SiteHeader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -38,6 +40,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: initTheme }} />
       </head>
       <body sx={styles.body}>
+        <HeaderGate>
+          <SiteHeader />
+        </HeaderGate>
         {children}
         <Analytics />
       </body>
