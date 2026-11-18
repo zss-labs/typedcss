@@ -1,7 +1,16 @@
 import { theme } from './theme';
 import * as css from '@typedcss/css';
 
-export const metadata = { alternates: { canonical: '/' } };
+const title = 'TypedCSS — Type-safe atomic CSS-in-JS';
+const description =
+  'TypedCSS is type-safe atomic CSS-in-JS with build-time compilation and a runtime fallback for dynamic style composition. Works with Next.js, Vite, webpack, and more.';
+const images = '/api/ogp/home/og.png';
+
+export const metadata = {
+  alternates: { canonical: '/' },
+  openGraph: { title, description, images },
+  twitter: { title, description, images },
+};
 import { CopyCommand } from './CopyCommand';
 import { SiteFooter } from './docs/_ui/SiteFooter';
 import { Logo } from './Logo';
@@ -26,7 +35,7 @@ const jsonLd = JSON.stringify({
       url: home,
       name: 'TypedCSS',
       description:
-        'The atomic CSS-in-JS dual model of Plumeria. The same API, merged at runtime.',
+        'TypedCSS is type-safe atomic CSS-in-JS with build-time compilation and a runtime fallback for dynamic style composition. Works with Next.js, Vite, webpack, and more.',
       publisher: { '@id': `${home}#organization` },
     },
     {
