@@ -1,6 +1,7 @@
 :root {
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: light;
+  view-transition-name: none;
 }
 
 :root.dark {
