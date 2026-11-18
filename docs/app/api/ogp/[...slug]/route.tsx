@@ -23,7 +23,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string[] }> },
 ) {
   const { slug } = await params;
-  let title = 'Type-safe atomic CSS-in-JS';
+  let title = 'Predictable overrides across component boundaries';
   if (slug.length !== 2 || slug[0] !== 'home') {
     const page = source.getPage(slug.slice(0, -1));
     if (!page) return new Response('Not Found', { status: 404 });
