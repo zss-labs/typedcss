@@ -10,7 +10,12 @@ const card = `data:image/png;base64,${(
 ).toString('base64')}`;
 
 export function generateStaticParams() {
-  return source.getPages().map((page) => ({ slug: [...page.slugs, 'og.png'] }));
+  return [
+    { slug: ['home', 'og.png'] },
+    ...source.getPages().map((page) => ({
+      slug: [...page.slugs, 'og.png'],
+    })),
+  ];
 }
 
 export async function GET(
@@ -18,9 +23,12 @@ export async function GET(
   { params }: { params: Promise<{ slug: string[] }> },
 ) {
   const { slug } = await params;
-  const page = source.getPage(slug.slice(0, -1));
-  if (!page) return new Response('Not Found', { status: 404 });
-  const title = page.data.title.slice(0, 100);
+  let title = 'Type-safe atomic CSS-in-JS';
+  if (slug.length !== 2 || slug[0] !== 'home') {
+    const page = source.getPage(slug.slice(0, -1));
+    if (!page) return new Response('Not Found', { status: 404 });
+    title = page.data.title.slice(0, 100);
+  }
 
   return new ImageResponse(
     <div
