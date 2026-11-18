@@ -1,16 +1,45 @@
 # @typedcss/css
 
-**TypedCSS** is [Plumeria](https://plumeria.dev) with the merge moved to runtime. You write the same `css.create` and the same `sx` prop, and the compiler still turns every style into atomic CSS. What changes is who picks the winning class: a small resolver on the element, instead of the compiler at the call site.
+**TypedCSS** brings predictable overrides to React styling. When you combine styles in an array, the rightmost style wins for each property, regardless of import or load order. The compiler merges styles it can resolve at build time. For styles passed through props, context, a store, or another package, a small runtime resolver applies the same override rules when needed.
 
-That lets a style travel anywhere a value can — through props, context, or another package — at the price of a small runtime and a class map in the bundle. Plumeria is the recommendation for a new project; TypedCSS gives more room when refactoring an existing one.
+## Installation
 
-## Quick start
+### Automatic setup
 
 ```sh
 npx @typedcss/init
 ```
 
-## Example
+The CLI detects your bundler and package manager, asks about project preferences such as ESLint, and previews the changes before installing packages and writing configuration files.
+
+### Manual setup
+
+1. Install the runtime and types as a regular dependency.
+
+   ```sh
+   pnpm add @typedcss/css
+   ```
+
+2. Install the plugin for your bundler and follow its configuration guide.
+
+   | Bundler                          | Install                             | Configure                                                   |
+   | -------------------------------- | ----------------------------------- | ----------------------------------------------------------- |
+   | Next.js                          | `pnpm add -D @typedcss/next-plugin` | [Next.js guide](https://typedcss.dev/docs/integration/next) |
+   | Vite, webpack, Rollup and others | `pnpm add -D @typedcss/unplugin`    | [Bundler guides](https://typedcss.dev/docs/integration)     |
+
+3. Declare the `sx` prop in `typedcss.d.ts`.
+
+   ```ts
+   /// <reference types="@typedcss/css/sx" />
+   ```
+
+[Full installation guide](https://typedcss.dev/docs/installation) · [ESLint plugin](https://www.npmjs.com/package/@typedcss/eslint-plugin)
+
+## API
+
+### css.create()
+
+Styles are defined as a map of rules. Pseudo-classes and media queries nest as blocks:
 
 ```tsx
 import * as css from '@typedcss/css';
@@ -19,70 +48,47 @@ const styles = css.create({
   text: {
     fontSize: 12,
     color: 'gray',
+    ':hover': {
+      color: 'black',
+    },
+    '@media (min-width: 800px)': {
+      fontSize: 14,
+    },
   },
   active: {
     color: 'navy',
   },
 });
-
-export function App() {
-  return <div sx={[styles.text, styles.active]} />;
-}
 ```
 
-**Compiled:**
+### sx
+
+Styles are applied with the `sx` prop. An array merges from left to right, and the rightmost style wins for each property:
 
 ```tsx
-<div className="xhrr6ses xvbwmxqp" />
+<div sx={[styles.text, isActive && styles.active]} />
 ```
 
-**Generated CSS:**
+A compiled style is a value, so it can be passed through props or context and applied where it lands:
 
-```css
-.xhrr6ses:not(#\#) {
-  font-size: 12px;
-}
-.xuifcaas {
-  color: gray;
-}
-.xvbwmxqp {
-  color: navy;
+```tsx
+const Accent = createContext<css.Style | null>(null);
+
+function Label({ textStyle }: { textStyle?: css.Style }) {
+  const accent = useContext(Accent);
+  return <div sx={[styles.text, accent, textStyle]}>Label</div>;
 }
 ```
 
-When `sx` can be resolved statically, the merge is decided at build time and only the winning classes reach the element. When it cannot, `sx` falls back to `css.props`, which merges at runtime and returns `{ className, style }`.
+### css.props()
 
-## Migrating
+When `sx` cannot be resolved at build time, it falls back to `css.props`, which merges at runtime and returns `{ className, style }`. Call it directly where `sx` is not available:
 
-The same source runs on either, and a codemod moves a project in each direction. From Plumeria to TypedCSS:
-
-```sh
-npx @plumeria/codemod migrate-to-typedcss
+```tsx
+<div {...css.props(styles.text, isActive && styles.active)} />
 ```
 
-From TypedCSS to Plumeria:
-
-```sh
-npx @typedcss/codemod migrate-to-plumeria
-```
-
-## Packages
-
-TypedCSS and Plumeria share every version number, and each package takes the same options as its Plumeria counterpart:
-
-| TypedCSS                  | Plumeria                  |
-| ------------------------- | ------------------------- |
-| `@typedcss/codemod`       | `@plumeria/codemod`       |
-| `@typedcss/css`           | `@plumeria/core`          |
-| `@typedcss/eslint-plugin` | `@plumeria/eslint-plugin` |
-| `@typedcss/init`          | `@plumeria/init`          |
-| `@typedcss/next-plugin`   | `@plumeria/next-plugin`   |
-| `@typedcss/oxide`         | `@plumeria/compiler`      |
-| `@typedcss/swc-jest`      | `@plumeria/swc-jest`      |
-| `@typedcss/unplugin`      | `@plumeria/unplugin`      |
-| `@typedcss/wind`          | `@plumeria/wind`          |
-
-Read [plumeria.dev/docs/typedcss](https://plumeria.dev/docs/typedcss) for what differs, and the Plumeria documentation for everything else.
+TypedCSS shares [Plumeria](https://plumeria.dev)’s API. See [typedcss.dev](https://typedcss.dev/docs) for the rest of it.
 
 ## License
 
