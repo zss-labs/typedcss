@@ -1,5 +1,12 @@
 # @typedcss/core
 
+## 22.0.15
+
+### Patch Changes
+
+- 401a5ea: - Update: Describe TypedCSS as React styling with predictable overrides across component boundaries and add the atomic-css keyword in package.json
+  - Update: Rewrite README around installation and the `css.create`, `sx` and `css.props` APIs
+
 ## 22.0.14
 
 ### Patch Changes

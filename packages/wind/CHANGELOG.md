@@ -1,5 +1,13 @@
 # @typedcss/wind
 
+## 22.0.15
+
+### Patch Changes
+
+- 401a5ea: Bump version to 22.0.15
+- Updated dependencies [401a5ea]
+  - @typedcss/css@22.0.15
+
 ## 22.0.14
 
 ### Patch Changes
