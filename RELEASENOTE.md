@@ -1,5 +1,11 @@
 # Release Notes
 
+## 22.0.15 (Nov 18, 2026)
+
+- Update: Describe TypedCSS as React styling with predictable overrides across component boundaries and add the atomic-css keyword in package.json
+
+- Update: Rewrite README around installation and the `css.create`, `sx` and `css.props` APIs
+
 ## 22.0.14 (Nov 17, 2026)
 
 - Fix: compile the stylesheet from the project files on disk, so it no longer depends on which module was transformed last and a deleted or emptied file leaves no stale CSS behind.

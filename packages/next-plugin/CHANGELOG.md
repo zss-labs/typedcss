@@ -1,5 +1,14 @@
 # @typedcss/next-plugin
 
+## 22.0.15
+
+### Patch Changes
+
+- 401a5ea: Bump version to 22.0.15
+- Updated dependencies [401a5ea]
+  - @typedcss/eslint-plugin@22.0.15
+  - @typedcss/oxide@22.0.15
+
 ## 22.0.14
 
 ### Patch Changes
