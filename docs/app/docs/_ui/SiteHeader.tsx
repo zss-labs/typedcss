@@ -134,6 +134,11 @@ const styles = css.create({
       color: docs.docFg,
     },
   },
+  external: {
+    display: 'inline-flex',
+    gap: 4,
+    alignItems: 'center',
+  },
   actions: {
     display: 'flex',
     gap: 12,
@@ -215,11 +220,20 @@ export function SiteHeader() {
           <Link href="/docs" {...css.props(styles.link)}>
             Docs
           </Link>
+          <a href="/llms.txt" sx={styles.link}>
+            llms.txt
+          </a>
           <Link href="/playground" {...css.props(styles.link)}>
             Playground
           </Link>
-          <a href="/llms.txt" sx={styles.link}>
-            llms.txt
+          <a
+            href="https://refirst11.github.io/css-compiler-bench/"
+            target="_blank"
+            rel="noreferrer noopener"
+            sx={[styles.link, styles.external]}
+          >
+            Benchmark
+            <ExternalIcon />
           </a>
           <div sx={styles.actions}>
             <ThemeSwitch />
