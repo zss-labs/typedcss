@@ -36,10 +36,14 @@ const styles = css.create({
   root: {
     display: 'flex',
     flexDirection: 'column',
-    gridArea: 'main',
-    height: '100dvh',
+    gridRow: 1,
+    gridColumn: '2 / -1',
+    height: 'calc(100dvh - 56px)',
     overflow: 'hidden',
     color: theme.textPrimary,
+    [breakpoints.md]: {
+      height: 'calc(100dvh - 104px)',
+    },
   },
   bar: {
     display: 'grid',
