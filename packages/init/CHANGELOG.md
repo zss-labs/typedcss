@@ -1,5 +1,11 @@
 # @typedcss/init
 
+## 22.0.16
+
+### Patch Changes
+
+- 07363d7: Bump version to 22.0.16
+
 ## 22.0.15
 
 ### Patch Changes
