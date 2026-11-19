@@ -10,6 +10,7 @@
   "ignore": [
     "nextjs",
     "vite-react-rsc",
+    "typedcss-docs",
     "example-bun",
     "example-esbuild",
     "example-farm",
