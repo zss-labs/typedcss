@@ -30,3 +30,4 @@ Do not react to the generation of zero-virtual.css.
 
 Avoid unnecessary secondary labels and descriptions.
 Let the layout do the talking.
+Before writing TypedCSS styles anywhere in this repo, read `docs/public/docs/ai.md` and follow it.
