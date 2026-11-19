@@ -5,5 +5,7 @@ import type { ReactNode } from 'react';
 
 export function HeaderGate({ children }: { children: ReactNode }) {
   const path = usePathname();
-  return path === '/' || path.startsWith('/docs') ? children : null;
+  return path === '/' || path.startsWith('/docs') || path === '/playground'
+    ? children
+    : null;
 }
