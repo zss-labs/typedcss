@@ -181,36 +181,22 @@ const styles = css.create({
   darkButton: {
     backgroundColor: '#5b8cff',
   },
-  merge: {
+  typed: {
     display: 'flex',
-    gap: 12,
+    gap: 14,
     alignItems: 'center',
-    fontFamily: 'var(--mono)',
-    fontSize: 11,
   },
-  chips: {
-    display: 'grid',
-    gap: 5,
+  ring: {
+    width: 64,
+    height: 64,
+    background: `radial-gradient(closest-side, ${theme.panel} 72%, transparent 74%), conic-gradient(#547b7c 60%, ${theme.line} 0)`,
+    borderRadius: '50%',
   },
-  chip: {
-    padding: '3px 7px',
-    color: theme.muted,
-    borderColor: theme.line,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  winner: {
-    color: theme.accentText,
-    borderColor: theme.accent,
-  },
-  badge: {
-    padding: '6px 12px',
-    fontFamily: 'inherit',
-    fontWeight: 600,
-    color: 'black',
-    backgroundColor: 'skyblue',
-    borderRadius: 999,
+  blend: {
+    width: 64,
+    height: 64,
+    background: 'linear-gradient(135deg, #547b7c, #788b77, #dc9e91, #d9b99b)',
+    borderRadius: 8,
   },
 });
 
@@ -277,6 +263,12 @@ export function Examples() {
           <span sx={[styles.hero, styles.tide]} />
         </div>
       </Example>
+      <Example href="/playground?example=var-type" title="Typed Variables">
+        <div sx={styles.typed}>
+          <span sx={styles.ring} />
+          <span sx={styles.blend} />
+        </div>
+      </Example>
       <Example href="/playground" title="Themes">
         <div sx={styles.pair}>
           <div sx={[styles.surface, styles.light]}>
@@ -289,17 +281,6 @@ export function Examples() {
             <span sx={[styles.text, styles.darkText]} />
             <span sx={[styles.button, styles.darkButton]} />
           </div>
-        </div>
-      </Example>
-      <Example href="/playground?example=merge" title="Last style wins">
-        <div sx={styles.merge}>
-          <div sx={styles.chips}>
-            <span sx={styles.chip}>base</span>
-            <span sx={styles.chip}>rounded</span>
-            <span sx={[styles.chip, styles.winner]}>sky</span>
-          </div>
-          <span sx={styles.arrow}>→</span>
-          <span sx={styles.badge}>Button</span>
         </div>
       </Example>
     </div>
